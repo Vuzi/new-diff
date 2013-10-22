@@ -1,5 +1,9 @@
 #include "diff.h"
 
+/* Prototypes statiques */
+static const char* get_type_char(struct stat* s);
+static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR* d2);
+
 void sec_closedir(DIR *d) {
 
     if(closedir(d) == -1)
@@ -56,7 +60,7 @@ int diff_dir(const char* dir_name1, const char* dir_name2) {
     return ret;
 }
 
-const char* get_type_char(struct stat *s) {
+static const char* get_type_char(struct stat *s) {
 
     if(S_ISREG(s->st_mode)) {
         if(s->st_size == 0)
@@ -84,7 +88,7 @@ const char* get_type_char(struct stat *s) {
 
 }
 
-int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR* d2) {
+static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR* d2) {
 
     int ret = 0, tmp = 0;
     char *tmp_name1 = NULL, *tmp_name2 = NULL;

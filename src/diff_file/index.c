@@ -1,5 +1,8 @@
 #include "index.h"
 
+/* Prototype statique */
+static unsigned int index_size(FILE *f);
+
 /* ===============================================
                     index_size
 
@@ -10,7 +13,7 @@
     ----------------------------------------------
     Retour : Retourne le nombre de lignes de f
    =============================================== */
-unsigned int index_size(FILE *f) {
+static unsigned int index_size(FILE *f) {
     unsigned int cpt = 0;
     char c = 0;
 

@@ -1,6 +1,9 @@
 #include "path_test.h"
 
-int get_type_path(const char* path) {
+/* Prototypes statique */
+static int get_type_path(const char* path);
+
+static int get_type_path(const char* path) {
     struct stat st;
 
     if(stat(path, &st) == 0) {
@@ -17,44 +20,38 @@ int get_type_path(const char* path) {
 
 }
 
-/* On cherche à savoir de quel cas de figure il s'agit
-   Cas possibles :
-   0:FILE FILE
-   1:DIR DIR
-   2:DIR FILE
-   3:FILE DIR */
-int check_and_type_paths(const char** paths) {
+file_arg_case check_and_type_paths(const char** paths) {
 
     int val1 = get_type_path(paths[0]), val2 = get_type_path(paths[1]);
 
     if(val1 == 1) {
         if(val2 == 1)
-            return 1;
+            return DIR_DIR;
         else if (val2 == 2)
-            return 2;
+            return DIR_FILE;
     } else if(val1 == 2) {
         if(val2 == 1)
-            return 3;
+            return FILE_DIR;
         else if (val2 == 2)
-            return 0;
+            return FILE_FILE;
     }
 
     if(val1 == 0) {
         printf("%s : not a file or a directory", paths[0]);
-        return -1;
+        return NONE;
     }
     else if(val1 == -1) {
         perror(paths[0]);
-        return -1;
+        return NONE;
     }
 
     if(val2 == 0) {
         printf("%s : not a file or a directory", paths[1]);
-        return -1;
+        return NONE;
     }
     else {
         perror(paths[1]);
-        return -1;
+        return NONE;
     }
 
 }

@@ -1,5 +1,10 @@
 #include "diff.h"
 
+
+/* Prototype des statiques */
+static int diff_file_make(FILE* file_1, FILE* file_2);
+static int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2);
+
 /* ===============================================
                       sec_fopen
 
@@ -51,7 +56,7 @@ void sec_fclose(FILE *f) {
     courante de f1 et de f2 (f1->line et f2->line)
     et indique la liste d'opération dans diff_list.
    =============================================== */
-int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
+static int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
 
     int line = 0;
     int val_supp = INT_MAX, val_add = INT_MAX, val_modif = INT_MAX;

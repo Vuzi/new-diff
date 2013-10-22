@@ -11,8 +11,6 @@
 FILE* sec_fopen(const char* path, const char* mode);
 void sec_fclose(FILE *f);
 
-int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2);
-int diff_file_make(FILE* file_1, FILE* f2);
 int diff_file(const char* f1_name, const char* f2_name);
 
 #endif // DIFF_H_INCLUDED

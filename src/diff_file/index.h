@@ -19,7 +19,6 @@ struct s_index {
 typedef struct s_index t_index;
 
 /* Prototypes */
-unsigned int index_size(FILE *f);
 t_index* index_file(FILE *f);
 void index_free(t_index* index);
 void index_display(t_index *f);

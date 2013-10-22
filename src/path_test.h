@@ -7,8 +7,17 @@
 #include <sys/stat.h>
 #include <string.h>
 
+enum e_file_arg_case {
+    NONE = -1,
+    FILE_FILE = 0,
+    DIR_DIR = 1,
+    DIR_FILE = 2,
+    FILE_DIR = 3
+};
+
+typedef enum e_file_arg_case file_arg_case;
+
 /* Prototypes */
-int get_type_path(const char* path);
-int check_and_type_paths(const char** paths);
+file_arg_case check_and_type_paths(const char** paths);
 
 #endif // PATH_TEST_H_INCLUDED

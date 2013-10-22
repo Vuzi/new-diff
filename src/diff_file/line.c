@@ -15,17 +15,17 @@
    =============================================== */
 int line_search(t_index *line, t_index *f1) {
 
-    unsigned int sav = f1->line, line_search = 0;
+    unsigned int sav = f1->line, line_to_search = 0;
     line_error ret = _NO_ERROR;
 
     while(ret == _NO_ERROR && line_compare(line, f1) != 0)
         ret = line_next(f1);
 
-    line_search = f1->line;
+    line_to_search = f1->line;
     line_go_to(f1, sav);
 
     if(ret == _NO_ERROR)
-        return line_search;
+        return line_to_search;
     else
         return -1;
 }
