@@ -2,5 +2,6 @@ Liste des arguments gérés (Par le code, pas réellement) :
 
   Pour les fichiers :
     -q/--brief : a voir effet sur test entre dossiers (Non précisé dans --help)
-    
+    -s/--report-identical-files :  --
+    -
 
