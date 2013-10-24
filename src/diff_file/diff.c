@@ -2,8 +2,7 @@
 
 
 /* Prototype des statiques */
-static int diff_file_make(FILE* file_1, FILE* file_2);
-static int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2);
+static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2);
 
 /* ===============================================
                       sec_fopen
@@ -56,7 +55,7 @@ void sec_fclose(FILE *f) {
     courante de f1 et de f2 (f1->line et f2->line)
     et indique la liste d'opération dans diff_list.
    =============================================== */
-static int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
+static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
 
     int line = 0;
     int val_supp = INT_MAX, val_add = INT_MAX, val_modif = INT_MAX;
@@ -91,7 +90,7 @@ static int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
                 /* Déplacement */
                 line_go_to(f1, (unsigned)(line)); //Possible sans test, car correspondance trouvée à line
 
-                val_supp = val_supp + diff_file_make_intern(&diff_supp, f1, f2);
+                val_supp = val_supp + diff_file_intern(&diff_supp, f1, f2);
             }
 
             f1->line = save_1;
@@ -107,7 +106,7 @@ static int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
                 /* Déplacement */
                 line_go_to(f2, (unsigned)(line)); //Possible sans test, car correspondance trouvée à line
 
-                val_add = val_add + diff_file_make_intern(&diff_add_ ,f1, f2);
+                val_add = val_add + diff_file_intern(&diff_add_ ,f1, f2);
             }
 
             f1->line = save_1;
@@ -124,21 +123,21 @@ static int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
             /* On a trouvé */
             if(line >= 0) {
                 val_modif = (f1->line - save) + (((unsigned)(line)) - f2->line);
-                diff_add(&diff_modif, CHANGED_LINE, save, f1->line, f2->line, (unsigned)(line-1));
+                diff_add(&diff_modif, CHANGED_LINE, save, f1->line-1, f2->line, (unsigned)(line-1));
 
                 /* On remonte de la ligne dépassée */
                 line_previous(f1);
             }
             /* Pas de correspondance jusqu'à fin du fichier */
             else {
-                val_modif = ((f1->line_max-1) - save) + ((f2->line_max-1) - f2->line);
+                val_modif = ((f1->line_max) - save) + ((f2->line_max) - f2->line);
                 diff_add(&diff_modif, CHANGED_LINE, save, f1->line_max-1, f2->line, f2->line_max-1);
 
                 line_go_to(f2, f2->line_max-1); // On va à la fin
                 line_go_to(f1, f1->line_max-1);
             }
 
-            val_modif = val_modif + diff_file_make_intern(&diff_modif ,f1, f2);
+            val_modif = val_modif + diff_file_intern(&diff_modif ,f1, f2);
 
 
             /* On sélectionne le test ayant causé le moins de mouvement */
@@ -157,7 +156,7 @@ static int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
                 return val_supp;
 
             } else if(val_add <= val_supp && val_add <= val_modif) {
-                /* Ajoute */
+                /* Ajout */
 
                 diff_delete(diff_supp);
                 diff_delete(diff_modif);
@@ -187,7 +186,7 @@ static int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
         }
         /* Lignes égales */
         else
-            return diff_file_make_intern(diff_list ,f1, f2);
+            return diff_file_intern(diff_list ,f1, f2);
 
     }
     /* Fin du fichier des deux côtés */
@@ -204,39 +203,6 @@ static int diff_file_make_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
 
 }
 
-static int diff_file_make(FILE* file_1, FILE* file_2) {
-
-    int ret = 0;
-
-    t_index *f1 = NULL, *f2 = NULL;
-
-    t_diff *diff_list = NULL;
-
-    if(file_1 && file_2) {
-
-        f1 = index_file(file_1);
-        f2 = index_file(file_2);
-
-        f1->line = -1;
-        f2->line = -1;
-
-        if(diff_file_make_intern(&diff_list, f1, f2) > 0)
-            ret = 1;
-        else
-            ret = 0;
-
-        diff_display(diff_list, f1 ,f2);
-        diff_delete(diff_list);
-
-        index_free(f1);
-        index_free(f2);
-
-    } else
-        ret = 2;
-
-    return ret;
-}
-
 
 int diff_file(const char* f1_name, const char* f2_name) {
 
@@ -244,14 +210,43 @@ int diff_file(const char* f1_name, const char* f2_name) {
 
     FILE* f1 = sec_fopen(f1_name, "r+"), *f2 = sec_fopen(f2_name, "r+");
 
+    t_index *i1 = NULL, *i2 = NULL;
+
+    t_diff *diff_list = NULL;
+
     if(f1) {
         if(f2) {
-            ret = diff_file_make(f1, f2);
+            i1 = index_file(f1, f1_name);
+            i2 = index_file(f2, f2_name);
+
+            i1->line = -1;
+            i2->line = -1;
+
+            /* Fichiers identiques */
+            if(diff_file_intern(&diff_list, i1, i2) > 0) {
+                ret = 1;
+                if(p->brief) // Si pas d'affichage
+                    printf("Files %s and %s differ\n", f1_name, f2_name);
+                else
+                    diff_display(diff_list, i1 ,i2);
+            }
+            /* Fichiers différents */
+            else {
+                ret = 0;
+                if(p->report_identical_files)
+                    printf("Files %s and %s are identical\n", f1_name, f2_name);
+            }
+
+            index_free(i1);
+            index_free(i2);
+
             sec_fclose(f1);
             sec_fclose(f2);
+
         } else {
             sec_fclose(f1);
             ret = 2;
+
         }
     } else
         ret = 2;

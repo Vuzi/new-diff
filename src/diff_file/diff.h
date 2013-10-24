@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <limits.h>
 
+#define CREATE_PARAMETERS
+
+#include "../params/constant.h"
 #include "diff_list.h"
 
 /* Prototypes */

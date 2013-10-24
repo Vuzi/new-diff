@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define END_LINE '\n'
 
@@ -10,6 +11,9 @@
 struct s_index {
 
     FILE* f;
+
+    char* f_name;
+
     unsigned int *index;   // Fin de chaque ligne
     unsigned int line;     // Ligne actuelle
     unsigned int line_max; // Nombre de lignes
@@ -19,7 +23,7 @@ struct s_index {
 typedef struct s_index t_index;
 
 /* Prototypes */
-t_index* index_file(FILE *f);
+t_index* index_file(FILE *f, const char* f_name);
 void index_free(t_index* index);
 void index_display(t_index *f);
 

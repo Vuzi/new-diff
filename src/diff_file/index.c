@@ -34,26 +34,30 @@ static unsigned int index_size(FILE *f) {
     Permet d'indexer un fichier pour permettre
     ensuite facilement le traitement.
     ----------------------------------------------
-    FILE *f : fichier à indexer.
+    FILE *f        : fichier à indexer.
+    c char *f_name : nom du fichier.
     ----------------------------------------------
     Retour : Retourne la structure instanciée pour
              l'nedexation. Renvoit une structure
              avec 0 ligne si le fichier n'est pas
              ouvert ou vide.
    =============================================== */
-t_index* index_file(FILE *f) {
+t_index* index_file(FILE *f, const char* f_name) {
 
     /* On initialise */
-    t_index *new_f = (t_index*)malloc(sizeof(t_index));
+    t_index *new_i = (t_index*)malloc(sizeof(t_index));
+
+    new_i->f_name = (char*)malloc(sizeof(char)*(strlen(f_name)+1));
+    strcpy(new_i->f_name, f_name);
 
     char tmp = 0;
     unsigned int i = 0;
 
     /* Valeurs de base */
-    new_f->f = f;
-    new_f->line_max = index_size(new_f->f);
-    new_f->index = (unsigned int*)malloc(sizeof(int)*new_f->line_max);
-    new_f->line = 0;
+    new_i->f = f;
+    new_i->line_max = index_size(new_i->f);
+    new_i->index = (unsigned int*)malloc(sizeof(int)*new_i->line_max);
+    new_i->line = 0;
 
     /* Rapide test pour vérifier si le fichier n'est pas vide */
     if(f && ((tmp = getc(f)) != EOF)) {
@@ -61,7 +65,7 @@ t_index* index_file(FILE *f) {
         rewind(f);
 
         /* Premiere ligne */
-        new_f->index[i] = 0;
+        new_i->index[i] = 0;
         i++;
 
         /* Pour chaque char */
@@ -69,7 +73,7 @@ t_index* index_file(FILE *f) {
             /* Si nouvelle ligne */
             if(tmp == END_LINE) {
                 /* On rempli la case */
-                new_f->index[i] = ftell(new_f->f);
+                new_i->index[i] = ftell(new_i->f);
                 i++;
             }
         }
@@ -79,7 +83,7 @@ t_index* index_file(FILE *f) {
     rewind(f);
 
     /* On renvoit la structure */
-    return new_f;
+    return new_i;
 }
 
 /* ===============================================
@@ -92,6 +96,7 @@ t_index* index_file(FILE *f) {
 void index_free(t_index* index) {
     if(index) {
         free(index->index);
+        free(index->f_name);
         free(index);
     }
 }

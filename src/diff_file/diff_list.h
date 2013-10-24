@@ -3,7 +3,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <sys/stat.h>
 
+#define CREATE_PARAMETERS
+
+#include "../params/constant.h"
 #include "line.h"
 
 /* Liste des différences */

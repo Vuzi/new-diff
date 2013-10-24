@@ -4,6 +4,10 @@
 #include <sys/stat.h>
 #include <string.h>
 
+#define CREATE_PARAMETERS
+
+#include "params/constant.h"
+
 #include "path_test.h"
 
 #include "diff_file/diff.h"
@@ -15,6 +19,8 @@ int main(int argc, char** argv){
 
     int ret = 0;
     char *tmp = NULL;
+
+    p = initialize_params();
 
     if(argc < 3) {
         printf("Pas assez d'arguments");
