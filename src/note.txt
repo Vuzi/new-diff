@@ -1,7 +1,23 @@
+Notes sur le comportement des arguments :
+
+  -q/--brief : pas d'effet sur le traitement des dossiers
+  -s/--report-identical-files : pas d'effet sur le traitement des dossiers
+  -c/-C NB/--context[=N] : pas d'effet sur le traitement des dossiers. Incompatible avec -u/-e/-n
+  
+  -y/--side-by-side : uniquement compatible avec le mode "classique" d'affichage. Incompatible avec -c/-u/-e/-n
+  -e/--ed : pas d'effet sur le traitement des dossiers. Incompatible avec -c/-u/-n
+  -n/--rcs : pas d'effet sur le traitement des dossiers. Incompatible avec -c/-u/-e
+  
+  
+
 Liste des arguments gérés (Par le code, pas réellement) :
 
   Pour les fichiers :
-    -q/--brief : a voir effet sur test entre dossiers (Non précisé dans --help)
+    -q/--brief : --
     -s/--report-identical-files :  --
     -c/-C NB/--context[=N] : normalement pleinnement fonctionnel, à tester pour en être absolument certain
 
+
+
+
+La gestion des arguments n'est pas encore complète, et le programme ne les lit pas réellement (Mais sait les gérer).
