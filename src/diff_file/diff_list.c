@@ -139,7 +139,7 @@ static void diff_display_context_lines(char number, int start, int end, t_diff* 
     if(diff) {
         if(number == 1) {
             while(tmp->type == ADDED_LINE) {
-                if(tmp->next == NULL) {
+                if(tmp->next == NULL || tmp->next->start_1 > end) {
                     to_display = 0;
                     break;
                 }
@@ -149,7 +149,7 @@ static void diff_display_context_lines(char number, int start, int end, t_diff* 
 
         } else {
             while(tmp->type == DELETED_LINE) {
-                if(tmp->next == NULL) {
+                if(tmp->next == NULL || tmp->next->start_2 > end) {
                     to_display = 0;
                     break;
                 }
@@ -175,82 +175,58 @@ static void diff_display_context_lines(char number, int start, int end, t_diff* 
 
     fputc('\n', stdout);
 
+
     /* Affichage */
     if(to_display) {
+
         if(number == 1) {
 
-            /* On peut afficher de start à end+NB si end - start > 0 */
-            if((end - start > 0 || diff->type != ADDED_LINE) && diff) {
-                /* Début */
-                if(start < diff->start_1)
-                    lines_display(f, start, diff->start_1-1, no_change);
+            /* Début du contexte */
+            if(start < diff->start_1)
+                lines_display(f, start, diff->start_1-1, no_change);
 
-                /* Pour chaque élément */
-                while(diff && diff->start_1 <= end) {
+            /* Pour chaque élément */
+            while(diff && diff->start_1 <= end) {
 
-                    /* Affichage modifications */
-                    if(diff->type == CHANGED_LINE)
-                        lines_display(f, diff->start_1, diff->end_1, mod);
-                    else if(diff->type == DELETED_LINE)
-                        lines_display(f, diff->start_1, diff->end_1, del);
+                /* Affichage modifications */
+                if(diff->type == CHANGED_LINE)
+                    lines_display(f, diff->start_1, diff->end_1, mod);
+                else if(diff->type == DELETED_LINE)
+                    lines_display(f, diff->start_1, diff->end_1, del);
 
-                    /* Si espace entre curseur et prochain à afficher */
-                    if(diff->next) {
-                        if(diff->next->start_1 <= end) {
-                            if(diff->end_1 < diff->next->start_1) {
-                                    lines_display(f, diff->end_1+1, diff->next->start_1-1, no_change);
-                            }
-                        } else {
-                            /* Dernier morceau */
-                            lines_display(f, diff->end_1+1, end, no_change);
-                        }
-                    } else {
-                        /* Dernier morceau */
-                        lines_display(f, diff->end_1+1, end, no_change);
-                    }
-
-                    diff = diff->next;
+                /* Si espace entre curseur et prochain à afficher */
+                if(diff->next && diff->next->start_1 <= end) {
+                    lines_display(f, diff->end_1+1, diff->next->start_1-1, no_change);
+                } else {
+                    lines_display(f, diff->end_1+1, end, no_change);
                 }
 
+                diff = diff->next;
             }
 
         } else {
 
-            /* On peut afficher de start à end+NB si end - start > 0 */
-            if((end - start > 0 || diff->type != DELETED_LINE) && diff) {
-                /* Début */
-                if(start < diff->start_2)
-                    lines_display(f, start, diff->start_2-1, no_change);
+            /* Début du contexte */
+            if(start < diff->start_2)
+                lines_display(f, start, diff->start_2-1, no_change);
 
-                /* Pour chaque élément */
-                while(diff && diff->start_2 <= end) {
+            /* Pour chaque élément */
+            while(diff && diff->start_2 <= end) {
 
-                    /* Affichage modifications */
-                    if(diff->type == CHANGED_LINE)
-                        lines_display(f, diff->start_2, diff->end_2, mod);
-                    else if(diff->type == ADDED_LINE)
-                        lines_display(f, diff->start_2, diff->end_2, add);
-                    else
-                        lines_display(f, diff->start_2, diff->end_2, no_change);
+                /* Affichage modifications */
+                if(diff->type == CHANGED_LINE)
+                    lines_display(f, diff->start_2, diff->end_2, mod);
+                else if(diff->type == ADDED_LINE)
+                    lines_display(f, diff->start_2, diff->end_2, add);
 
-                    /* Si espace entre curseur et prochain à afficher */
-                    if(diff->next) {
-                        if(diff->next->start_2 <= end) {
-                            if(diff->end_2 < diff->next->start_2) {
-                                    lines_display(f, diff->end_2+1, diff->next->start_2-1, no_change);
-                            }
-                        } else {
-                            /* Dernier morceau */
-                            lines_display(f, diff->end_2+1, end, no_change);
-                        }
-                    } else {
-                        /* Dernier morceau */
-                        lines_display(f, diff->end_2+1, end, no_change);
-                    }
-
-                    diff = diff->next;
+                /* Si espace entre curseur et prochain à afficher */
+                if(diff->next && diff->next->start_2 <= end) {
+                    lines_display(f, diff->end_2+1, diff->next->start_2-1, no_change);
+                } else {
+                    lines_display(f, diff->end_2+1, end, no_change);
                 }
 
+                diff = diff->next;
             }
         }
     }
@@ -281,19 +257,28 @@ static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2) {
 
         diff = list_e;
 
+
         /* Début */
-        start_1 = (list_e->start_1 - p->context > 0) ? list_e->start_1 - p->context : 0 ;
-        start_2 = (list_e->start_2 - p->context > 0) ? list_e->start_2 - p->context : 0 ;
+        if(diff->type == DELETED_LINE) // Décalage spécial en cas de lignes supp
+            start_2 = list_e->start_2;
+        else
+            start_2 = (list_e->start_2 - p->context > 0) ? list_e->start_2 - p->context : 0 ;
+
+        if(diff->type == ADDED_LINE) // Décalage spécial en cas de lignes ajoutées
+            start_1 = list_e->start_1;
+        else
+            start_1 = (list_e->start_1 - p->context > 0) ? list_e->start_1 - p->context : 0 ;
+
 
         while( list_e->next && // Tant qu'on a un élement suivant & qu'il est assez prêt du précédent
-             ((list_e->next->start_1 - list_e->end_1 - 1 < (2*p->context)) || (list_e->next->start_2 - list_e->end_2 - 1 < (2*p->context)))) {
+             (((p->context > 0) && ((list_e->next->start_1 - list_e->end_1 - 1 < (2*p->context)) || (list_e->next->start_2 - list_e->end_2 - 1 < (2*p->context)))))) {
 
             list_e = list_e->next;
         }
 
         /* Fin */
-        end_1 = (unsigned)(list_e->end_1 + p->context) >= f1->line_max ? (signed)(f1->line_max-1) : list_e->end_1 + p->context;
-        end_2 = (unsigned)(list_e->end_2 + p->context) >= f2->line_max ? (signed)(f2->line_max-1) : list_e->end_2 + p->context;
+        end_1 = list_e->end_1 + p->context >= (signed)(f1->line_max) ? (signed)(f1->line_max-1) : list_e->end_1 + p->context;
+        end_2 = list_e->end_2 + p->context >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 + p->context;
 
         diff_display_context_lines(1, start_1, end_1, diff, f1, "*");
         diff_display_context_lines(2, start_2, end_2, diff, f2, "-");
@@ -309,52 +294,60 @@ static void diff_display_unified_lines(t_index *f1, int start_1, int end_1, t_in
     char del[3] = "-";
 
     /* Affichage des numéros de lignes */
-    if((end_1+1) - (start_1+1) + 1 == 1)
-         printf("@@ -%d", start_1+1);
-    else
-        printf("@@ -%d,%d", start_1+1, (end_1+1) - (start_1+1) + 1);
+    if((end_1+1) == 0 && (start_1+1) == 0)
+        printf("@@ -0,0");
+    else {
+        if((end_1+1) - (start_1+1) + 1 == 1)
+             printf("@@ -%d", start_1+1);
+        else
+            printf("@@ -%d,%d", start_1+1, (end_1+1) - (start_1+1) + 1);
+    }
 
-    if((end_2+1) - (start_2+1) + 1 == 1)
-         printf(" +%d @@\n", start_2+1);
-    else
-        printf(" +%d,%d @@\n", start_2+1, (end_2+1) - (start_2+1) + 1);
+    if((end_2+1) == 0 && (start_2+1) == 0)
+        printf(" +0,0 @@\n");
+    else {
+        if((end_2+1) - (start_2+1) + 1 == 1)
+             printf(" +%d @@\n", start_2+1);
+        else
+            printf(" +%d,%d @@\n", start_2+1, (end_2+1) - (start_2+1) + 1);
+    }
 
-    /* Début */
-    if(start_1 < diff->start_1)
-        lines_display(f1, start_1, diff->start_1-1, no_change);
+    if(diff) {
 
-    /* Pour chaque élément */
-    while(diff && diff->start_1 <= end_1) {
-
-        /* Affichage modifications */
-        if(diff->type == CHANGED_LINE) {
-            lines_display(f1, diff->start_1, diff->end_1, del);
-            lines_display(f2, diff->start_2, diff->end_2, add);
+        /* Début du contexte unifié */
+        if(start_1 < diff->start_1 || (diff->type == ADDED_LINE && start_1 >= diff->start_1)) {
+            if(diff->type == ADDED_LINE)
+                lines_display(f1, start_1, diff->start_1, no_change);
+            else
+                lines_display(f1, start_1, diff->start_1-1, no_change);
         }
-        else if(diff->type == DELETED_LINE)
-            lines_display(f1, diff->start_1, diff->end_1, del);
-        else if(diff->type == ADDED_LINE)
-            lines_display(f2, diff->start_2, diff->end_2, add);
 
-        /* Si espace entre curseur et prochain à afficher */
-        if(diff->next) {
-            if(diff->next->start_1 <= end_1) {
-                if(diff->end_1 < diff->next->start_1) {
-                    if(diff->next->type == ADDED_LINE)
-                        lines_display(f1, diff->end_1+1, diff->next->start_1, no_change);
-                    else
-                        lines_display(f1, diff->end_1+1, diff->next->start_1-1, no_change);
-                }
+            /* Pour chaque élément */
+        while(diff && diff->start_1 <= end_1) {
+
+            /* Affichage modifications */
+            if(diff->type == CHANGED_LINE) {
+                lines_display(f1, diff->start_1, diff->end_1, del);
+                lines_display(f2, diff->start_2, diff->end_2, add);
+            }
+            else if(diff->type == DELETED_LINE)
+                lines_display(f1, diff->start_1, diff->end_1, del);
+            else if(diff->type == ADDED_LINE)
+                lines_display(f2, diff->start_2, diff->end_2, add);
+
+
+            /* Si espace entre curseur et prochain à afficher */
+            if(diff->next && diff->next->start_1 <= end_1) {
+                if(diff->next->type == ADDED_LINE)
+                    lines_display(f1, diff->end_1+1, diff->next->start_1, no_change);
+                else
+                    lines_display(f1, diff->end_1+1, diff->next->start_1-1, no_change);
             } else {
-                /* Dernier morceau */
                 lines_display(f1, diff->end_1+1, end_1, no_change);
             }
-        } else {
-            /* Dernier morceau */
-            lines_display(f1, diff->end_1+1, end_1, no_change);
-        }
 
-        diff = diff->next;
+            diff = diff->next;
+        }
     }
 
 }
@@ -381,18 +374,27 @@ static void diff_display_unified(t_diff* list_e, t_index *f1, t_index *f2) {
         diff = list_e;
 
         /* Début */
-        start_1 = (list_e->start_1 - p->unifier > 0) ? list_e->start_1 - p->unifier : 0 ;
         start_2 = (list_e->start_2 - p->unifier > 0) ? list_e->start_2 - p->unifier : 0 ;
 
+        if(diff->type == ADDED_LINE) { // Décalage d'ajout de lignes (Les lignes supprimées sont naturellements comptées dans le fichier 1)
+                start_1 = ((list_e->start_1 + 1) - p->unifier > 0) ? (list_e->start_1 + 1) - p->unifier : 0 ;
+        }
+        else
+            start_1 = (list_e->start_1 - p->unifier > 0) ? list_e->start_1 - p->unifier : 0 ;
+
         while( list_e->next && // Tant qu'on a un élement suivant & qu'il est assez prêt du précédent
-             ((list_e->next->start_1 - list_e->end_1 - 1 < (2*p->unifier)) || (list_e->next->start_2 - list_e->end_2 - 1 < (2*p->unifier)))) {
+             ((p->unifier > 0) && ((list_e->next->start_1 - list_e->end_1 - 1 <= (2*p->unifier)) || (list_e->next->start_2 - list_e->end_2 - 1 <= (2*p->unifier))))) {
 
             list_e = list_e->next;
         }
 
         /* Fin */
-        end_1 = (unsigned)(list_e->end_1 + p->unifier) >= f1->line_max ? (signed)(f1->line_max-1) : list_e->end_1 + p->unifier;
-        end_2 = (unsigned)(list_e->end_2 + p->unifier) >= f2->line_max ? (signed)(f2->line_max-1) : list_e->end_2 + p->unifier;
+        end_1 = list_e->end_1 + p->unifier >= (signed)(f1->line_max) ? (signed)(f1->line_max-1) : list_e->end_1 + p->unifier;
+
+        if(diff->type == DELETED_LINE && p->unifier == 0) { // Cas spécial
+            end_2 = list_e->end_2 - 1 + p->unifier >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 - 1 + p->unifier;
+        } else
+            end_2 = list_e->end_2 + p->unifier >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 + p->unifier;
 
         diff_display_unified_lines(f1, start_1, end_1, f2, start_2, end_2, diff);
 
@@ -416,7 +418,6 @@ void diff_display(t_diff* list_e, t_index *f1, t_index *f2) {
     /* Format pas défaut */
     else {
         diff_display_regular(list_e, f1, f2);
-        diff_display_context(list_e, f1, f2);
     }
 
 }
