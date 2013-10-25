@@ -15,8 +15,8 @@ Liste des arguments gérés (Par le code, pas réellement) :
   Pour les fichiers :
     -q/--brief : --
     -s/--report-identical-files :  --
-    -c/-C NB/--context[=N] : normalement pleinnement fonctionnel, à tester pour en être absolument certain
-
+    -c/-C NB/--context[=N] : Affichage fonctionnel, bug dans le n° des lignes
+    -u/-U NB/--unified[=N] : Affichage fonctionnel, bug dans le n° des lignes
 
 
 
