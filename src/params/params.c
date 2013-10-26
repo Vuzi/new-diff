@@ -9,11 +9,10 @@ Params* initialize_params() {
 	return_params->brief = 0;
 	return_params->report_identical_files = 0;
 
-	return_params->o_style = REGULAR;
 	return_params->context = 3;
 	return_params->unifier = 3;
 
-    return_params->show_max_char = 130;
+	return_params->o_style = REGULAR;
 
 	return_params->show_function_line = NULL;
 	return_params->label = NULL;
@@ -327,7 +326,7 @@ void print_params(Params* parameters) {
 	printf("Generate script : %d\n", parameters->generate_script);
 	printf("generate diff file : %d\n", parameters->generate_diff_file);
 
-	//printf("Show colomns : %d\n", parameters->show_colomns);
+	printf("Show colomns : %d\n", parameters->show_colomns);
 	printf("Show max char : %d\n", parameters->show_max_char);
 	printf("Show left identical : %d\n", parameters->show_left_identical); /* Ligne identique colonne de gauche */
 

@@ -233,11 +233,7 @@ int diff_file(const char* f1_name, const char* f2_name) {
             /* Fichiers différents */
             else {
                 ret = 0;
-
-                if(p->o_style == COLUMNS) // Même si le fichier est identique, il faut l'afficher
-                    diff_display(diff_list, i1, i2);
-
-                if(p->report_identical_files) // Doit s'ajouter à l'affichage par colonnes
+                if(p->report_identical_files)
                     printf("Files %s and %s are identical\n", f1_name, f2_name);
             }
 
