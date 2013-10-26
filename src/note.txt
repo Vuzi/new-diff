@@ -4,14 +4,13 @@ Notes sur le comportement des arguments :
   -U NB peut aussi s'écrire -UNB
 
   -q/--brief : pas d'effet sur le traitement des dossiers
-  -s/--report-identical-files : pas d'effet sur le traitement des dossiers
+  -s/--report-identical-files : pas d'effet sur le traitement des dossiers. N'empêche pas l'affichage d'autres informations
   -c/-C NB/--context[=N] : pas d'effet sur le traitement des dossiers. Incompatible avec -u/-e/-n/-y
   -u/-U NB/--unified[=N] : pas d'effet sur le traitement des dossiers. Incompatible avec -e/-n/-c/-y
-  -y/--side-by-side : uniquement compatible avec le mode "classique" d'affichage. Incompatible avec -c/-u/-e/-n
+  -y/--side-by-side : uniquement compatible avec le mode "classique" d'affichage. Incompatible avec -c/-u/-e/-n. S'affiche même pour un fichier identique
   -e/--ed : pas d'effet sur le traitement des dossiers. Incompatible avec -c/-u/-n
   -n/--rcs : pas d'effet sur le traitement des dossiers. Incompatible avec -c/-u/-e
-  
-  
+  -w/--width : largeur des colonnes pour le monde "side by side"
 
 Liste des arguments gérés (Par le code, pas réellement) :
 
