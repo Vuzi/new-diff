@@ -11,6 +11,13 @@ Notes sur le comportement des arguments :
   -n/--rcs : pas d'effet sur le traitement des dossiers. Incompatible avec -c/-u/-e
   -w/--width NB : largeur des colonnes pour le monde "side by side". Fonctionnement indeterminé, peut afficher moins de colonnes que NB
 
+Note sur -e :
+
+  A l'envers (Changement le plus avancé dans le texte jusqu'à le moins)
+  format : ligne affectée, nombre de ligne (1 étant implicite) c = changement / a = ajout / d = suppression
+           En dessous, lignes à ajouter à f2 (sauf si suppression)
+           "." Après l'extrait (Sauf dans le cas de -d)
+
 Liste des arguments gérés (Par le code, pas réellement) :
 
   Pour les fichiers :
