@@ -162,6 +162,11 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
             ret = 1;
         }
     }
+    
+    /* Fichier dans d2 en plus */
+    while((dr2 = readdir(d2)) != NULL) {
+        printf("Only in %s: %s\n", d2_name, dr2->d_name);
+    }
 
     return ret;
 }
