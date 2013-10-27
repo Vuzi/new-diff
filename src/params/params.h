@@ -23,7 +23,7 @@ typedef struct _params {
 	short generate_script;
 	short generate_diff_file;
 
-	int show_max_char;
+	unsigned int show_max_char;
 	short show_left_identical; /* Ligne identique colonne de gauche */
 
 	short remove_identical;

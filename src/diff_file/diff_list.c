@@ -431,12 +431,12 @@ static void diff_display_columns_common(int start_1, int start_2, unsigned int l
         }
 
         /* Opérateur */
-        for(j = 0; j < ((char_center-1)/2) + (char_center%2); j++)
+        for(j = 0; j < ((char_center-1)/2); j++)
             putchar((int)' ');
 
         putchar((int)op);
 
-        for(j = 0; j < ((char_center-1)/2); j++)
+        for(j = 0; j < ((char_center-1)/2) + ((char_center-1)%2); j++)
             putchar((int)' ');
 
         /* Ligne de f2 */
@@ -469,12 +469,12 @@ static void diff_display_columns_added(int start, unsigned int lenght, t_index *
             putchar((int)' ');
 
         /* Opérateur */
-        for(j = 0; j < ((char_center-1)/2) + (char_center%2); j++)
+        for(j = 0; j < ((char_center-1)/2); j++)
             putchar((int)' ');
 
         putchar((int)'>');
 
-        for(j = 0; j < ((char_center-1)/2); j++)
+        for(j = 0; j < ((char_center-1)/2) + ((char_center-1)%2); j++)
             putchar((int)' ');
 
         /* Ligne ajoutée */
@@ -514,12 +514,12 @@ static void diff_display_columns_deleted(int start, unsigned int lenght, t_index
         }
 
         /* Opérateur */
-        for(j = 0; j < ((char_center-1)/2) + (char_center%2); j++)
+        for(j = 0; j < ((char_center-1)/2); j++)
             putchar((int)' ');
 
         putchar((int)'<');
 
-        for(j = 0; j < ((char_center-1)/2); j++)
+        for(j = 0; j < ((char_center-1)/2) + ((char_center-1)%2); j++)
             putchar((int)' ');
 
         /* Espace vide */
@@ -533,7 +533,7 @@ static void diff_display_columns_deleted(int start, unsigned int lenght, t_index
 static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int show_max_char) {
 
     unsigned int char_ligne = (show_max_char - 8) > 0 ? (show_max_char - 8) : 0; // Nombre de colonnes
-    unsigned int char_center = show_max_char - (char_ligne*2); // Nombre de colone centrales
+    unsigned int char_center = show_max_char - (char_ligne); // Nombre de colone centrale
 
     /* On s'assure d'être revenu au début */
     line_go_to(f1, 0);
@@ -547,22 +547,22 @@ static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int s
                 diff_display_columns_common(f1->line, f2->line, list_e->start_1 - f1->line, f1, f2, char_ligne, char_center, ' ');
 
             if(list_e->type == ADDED_LINE) // Si des lignes ajoutées
-                diff_display_columns_added(list_e->start_1, list_e->end_1 - list_e->start_1, f1, char_ligne, char_center);
+                diff_display_columns_added(list_e->start_2, list_e->end_2 - list_e->start_2 + 1, f2, char_ligne, char_center);
 
             else if(list_e->type == DELETED_LINE) // Si des lignes supprimmées
-                diff_display_columns_deleted(list_e->start_2, list_e->end_2 - list_e->start_2, f2, char_ligne, char_center);
+                diff_display_columns_deleted(list_e->start_1, list_e->end_1 - list_e->start_1 + 1, f1, char_ligne, char_center);
 
             else { // Si des lignes modifiées
 
                 /* Si plus de ligne dans f1 que dans f2 */
                 if(list_e->end_1 - list_e->start_1 > list_e->end_2 - list_e->start_2) {
-                    diff_display_columns_common(f1->line, f2->line, list_e->end_2 - list_e->start_2, f1, f2, char_ligne, char_center, '|');
-                    diff_display_columns_deleted(list_e->end_2 - list_e->start_2 + 1, (list_e->end_1 - list_e->start_1)-(list_e->end_2 - list_e->start_2), f1, char_ligne, char_center);
+                    diff_display_columns_common(list_e->start_1,  list_e->start_2, list_e->end_2 - list_e->start_2+1, f1, f2, char_ligne, char_center, '|');
+                    diff_display_columns_deleted(list_e->start_1 + (list_e->end_1 - list_e->start_1), (list_e->end_1 - list_e->start_1)-(list_e->end_2 - list_e->start_2), f1, char_ligne, char_center);
                 }
                 /* Moins ou autant de ligne dans f1 que dans f2 */
                 else {
-                    diff_display_columns_common(f1->line, f2->line, list_e->end_1 - list_e->start_1, f1, f2, char_ligne, char_center, '|');
-                    diff_display_columns_added(list_e->end_1 - list_e->start_1 + 1, (list_e->end_2 - list_e->start_2)-(list_e->end_1 - list_e->start_1), f2, char_ligne, char_center);
+                    diff_display_columns_common(list_e->start_1,  list_e->start_2, list_e->end_1 - list_e->start_1+1, f1, f2, char_ligne, char_center, '|');
+                    diff_display_columns_added(f2->line + 1, (list_e->end_2 - list_e->start_2)-(list_e->end_1 - list_e->start_1), f2, char_ligne, char_center);
                 }
 
             }
@@ -574,7 +574,7 @@ static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int s
         }
 
         /* Affichage de la fin */
-        diff_display_columns_common(f1->line, f2->line, f1->line_max - f1->line, f1, f2, char_ligne, char_center, ' ');
+        diff_display_columns_common(f1->line, f2->line, f1->line_max - f1->line - 1, f1, f2, char_ligne, char_center, ' ');
 
     }
     /* Fichiers identiques, on affiche quand même */
