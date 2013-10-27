@@ -19,7 +19,8 @@ Liste des arguments gérés (Par le code, pas réellement) :
     -s/--report-identical-files :  --
     -c/-C NB/--context[=N] : -- (Possible bugs dans des cas très spécifiques, à tester)
     -u/-U NB/--unified[=N] : -- (Possible bugs dans des cas très spécifiques, à tester)
-
+    -y/--side-by-side : Code écrit, test à réaliser
+    -w/--width NB :  Code écrit, test à réaliser
 
 
 La gestion des arguments n'est pas encore complète, et le programme ne les lit pas réellement (Mais sait les gérer).
