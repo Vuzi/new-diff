@@ -9,7 +9,7 @@ typedef enum _mode {
 
 
 typedef enum _output_style {
-	REGULAR, CONTEXT, UNIFIED
+	REGULAR, CONTEXT, UNIFIED, COLUMNS
 } output_style;
 
 typedef struct _params {
@@ -23,8 +23,7 @@ typedef struct _params {
 	short generate_script;
 	short generate_diff_file;
 
-	short show_colomns;
-	short show_max_char;
+	int show_max_char;
 	short show_left_identical; /* Ligne identique colonne de gauche */
 
 	short remove_identical;
