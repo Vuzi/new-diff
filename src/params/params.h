@@ -9,7 +9,7 @@ typedef enum _mode {
 
 
 typedef enum _output_style {
-	REGULAR, CONTEXT, UNIFIED, COLUMNS
+	REGULAR, CONTEXT, UNIFIED, COLUMNS, EDIT_SCRIPT
 } output_style;
 
 typedef struct _params {

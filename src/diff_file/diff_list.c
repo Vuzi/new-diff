@@ -9,6 +9,8 @@ static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int s
 static void diff_display_columns_common(int start_1, int start_2, unsigned int length, t_index *f1, t_index *f2, unsigned int char_ligne, unsigned int char_center, char op);
 static void diff_display_columns_added(int start, unsigned int lenght, t_index *f, unsigned int char_ligne, unsigned int char_center);
 static void diff_display_columns_deleted(int start, unsigned int lenght, t_index *f, unsigned int char_ligne, unsigned int char_center);
+static void diff_display_ed(t_diff* list_e, t_index *f);
+static t_diff* diff_display_ed_get_diff(t_diff* list_e, unsigned int n);
 
 void diff_add(t_diff** list_e, diff_type type, int start_1, int end_1, int start_2, int end_2) {
 
@@ -583,24 +585,76 @@ static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int s
 
 }
 
+
+static t_diff* diff_display_ed_get_diff(t_diff* list_e, unsigned int n) {
+
+    while(n > 0) {
+        n--;
+        list_e = list_e->next;
+    }
+
+    return list_e;
+}
+
+static void diff_display_ed(t_diff* list_e, t_index *f) {
+
+    t_diff *tmp = list_e;
+    unsigned int diff_len = 0, i = 0;
+
+    /* ed fonctionne à l'envers, on doit garder le nombre de diff disponible */
+    while(tmp) {
+        tmp = tmp->next;
+        diff_len++;
+    }
+
+    /* Pour chaque diff */
+    for(i = 0; i < diff_len; i++) {
+        tmp = diff_display_ed_get_diff(list_e, (diff_len - i) - 1);
+
+        if(tmp->type == ADDED_LINE) {
+            if(tmp->end_1 - tmp->start_1 + 1 == 1)
+                printf("%da\n", tmp->start_1+1);
+            else
+                printf("%d,%da\n", tmp->start_1+1, tmp->end_1 - tmp->start_1 + 1);
+
+            lines_display(f,tmp->start_2, tmp->end_2, "");
+
+            puts(".");
+        } else if(tmp->type == CHANGED_LINE) {
+            if(tmp->end_1 - tmp->start_1 + 1 == 1)
+                printf("%dc\n", tmp->start_1+1);
+            else
+                printf("%d,%dc\n", tmp->start_1+1, tmp->end_1 - tmp->start_1 + 1);
+
+            lines_display(f,tmp->start_2, tmp->end_2, "");
+
+            puts(".");
+        } else {
+            if(tmp->end_1 - tmp->start_1 + 1 == 1)
+                printf("%dd\n", tmp->start_1+1);
+            else
+                printf("%d,%dd\n", tmp->start_1+1, tmp->end_1 - tmp->start_1 + 1);
+        }
+
+    }
+}
+
 void diff_display(t_diff* list_e, t_index *f1, t_index *f2) {
 
     /* Format de sortie contextuel */
-    if(p->o_style == CONTEXT) {
+    if(p->o_style == CONTEXT)
         diff_display_context(list_e, f1, f2);
-    }
     /* Format de sortie unifé */
-    else if(p->o_style == UNIFIED) {
+    else if(p->o_style == UNIFIED)
         diff_display_unified(list_e, f1, f2);
-
-    }
+    /* Format edit script */
+    else if(p->o_style == EDIT_SCRIPT)
+        diff_display_ed(list_e, f2);
     /* Format en colonnes */
-    else if(p->o_style == COLUMNS) {
+    else if(p->o_style == COLUMNS)
         diff_display_columns(list_e, f1, f2, p->show_max_char);
-    }
     /* Format pas défaut */
-    else {
+    else
         diff_display_regular(list_e, f1, f2);
-    }
 
 }

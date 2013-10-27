@@ -18,6 +18,7 @@ Liste des arguments gérés (Par le code, pas réellement) :
     -s/--report-identical-files :  --
     -c/-C NB/--context[=N] : -- (Possible bugs dans des cas très spécifiques, à tester)
     -u/-U NB/--unified[=N] : -- (Possible bugs dans des cas très spécifiques, à tester)
+    -e/--ed : -- (Possible bugs dans des cas très spécifiques, à tester)
     -y/--side-by-side : Fonctionnel, sauf dans le calcul des largeurs
     -w/--width NB :  Fonctionnel, sauf dans le calcul des largeurs (A déterminer)
 
