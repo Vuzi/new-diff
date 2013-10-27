@@ -8,6 +8,11 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+#define CREATE_PARAMETERS
+
+#include "../params/constant.h"
+
+
 /* Prototypes */
 void sec_closedir(DIR *d);
 DIR *sec_opendir(const char* path);

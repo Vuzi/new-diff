@@ -124,8 +124,12 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
                         }
                         /* Sinon ... */
                         else {
-                            printf("File %s/%s is a %s while file %s/%s is a %s\n",
-                                   d1_name, dr1->d_name, get_type_char(&st1), d2_name, dr2->d_name, get_type_char(&st2));
+                            if(p->label == NULL)
+                                printf("File %s/%s is a %s while file %s/%s is a %s\n",
+                                        d1_name, dr1->d_name, get_type_char(&st1), d2_name, dr2->d_name, get_type_char(&st2));
+                            else
+                                printf("File %s is a %s while file %s/%s is a %s\n",
+                                        p->label, get_type_char(&st1), d2_name, dr2->d_name, get_type_char(&st2));
                         }
                     } else
                         perror(dr2->d_name);
@@ -167,6 +171,6 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
     while((dr2 = readdir(d2)) != NULL) {
         printf("Only in %s: %s\n", d2_name, dr2->d_name);
     }
-
+    
     return ret;
 }

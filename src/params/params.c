@@ -6,6 +6,7 @@ Params* initialize_params() {
 
 	return_params = (Params*) calloc(1, sizeof(Params));
 
+    /* Certain en dur à des fins de test */
 	return_params->brief = 0;
 	return_params->report_identical_files = 0;
 
@@ -14,9 +15,13 @@ Params* initialize_params() {
 	return_params->unifier = 3;
 
     return_params->show_max_char = 130;
+    return_params->left_column = 0;
+	return_params->suppress_common_lines = 0; /* Ne pas afficher les lignes identiques */
 
+	return_params->show_c_function = 0;
 	return_params->show_function_line = NULL;
 	return_params->label = NULL;
+
 	return_params->exclude_pattern = NULL;
 	return_params->exclude_from = NULL;
 
@@ -329,9 +334,9 @@ void print_params(Params* parameters) {
 
 	//printf("Show colomns : %d\n", parameters->show_colomns);
 	printf("Show max char : %d\n", parameters->show_max_char);
-	printf("Show left identical : %d\n", parameters->show_left_identical); /* Ligne identique colonne de gauche */
+//	printf("Show left identical : %d\n", parameters->show_left_identical); /* Ligne identique colonne de gauche */
 
-	printf("Remove identical : %d\n", parameters->remove_identical);
+//	printf("Remove identical : %d\n", parameters->remove_identical);
 	printf("Show C function : %d\n", parameters->show_c_function);
 	printf("Show function line : %s\n", parameters->show_function_line); /* Montrer la ligne la plus récente égale à RE*/
 	printf("Label : %s\n", parameters->label);

@@ -251,7 +251,10 @@ static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2) {
 
     /* Affichage des noms de fichier */
     fputs("*** ",stdout);
-    diff_display_file_name(f1);
+    if(p->label == NULL)
+        diff_display_file_name(f1);
+    else
+        puts(p->label);
 
     fputs("--- ",stdout);
     diff_display_file_name(f2);
@@ -368,7 +371,10 @@ static void diff_display_unified(t_diff* list_e, t_index *f1, t_index *f2) {
 
     /* Affichage des noms de fichier */
     fputs("--- ",stdout);
-    diff_display_file_name(f1);
+    if(p->label == NULL)
+        diff_display_file_name(f1);
+    else
+        puts(p->label);
 
     fputs("+++ ",stdout);
     diff_display_file_name(f2);
@@ -413,48 +419,59 @@ static void diff_display_columns_common(int start_1, int start_2, unsigned int l
     unsigned int i = 0, j = 0;
     char tmp = 0;
 
-    /* Pour chaque lignes */
-    for(i = 0; i < length ; i++) {
-        /* On va sur la ligne correspondante */
-        line_go_to(f1, i + start_1);
-        line_go_to(f2, i + start_2);
+    if(op != ' ' || (op == ' ' && !(p->suppress_common_lines))) {
+        /* Pour chaque lignes */
+        for(i = 0; i < length ; i++) {
+            /* On va sur la ligne correspondante */
+            line_go_to(f1, i + start_1);
+            line_go_to(f2, i + start_2);
 
-        /* Ligne de f1 */
-        for(j = 0; j < char_ligne; j++){
-            /* On affiche jusqu'à la fin de ligne */
-            if((tmp = fgetc(f1->f)) != '\n' && tmp != EOF)
-                putchar((int)tmp);
-            else
-                break;
+            /* Ligne de f1 */
+            for(j = 0; j < char_ligne; j++){
+                /* On affiche jusqu'à la fin de ligne */
+                if((tmp = fgetc(f1->f)) != '\n' && tmp != EOF)
+                    putchar((int)tmp);
+                else
+                    break;
+            }
+            /* Ce qui manque en espace */
+            for(; j < char_ligne; j++){
+                putchar((int)' ');
+            }
+
+            /* Opérateur */
+            for(j = 0; j < ((char_center-1)/2); j++)
+                putchar((int)' ');
+
+            if(op == ' ') {
+                if(p->left_column)
+                    putchar((int)'(');
+                else
+                    putchar((int)op);
+            } else
+                putchar((int)op);
+
+            for(j = 0; j < ((char_center-1)/2) + ((char_center-1)%2); j++)
+                putchar((int)' ');
+
+            j = 0;
+            /* Ligne de f2 */
+            if(op != ' ' || (op == ' ' && !(p->left_column))) {
+                for(; j < char_ligne; j++){
+                    /* On affiche jusqu'à la fin de ligne */
+                    if((tmp = fgetc(f2->f)) != '\n' && tmp != EOF)
+                        putchar((int)tmp);
+                    else
+                        break;
+                }
+            }
+            /* Ce qui manque en espace */
+            for(; j < char_ligne; j++){
+                putchar((int)' ');
+            }
+
+            putchar((int)'\n');
         }
-        /* Ce qui manque en espace */
-        for(; j < char_ligne; j++){
-            putchar((int)' ');
-        }
-
-        /* Opérateur */
-        for(j = 0; j < ((char_center-1)/2); j++)
-            putchar((int)' ');
-
-        putchar((int)op);
-
-        for(j = 0; j < ((char_center-1)/2) + ((char_center-1)%2); j++)
-            putchar((int)' ');
-
-        /* Ligne de f2 */
-        for(j = 0; j < char_ligne; j++){
-            /* On affiche jusqu'à la fin de ligne */
-            if((tmp = fgetc(f2->f)) != '\n' && tmp != EOF)
-                putchar((int)tmp);
-            else
-                break;
-        }
-        /* Ce qui manque en espace */
-        for(; j < char_ligne; j++){
-            putchar((int)' ');
-        }
-
-        putchar((int)'\n');
     }
 }
 

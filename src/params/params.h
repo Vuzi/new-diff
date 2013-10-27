@@ -24,9 +24,9 @@ typedef struct _params {
 	short generate_diff_file;
 
 	unsigned int show_max_char;
-	short show_left_identical; /* Ligne identique colonne de gauche */
+	short left_column; /* Ligne identique colonne de gauche */
+	short suppress_common_lines; /* Ne pas afficher les lignes identiques */
 
-	short remove_identical;
 	short show_c_function;
 	char* show_function_line; /* Montrer la ligne la plus récente égale à RE*/
 	char* label;
