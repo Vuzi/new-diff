@@ -1,5 +1,6 @@
 Notes sur le comportement des arguments :
 
+  --normal force la sortie au format normal
   -C NB peut aussi s'écrire -CNB
   -U NB peut aussi s'écrire -UNB
   -q/--brief : pas d'effet sur le traitement des dossiers
@@ -10,6 +11,7 @@ Notes sur le comportement des arguments :
   -e/--ed : pas d'effet sur le traitement des dossiers. Incompatible avec -c/-u/-n
   -n/--rcs : pas d'effet sur le traitement des dossiers. Incompatible avec -c/-u/-e
   -w/--width NB : largeur des colonnes pour le monde "side by side". Fonctionnement indeterminé, peut afficher moins de colonnes que NB
+  -d/--show-c-function : se base sur les tabulations. Force la sortie sur -c si rien n'est précisé.
 
 Liste des arguments gérés (Par le code, pas réellement) :
 
