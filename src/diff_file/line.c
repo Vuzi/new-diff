@@ -158,19 +158,45 @@ line_error line_go_to(t_index *f, unsigned int n) {
     char* line_start : à afficher avant chaque ligne
    =============================================== */
 void lines_display(t_index *f, unsigned int start, unsigned int end, const char *line_start) {
-    unsigned int i = 0;
+    lines_display_lenght(f, start, end, line_start, 0);
+}
+
+/* ===============================================
+                lines_display_lenght
+
+    Affiche les lignes de f de start à end (compris)
+    en ajoutant line_start avant chaque ligne avec
+    un maximum de lenght caractères. 0 permet de ne
+    pas utiliser de limitation.
+    Saute une ligne après chaque ligne écrite.
+    ----------------------------------------------
+    t_index *f       : fichier où sont les lignes.
+    u int start      : première ligne.
+    u int end        : dernière ligne.
+    char* line_start : à afficher avant chaque ligne
+    u int lenght     : nombre de char max
+   =============================================== */
+void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, const char *line_start, unsigned int lenght) {
+    unsigned int i = 0, j = 0;
     char c = 0;
 
     if(f) {
         if(start <= end && end <= f->line_max) {
-            for(i = start; i <= end; i++) {
+            for(i = start; i <= end; i++, j = 0) {
                 fseek(f->f, f->index[i], SEEK_SET);
 
                 if(line_start)
                     fputs(line_start, stdout);
 
-                while((c = getc(f->f)) != END_LINE && c != EOF)
-                    putchar(c);
+                if(lenght > 0) {
+                    while((c = getc(f->f)) != END_LINE && c != EOF && j < lenght) {
+                        putchar(c);
+                        j++;
+                    }
+                } else {
+                    while((c = getc(f->f)) != END_LINE && c != EOF)
+                        putchar(c);
+                }
 
                 putchar('\n');
             }

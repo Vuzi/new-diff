@@ -21,5 +21,6 @@ line_error line_go_to(t_index *f, unsigned int n);
 int line_compare(t_index *l1, t_index *l2);
 int line_search(t_index *line, t_index *f1);
 void lines_display(t_index *f, unsigned int start, unsigned int end, const char *line_start);
+void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, const char *line_start, unsigned int lenght);
 
 #endif // LINE_H_INCLUDED

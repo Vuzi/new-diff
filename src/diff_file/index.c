@@ -28,6 +28,38 @@ static unsigned int index_size(FILE *f) {
     return cpt;
 }
 
+void index_file_c_func(t_index* index) {
+
+    unsigned int i = 0, *tmp = NULL;
+    char c_tmp = 0;
+
+    index->c_func = (unsigned int*)malloc(sizeof(unsigned int)*(size_t)(index->line_max)); // Taille max
+
+    /* Pour chaques lignes */
+    for(i = 0; i < index->line_max; i++) {
+
+        fseek(index->f, index->index[i], SEEK_SET);
+
+        /* Si la ligne commence par un caractère possible */
+        if(((c_tmp = (char)getc(index->f)) >= 'a' && c_tmp <= 'z') ||
+            (c_tmp >= 'A' && c_tmp <= 'Z') ||
+            (c_tmp == '_')){
+
+            index->c_func[index->c_func_nb] = i;
+            index->c_func_nb++;
+        }
+    }
+
+    /* On remet à la bonne taille */
+    tmp = (unsigned int*)malloc(sizeof(unsigned int)*((size_t)(index->c_func_nb)));
+    memcpy(tmp, index->c_func, (size_t)(index->c_func_nb)*sizeof(unsigned int));
+    free(index->c_func);
+    index->c_func = tmp;
+
+    rewind(index->f);
+
+}
+
 /* ===============================================
                     index_file
 
@@ -58,6 +90,8 @@ t_index* index_file(FILE *f, const char* f_name) {
     new_i->line_max = index_size(new_i->f);
     new_i->index = (unsigned int*)malloc(sizeof(int)*new_i->line_max);
     new_i->line = 0;
+    new_i->c_func = NULL;
+    new_i->c_func_nb = 0;
 
     /* Rapide test pour vérifier si le fichier n'est pas vide */
     if(f && ((tmp = getc(f)) != EOF)) {
@@ -114,10 +148,21 @@ void index_display(t_index *f) {
 
     if(f){
         printf("Fichier de %d ligne(s) :\n", f->line_max);
-    }
 
-    for(i = 0; i+1 < f->line_max; i++) {
-        printf("Ligne %d : %d -> %d\n", i, f->index[i], f->index[i+1]-1);
+        for(i = 0; i+1 < f->line_max; i++) {
+            printf("\tLigne %d : %d -> %d\n", i, f->index[i], f->index[i+1]-1);
+        }
+        printf("\tLigne %d : %d -> EOF\n", i, f->index[i]);
+
+
+        if(p->show_c_function) {
+            printf("Fonctions C :");
+
+            for(i = 0; i+1 < f->c_func_nb; i++) {
+                printf("\tFonction %d : %d -> %d\n", i, f->c_func[i], f->c_func[i+1]-1);
+            }
+            printf("\tFonction %d : %d -> EOF\n", i, f->c_func[i]);
+
+        }
     }
-    printf("Ligne %d : %d -> EOF\n", i, f->index[i]);
 }

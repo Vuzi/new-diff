@@ -27,6 +27,15 @@ int main(int argc, char** argv){
         return 2;
     }
 
+    // + tard, check les params
+    if(p->o_style == NOT_SELECTED) {
+        if(p->show_c_function)
+            p->o_style = CONTEXT;
+        else
+            p->o_style = REGULAR;
+
+    }
+
     // File & File
     if((ret = check_and_type_paths((const char **)(argv+1))) == 0) {
         return diff_file((const char *)(*(argv+1)), (const char *)(*(argv+2)));

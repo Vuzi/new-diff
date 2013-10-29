@@ -10,7 +10,7 @@ Params* initialize_params() {
 	return_params->brief = 0;
 	return_params->report_identical_files = 0;
 
-	return_params->o_style = REGULAR;
+	return_params->o_style = NOT_SELECTED;
 	return_params->context = 3;
 	return_params->unifier = 3;
 

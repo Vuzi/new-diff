@@ -3,6 +3,7 @@
 /* Prototypes fonctions statiques */
 static void diff_display_regular(t_diff* list_e, t_index *f1, t_index *f2);
 static void diff_display_file_name(t_index *f1);
+static void diff_display_current_c_func(t_index* index, unsigned int line);
 static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2);
 static void diff_display_unified(t_diff* list_e, t_index *f1, t_index *f2);
 static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int show_max_char);
@@ -53,6 +54,55 @@ void diff_delete(t_diff* list) {
     }
 }
 
+
+static void diff_display_file_name(t_index *f1) {
+
+    int blank_lenght = 0;
+
+    struct stat s;
+    char stat_time[512] = {0};
+    struct tm *stat_tm = NULL;
+
+    stat(f1->f_name, &s);
+    stat_tm = localtime(&(s.st_mtime));
+    strftime(stat_time, 512, "%Y-%m-%d %H:%M:%S", stat_tm);
+
+    blank_lenght = 12-(strlen(f1->f_name)%12);
+
+    printf("%s", f1->f_name, s.st_mtime);
+
+    while(blank_lenght > 0) {
+        fputc((int)' ', stdout);
+        blank_lenght--;
+    }
+
+    printf("%s.%llu ", stat_time, (unsigned long long)s.st_mtime);
+
+    strftime(stat_time, 512, "%z", stat_tm);
+    printf("%s\n", stat_time);
+
+}
+
+
+static void diff_display_current_c_func(t_index* index, unsigned int line) {
+
+    unsigned int i = 1;
+
+    /* Si on a au moins une fonction C */
+    if(index->c_func_nb > 0) {
+        /* Si on est après la première */
+        if(line > index->c_func[0]) {
+
+            while(i < index->c_func_nb && index->c_func[i] < line)
+                i++;
+
+            lines_display_lenght(index, index->c_func[i-1], index->c_func[i-1], "", 40);
+        }
+    }
+
+}
+
+
 static void diff_display_regular(t_diff* list_e, t_index *f1, t_index *f2) {
 
     while(list_e) {
@@ -98,34 +148,6 @@ static void diff_display_regular(t_diff* list_e, t_index *f1, t_index *f2) {
     }
 }
 
-
-static void diff_display_file_name(t_index *f1) {
-
-    int blank_lenght = 0;
-
-    struct stat s;
-    char stat_time[512] = {0};
-    struct tm *stat_tm = NULL;
-
-    stat(f1->f_name, &s);
-    stat_tm = localtime(&(s.st_mtime));
-    strftime(stat_time, 512, "%Y-%m-%d %H:%M:%S", stat_tm);
-
-    blank_lenght = 12-(strlen(f1->f_name)%12);
-
-    printf("%s", f1->f_name, s.st_mtime);
-
-    while(blank_lenght > 0) {
-        fputc((int)' ', stdout);
-        blank_lenght--;
-    }
-
-    printf("%s.%llu ", stat_time, (unsigned long long)s.st_mtime);
-
-    strftime(stat_time, 512, "%z", stat_tm);
-    printf("%s\n", stat_time);
-
-}
 
 static void diff_display_context_lines(char number, int start, int end, t_diff* diff, t_index *f, const char* esc) {
 
@@ -239,6 +261,7 @@ static void diff_display_context_lines(char number, int start, int end, t_diff* 
 
 }
 
+
 static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2) {
 
     int start_1;
@@ -262,10 +285,7 @@ static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2) {
 
     while(list_e) {
 
-        puts("***************");
-
         diff = list_e;
-
 
         /* Début */
         if(diff->type == DELETED_LINE) // Décalage spécial en cas de lignes supp
@@ -277,6 +297,16 @@ static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2) {
             start_1 = list_e->start_1;
         else
             start_1 = (list_e->start_1 - p->context > 0) ? list_e->start_1 - p->context : 0 ;
+
+        /* Affichage de l'entête */
+        fputs("***************", stdout);
+
+        /* Si on doit afficher le nom de la fonction courrante */
+        if(p->show_c_function) {
+            fputc((int)' ', stdout);
+            diff_display_current_c_func(f1, start_1);
+        } else
+            fputc((int)'\n', stdout);
 
 
         while( list_e->next && // Tant qu'on a un élement suivant & qu'il est assez prêt du précédent
@@ -313,13 +343,19 @@ static void diff_display_unified_lines(t_index *f1, int start_1, int end_1, t_in
     }
 
     if((end_2+1) == 0 && (start_2+1) == 0)
-        printf(" +0,0 @@\n");
+        printf(" +0,0 @@");
     else {
         if((end_2+1) - (start_2+1) + 1 == 1)
-             printf(" +%d @@\n", start_2+1);
+             printf(" +%d @@", start_2+1);
         else
-            printf(" +%d,%d @@\n", start_2+1, (end_2+1) - (start_2+1) + 1);
+            printf(" +%d,%d @@", start_2+1, (end_2+1) - (start_2+1) + 1);
     }
+
+    if(p->show_c_function) {
+        fputc((int)' ', stdout);
+        diff_display_current_c_func(f1, start_1);
+    } else
+        fputc((int)'\n', stdout);
 
     if(diff) {
 
@@ -551,8 +587,8 @@ static void diff_display_columns_deleted(int start, unsigned int lenght, t_index
 
 static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int show_max_char) {
 
-    unsigned int char_ligne = (show_max_char - 8) > 0 ? (show_max_char - 8) : 0; // Nombre de colonnes
-    unsigned int char_center = show_max_char - (char_ligne); // Nombre de colone centrale
+    unsigned int char_ligne = (show_max_char - 5) >= 0 ? (show_max_char - 3) : 0; // Nombre de colonnes
+    unsigned int char_center = 3 + char_ligne%2; // Nombre de colone centrale
 
     /* On s'assure d'être revenu au début */
     line_go_to(f1, 0);
@@ -563,25 +599,25 @@ static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int s
         while(list_e) {
 
             if(list_e->start_1 - f1->line > 0) // Si des lignes avant le prochain diff, on affiche
-                diff_display_columns_common(f1->line, f2->line, list_e->start_1 - f1->line, f1, f2, char_ligne, char_center, ' ');
+                diff_display_columns_common(f1->line, f2->line, list_e->start_1 - f1->line, f1, f2, char_ligne/2, char_center, ' ');
 
             if(list_e->type == ADDED_LINE) // Si des lignes ajoutées
-                diff_display_columns_added(list_e->start_2, list_e->end_2 - list_e->start_2 + 1, f2, char_ligne, char_center);
+                diff_display_columns_added(list_e->start_2, list_e->end_2 - list_e->start_2 + 1, f2, char_ligne/2, char_center);
 
             else if(list_e->type == DELETED_LINE) // Si des lignes supprimmées
-                diff_display_columns_deleted(list_e->start_1, list_e->end_1 - list_e->start_1 + 1, f1, char_ligne, char_center);
+                diff_display_columns_deleted(list_e->start_1, list_e->end_1 - list_e->start_1 + 1, f1, char_ligne/2, char_center);
 
             else { // Si des lignes modifiées
 
                 /* Si plus de ligne dans f1 que dans f2 */
                 if(list_e->end_1 - list_e->start_1 > list_e->end_2 - list_e->start_2) {
-                    diff_display_columns_common(list_e->start_1,  list_e->start_2, list_e->end_2 - list_e->start_2+1, f1, f2, char_ligne, char_center, '|');
-                    diff_display_columns_deleted(list_e->start_1 + (list_e->end_1 - list_e->start_1), (list_e->end_1 - list_e->start_1)-(list_e->end_2 - list_e->start_2), f1, char_ligne, char_center);
+                    diff_display_columns_common(list_e->start_1,  list_e->start_2, list_e->end_2 - list_e->start_2+1, f1, f2, char_ligne/2, char_center, '|');
+                    diff_display_columns_deleted(list_e->start_1 + (list_e->end_1 - list_e->start_1), (list_e->end_1 - list_e->start_1)-(list_e->end_2 - list_e->start_2), f1, char_ligne/2, char_center);
                 }
                 /* Moins ou autant de ligne dans f1 que dans f2 */
                 else {
-                    diff_display_columns_common(list_e->start_1,  list_e->start_2, list_e->end_1 - list_e->start_1+1, f1, f2, char_ligne, char_center, '|');
-                    diff_display_columns_added(f2->line + 1, (list_e->end_2 - list_e->start_2)-(list_e->end_1 - list_e->start_1), f2, char_ligne, char_center);
+                    diff_display_columns_common(list_e->start_1,  list_e->start_2, list_e->end_1 - list_e->start_1+1, f1, f2, char_ligne/2, char_center, '|');
+                    diff_display_columns_added(f2->line + 1, (list_e->end_2 - list_e->start_2)-(list_e->end_1 - list_e->start_1), f2, char_ligne/2, char_center);
                 }
 
             }

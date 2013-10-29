@@ -219,6 +219,10 @@ int diff_file(const char* f1_name, const char* f2_name) {
             i1 = index_file(f1, f1_name);
             i2 = index_file(f2, f2_name);
 
+            /* Si on doit afficher une fonction C */
+            if(p->show_c_function)
+                index_file_c_func(i1);
+
             i1->line = -1;
             i2->line = -1;
 
