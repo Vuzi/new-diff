@@ -6,7 +6,7 @@ Params* initialize_params() {
 
 	return_params = (Params*) calloc(1, sizeof(Params));
 
-    /* Certain en dur à des fins de test */
+    /* Certain en dur ï¿½ des fins de test */
 	return_params->brief = 0;
 	return_params->report_identical_files = 0;
 
@@ -288,6 +288,12 @@ int write_params(char* parameter, char* value, Params* parameters) {
 	else if (!strcmp(parameter, "ed") || !strcmp(parameter, "e") || !strcmp(parameter, "C")) {
 		parameters->generate_script = 1;
 	}
+	else if (!strcmp(parameter, "rcs") || !strcmp(parameter, "n")) {
+		parameters->generate_diff_file = 1;
+	}
+	else if (!strcmp(parameter, "side-by-side") || !strcmp(parameter, "y")) {
+		parameters->o_style = COLUMNS;
+	}
 
 	if (use_value == 0) {
 		if (parameters->pathLeft != NULL) {
@@ -338,7 +344,7 @@ void print_params(Params* parameters) {
 
 //	printf("Remove identical : %d\n", parameters->remove_identical);
 	printf("Show C function : %d\n", parameters->show_c_function);
-	printf("Show function line : %s\n", parameters->show_function_line); /* Montrer la ligne la plus récente égale à RE*/
+	printf("Show function line : %s\n", parameters->show_function_line); /* Montrer la ligne la plus rï¿½cente ï¿½gale ï¿½ RE*/
 	printf("Label : %s\n", parameters->label);
 
 	printf("Expand tab : %d\n", parameters->expand_tab);
@@ -375,7 +381,7 @@ void print_params(Params* parameters) {
 	printf("Line type format LFMT : %s\n", parameters->line_type_format_LFMT);
 
 	printf("Minimal diference : %d\n", parameters->minimal_diference);
-	printf("Horizontal lines : %d\n", parameters->horizontal_lines); /* Retire N lignes ayant des préfixes et suffixes identiques */
+	printf("Horizontal lines : %d\n", parameters->horizontal_lines); /* Retire N lignes ayant des prï¿½fixes et suffixes identiques */
 	printf("Speed large files : %d\n", parameters->speed_large_files);
 
 	printf("Show help : %d\n", parameters->show_help);
