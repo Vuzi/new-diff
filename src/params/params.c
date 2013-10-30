@@ -6,7 +6,7 @@ Params* initialize_params() {
 
 	return_params = (Params*) calloc(1, sizeof(Params));
 
-    	/* Certain en dur à des fins de test */
+	/* Certain en dur à des fins de test */
 	return_params->brief = 0;
 	return_params->report_identical_files = 0;
 
@@ -82,7 +82,8 @@ int check_params(int argc, char **argv, Params *parameters) {
 						}
 					}
 				}
-			} else {
+			}
+			else {
 				result = read_param(argv[i], parameters, long_continue);
 
 				if (result == 3) {
@@ -96,13 +97,15 @@ int check_params(int argc, char **argv, Params *parameters) {
 			if (result == 1) {
 				/* Last paramters "--PARAM[=VALUE] return 1" */
 				long_continue = 1;
-			} else if (result == -1) {
+			}
+			else if (result == -1) {
 				return 0;
 			}
 		}
 
 		return 1;
-	} else {
+	}
+	else {
 		return 0;
 	}
 }
@@ -132,7 +135,8 @@ char* append_char(char* src, char append) {
 
 	if (src != NULL) {
 		s = (strlen(src));
-	} else {
+	}
+	else {
 		s = 0;
 	}
 	r = (char*) calloc(s + 2, sizeof(char) );
@@ -179,7 +183,7 @@ int read_param(char *parameter, Params* parameters, int lc) {
 	if (parameter[0] == test_dash && parameter[1] == test_dash) {
 		if (size == 2) {
 			if (parameters->pathLeft == NULL) {
-				parameters->pathLeft = (char*) malloc(sizeof(char) * 2 );
+				parameters->pathLeft = (char*) malloc(sizeof(char) * 2);
 				parameters->pathLeft[0] = '-';
 				parameters->pathLeft[1] = '\0';
 			}
@@ -200,10 +204,12 @@ int read_param(char *parameter, Params* parameters, int lc) {
 			if (swap) {
 				/* Add a letter for a value */
 				value = append_char(value, parameter[count]);
-			} else {
+			}
+			else {
 				if (parameter[count] == test_equals) {
 					swap = 1;
-				} else {
+				}
+				else {
 					/* Add a letter for a param */
 					param = append_char(param, parameter[count]);
 				}
@@ -215,7 +221,8 @@ int read_param(char *parameter, Params* parameters, int lc) {
 			return 4;
 		}
 		return 1;
-	} else if (parameter[0] == test_dash) {
+	}
+	else if (parameter[0] == test_dash) {
 		if (size == 1) {
 			/* Entry read */
 
@@ -233,7 +240,8 @@ int read_param(char *parameter, Params* parameters, int lc) {
 
 		if (size < 3) {
 			return 2;
-		} else {
+		}
+		else {
 			count = 1;
 			while (parameter[count] != '\0') {
 				pointer_char[0] = parameter[count];
@@ -241,7 +249,8 @@ int read_param(char *parameter, Params* parameters, int lc) {
 				count += 1;
 			}
 		}
-	} else {
+	}
+	else {
 		return 3;
 	}
 
@@ -263,10 +272,6 @@ int write_params(char* parameter, char* value, Params* parameters) {
 		printf("Parameter value : %i\n", val);
 	}
 	printf("-----\n");
-	
-	if (parameters->o_style != NOT_SELECTED) {
-		//TODO:
-	}
 
 	/* Writing a list of */
 	if (!strcmp(parameter, "normal")) {
@@ -305,12 +310,13 @@ int write_params(char* parameter, char* value, Params* parameters) {
 	else if (!strcmp(parameter, "side-by-side") || !strcmp(parameter, "y")) {
 		parameters->o_style = COLUMNS;
 	}
-	else if (!strcmp(parameter, "with") || !strcmp(parameter, "w")) {
+	else if (!strcmp(parameter, "width") || !strcmp(parameter, "w")) {
+		printf("Width test\n");
 		if (value == NULL || val < 1 || !strcmp(parameter, "w")) {
 			val = 130;
 		}
 
-		parameters->context = val;
+		parameters->show_max_char = val;
 		use_value = 1;
 	}
 	else if (!strcmp(parameter, "left-column")) {
@@ -374,9 +380,9 @@ void print_params(Params* parameters) {
 
 	//printf("Show colomns : %d\n", parameters->show_colomns);
 	printf("Show max char : %d\n", parameters->show_max_char);
-//	printf("Show left identical : %d\n", parameters->show_left_identical); /* Ligne identique colonne de gauche */
+	//	printf("Show left identical : %d\n", parameters->show_left_identical); /* Ligne identique colonne de gauche */
 
-//	printf("Remove identical : %d\n", parameters->remove_identical);
+	//	printf("Remove identical : %d\n", parameters->remove_identical);
 	printf("Show C function : %d\n", parameters->show_c_function);
 	printf("Show function line : %s\n", parameters->show_function_line); /* Montrer la ligne la plus r�cente �gale � RE*/
 	printf("Label : %s\n", parameters->label);
