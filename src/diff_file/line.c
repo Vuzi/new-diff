@@ -60,10 +60,12 @@ int line_compare(t_index *l1, t_index *l2) {
         }
         line_go_to(l1, l1->line); // On revient à la ligne en cours
         line_go_to(l2, l2->line);
+        
         if((tmp1 == END_LINE && tmp2 == EOF) || (tmp2 == END_LINE && tmp1 == EOF))
             return 0;
         else
             return 1;
+            
     } else
         return -1;
 
@@ -190,16 +192,29 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
 
                 if(lenght > 0) {
                     while((c = getc(f->f)) != END_LINE && c != EOF && j < lenght) {
-                        putchar(c);
+                        if(p->expand_tab && c == '\t' )
+                            print_space(p->size_tab);
+                        else
+                            putchar(c);
                         j++;
                     }
                 } else {
                     while((c = getc(f->f)) != END_LINE && c != EOF)
-                        putchar(c);
+                        if(p->expand_tab && c == '\t' )
+                            print_space(p->size_tab);
+                        else
+                            putchar(c);
                 }
 
                 putchar('\n');
             }
         }
     }
+}
+
+void print_space(unsigned int n) {
+    unsigned int i = 0;
+    
+    for(i = 0; i < n; i++)
+        fputc(' ', stdout);
 }
