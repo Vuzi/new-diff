@@ -310,9 +310,8 @@ int write_params(char* parameter, char* value, Params* parameters) {
 	else if (!strcmp(parameter, "side-by-side") || !strcmp(parameter, "y")) {
 		parameters->o_style = COLUMNS;
 	}
-	else if (!strcmp(parameter, "width") || !strcmp(parameter, "w")) {
-		printf("Width test\n");
-		if (value == NULL || val < 1 || !strcmp(parameter, "w")) {
+	else if (!strcmp(parameter, "width") || !strcmp(parameter, "W")) {
+		if (value == NULL || val < 1 || !strcmp(parameter, "W")) {
 			val = 130;
 		}
 
@@ -333,6 +332,28 @@ int write_params(char* parameter, char* value, Params* parameters) {
 	else if (!strcmp(parameter, "label")) {
 		parameters->label = NULL;
 		return 4; // Special return
+	}
+	else if (!strcmp(parameter, "ignore-case") || !strcmp(parameter, "i")) {
+		parameters->ignore_case = 1;
+	}
+	else if (!strcmp(parameter, "ignore-tab-expansion") || !strcmp(parameter, "E")) {
+		parameters->ignore_tab = 1;
+	}
+	else if (!strcmp(parameter, "ignore-trailing-space") || !strcmp(parameter, "Z")) {
+		parameters->ignore_end_space = 1;
+	}
+	else if (!strcmp(parameter, "ignore-space-change") || !strcmp(parameter, "b")) {
+		parameters->ignore_change_space = 1;
+	}
+	else if (!strcmp(parameter, "ignore-all-space") || !strcmp(parameter, "w")) {
+		parameters->ignore_all_space = 1;
+	}
+	else if (!strcmp(parameter, "ignore-blank-lines") || !strcmp(parameter, "B")) {
+		parameters->ignore_blank_lines = 1;
+	}
+	else if (!strcmp(parameter, "ignore-matching-lines") || !strcmp(parameter, "I")) {
+		parameters->ignore_regex_match = value;
+		use_value = 1;
 	}
 
 	if (use_value == 0) {
@@ -384,7 +405,7 @@ void print_params(Params* parameters) {
 
 	//	printf("Remove identical : %d\n", parameters->remove_identical);
 	printf("Show C function : %d\n", parameters->show_c_function);
-	printf("Show function line : %s\n", parameters->show_function_line); /* Montrer la ligne la plus r�cente �gale � RE*/
+	printf("Show function line : %s\n", parameters->show_function_line);
 	printf("Label : %s\n", parameters->label);
 
 	printf("Expand tab : %d\n", parameters->expand_tab);
