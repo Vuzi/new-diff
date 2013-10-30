@@ -9,7 +9,7 @@ typedef enum _mode {
 
 
 typedef enum _output_style {
-	NOT_SELECTED, REGULAR, CONTEXT, UNIFIED, COLUMNS, EDIT_SCRIPT
+	NOT_SELECTED, REGULAR, CONTEXT, UNIFIED, COLUMNS, EDIT_SCRIPT, RCS
 } output_style;
 
 typedef struct _params {
@@ -28,7 +28,7 @@ typedef struct _params {
 	short suppress_common_lines; /* Ne pas afficher les lignes identiques */
 
 	short show_c_function;
-	char* show_function_line; /* Montrer la ligne la plus récente égale à RE*/
+	char* show_function_line;
 	char* label;
 
 	short expand_tab;
@@ -65,7 +65,7 @@ typedef struct _params {
 	char* line_type_format_LFMT;
 
 	short minimal_diference;
-	short horizontal_lines; /* Retire N lignes ayant des préfixes et suffixes identiques */
+	short horizontal_lines;
 	short speed_large_files;
 
 	short show_help;
