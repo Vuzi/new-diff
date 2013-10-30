@@ -69,7 +69,9 @@ int check_params(int argc, char **argv, Params *parameters) {
 						}
 					}
 					else if (result == 4) {
-						
+						if ((i + 1) < argc) {
+							write_params(argv[i], argv[(i + 1)], parameters);
+						}
 					}
 					else {
 						parameters->pathLeft = (char*) calloc(strlen(argv[i]) + 1, sizeof(char) );
