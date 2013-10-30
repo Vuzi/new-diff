@@ -320,8 +320,23 @@ static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2) {
         end_2 = list_e->end_2 + p->context >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 + p->context;
 
         diff_display_context_lines(1, start_1, end_1, diff, f1, "*");
+        
+        if(end_1 == f1->line_max-1) {
+            fseek(f1->f, 0, SEEK_END);
+            if(getc(f1−>f) != '\n') // Si on finit par autre chose qu'un saut de ligne
+                printf("\ No newline at end of file\n");
+            line_go_to(f1, f1->line_max-1);
+        }
+        
         diff_display_context_lines(2, start_2, end_2, diff, f2, "-");
-
+        
+        if(end_2 == f2->line_max-1) {
+            fseek(f2->f, 0, SEEK_END);
+            if(getc(f2−>f) != '\n') // Si on finit par autre chose qu'un saut de ligne
+                printf("\ No newline at end of file\n");
+            line_go_to(f2, f2->line_max-1);
+        }
+        
         list_e = list_e->next;
     }
 }
@@ -444,6 +459,13 @@ static void diff_display_unified(t_diff* list_e, t_index *f1, t_index *f2) {
             end_2 = list_e->end_2 + p->unifier >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 + p->unifier;
 
         diff_display_unified_lines(f1, start_1, end_1, f2, start_2, end_2, diff);
+
+        if(end_1 == f1->line_max-1) {
+            fseek(f1->f, 0, SEEK_END);
+            if(getc(f1−>f) != '\n') // Si on finit par autre chose qu'un saut de ligne
+                printf("\ No newline at end of file\n");
+            line_go_to(f1, f1->line_max-1);
+        }
 
         list_e = list_e->next;
     }
