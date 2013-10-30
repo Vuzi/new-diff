@@ -381,7 +381,7 @@ void print_params(Params* parameters) {
 	printf("Line type format LFMT : %s\n", parameters->line_type_format_LFMT);
 
 	printf("Minimal diference : %d\n", parameters->minimal_diference);
-	printf("Horizontal lines : %d\n", parameters->horizontal_lines); /* Retire N lignes ayant des pr�fixes et suffixes identiques */
+	printf("Horizontal lines : %d\n", parameters->horizontal_lines); /* Retire N lignes ayant des préfixes et suffixes identiques */
 	printf("Speed large files : %d\n", parameters->speed_large_files);
 
 	printf("Show help : %d\n", parameters->show_help);
