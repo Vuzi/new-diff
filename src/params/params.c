@@ -68,6 +68,9 @@ int check_params(int argc, char **argv, Params *parameters) {
 							j += 1;
 						}
 					}
+					else if (result == 4) {
+						
+					}
 					else {
 						parameters->pathLeft = (char*) calloc(strlen(argv[i]) + 1, sizeof(char) );
 						parameters->pathLeft[strlen(argv[i])] = '\0';
@@ -206,7 +209,9 @@ int read_param(char *parameter, Params* parameters, int lc) {
 			count += 1;
 		}
 
-		write_params(param, value, parameters);
+		if (write_params(param, value, parameters) == 4) {
+			return 4;
+		}
 		return 1;
 	} else if (parameter[0] == test_dash) {
 		if (size == 1) {
@@ -256,19 +261,23 @@ int write_params(char* parameter, char* value, Params* parameters) {
 		printf("Parameter value : %i\n", val);
 	}
 	printf("-----\n");
+	
+	if (parameters->o_style != NOT_SELECTED) {
+		//TODO:
+	}
 
 	/* Writing a list of */
 	if (!strcmp(parameter, "normal")) {
-		parameters->brief = NORMAL;
+		parameters->o_style = REGULAR;
 	}
 	else if (!strcmp(parameter, "brief") || !strcmp(parameter, "q")) {
-		parameters->brief = DIFFERENT;
+		parameters->brief = 1;
 	}
 	else if (!strcmp(parameter, "report-identical-files") || !strcmp(parameter, "s")) {
-		parameters->brief = IDENTICAL;
+		parameters->brief = 2;
 	}
 	else if (!strcmp(parameter, "context") || !strcmp(parameter, "c") || !strcmp(parameter, "C")) {
-		if (value == NULL || val < 1 || !strcmp(parameter, "c")) {
+		if (value == NULL || val < 0 || !strcmp(parameter, "c")) {
 			val = 3;
 		}
 
@@ -277,7 +286,7 @@ int write_params(char* parameter, char* value, Params* parameters) {
 		use_value = 1;
 	}
 	else if (!strcmp(parameter, "unified") || !strcmp(parameter, "u") || !strcmp(parameter, "U")) {
-		if (value == NULL || val < 1 || !strcmp(parameter, "u")) {
+		if (value == NULL || val < 0 || !strcmp(parameter, "u")) {
 			val = 3;
 		}
 
@@ -293,6 +302,29 @@ int write_params(char* parameter, char* value, Params* parameters) {
 	}
 	else if (!strcmp(parameter, "side-by-side") || !strcmp(parameter, "y")) {
 		parameters->o_style = COLUMNS;
+	}
+	else if (!strcmp(parameter, "with") || !strcmp(parameter, "w")) {
+		if (value == NULL || val < 1 || !strcmp(parameter, "w")) {
+			val = 130;
+		}
+
+		parameters->context = val;
+		use_value = 1;
+	}
+	else if (!strcmp(parameter, "left-column")) {
+		parameters->o_style = COLUMNS;
+		parameters->left_column = 1;
+	}
+	else if (!strcmp(parameter, "suppress-common-lines")) {
+		parameters->o_style = COLUMNS;
+		parameters->suppress_common_lines = 1;
+	}
+	else if (!strcmp(parameter, "show-c-function") || !strcmp(parameter, "p")) {
+		parameters->show_c_function = 1;
+	}
+	else if (!strcmp(parameter, "label")) {
+		parameters->label = NULL;
+		return 4; // Special return
 	}
 
 	if (use_value == 0) {
