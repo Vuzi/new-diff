@@ -6,7 +6,7 @@ Params* initialize_params() {
 
 	return_params = (Params*) calloc(1, sizeof(Params));
 
-    /* Certain en dur � des fins de test */
+    	/* Certain en dur à des fins de test */
 	return_params->brief = 0;
 	return_params->report_identical_files = 0;
 
@@ -14,8 +14,8 @@ Params* initialize_params() {
 	return_params->context = 3;
 	return_params->unifier = 3;
 
-    return_params->show_max_char = 130;
-    return_params->left_column = 0;
+	return_params->show_max_char = 130;
+	return_params->left_column = 0;
 	return_params->suppress_common_lines = 0; /* Ne pas afficher les lignes identiques */
 
 	return_params->show_c_function = 0;
