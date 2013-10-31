@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 
 #define CREATE_PARAMETERS
@@ -18,7 +20,12 @@ struct s_index {
 
     char* f_name;
 
+    /* Cas des fichiers >= 1Mo */
     unsigned int *index;   // Fin de chaque ligne
+
+    /* Cas des fichiers < 1Mo */
+    char **lines;
+
     unsigned int line;     // Ligne actuelle
     unsigned int line_max; // Nombre de lignes
 

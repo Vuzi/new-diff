@@ -2,6 +2,8 @@
 
 /* Prototype statique */
 static unsigned int index_size(FILE *f);
+static t_index* index_file_small(FILE *f, const char* f_name);
+static t_index* index_file_large(FILE *f, const char* f_name);
 
 /* ===============================================
                     index_size
@@ -76,25 +78,67 @@ void index_file_c_func(t_index* index) {
    =============================================== */
 t_index* index_file(FILE *f, const char* f_name) {
 
+    struct stat st;
+
+    if(stat(f_name, &st) == 0) {
+        if(st.st_size >= 1048576)
+            return index_file_large(f, f_name);
+        else
+            return index_file_small(f, f_name);
+    } else
+        return index_file_large(f, f_name);
+}
+
+
+static t_index* index_file_small(FILE *f, const char* f_name) {
+
+    /* On initialise */
+    t_index *new_i = index_file_large(f, f_name);
+
+    unsigned int i = 0;
+
+    new_i->lines = (char**)malloc(sizeof(char*)*(new_i->line_max));
+
+    if(new_i->index) {
+        /* Pour les premières lignes */
+        for(i = 0; i < new_i->line_max+1; i++) {
+            new_i->lines[i] = (char*)calloc(1, sizeof(char)*(new_i->index[i+1]-new_i->index[i]+1)); // alloc
+            fread(new_i->lines[i], 1, new_i->index[i+1]-new_i->index[i]-1, new_i->f); // recopie
+        }
+        /* Pour la dernière ligne */
+        fseek(new_i->f, 0, SEEK_END);
+        new_i->lines[i] = (char*)calloc(1, sizeof(char)*(ftell(new_i->f)-new_i->index[i]+1)); // alloc
+        fread(new_i->lines[i], 1, ftell(new_i->f)-new_i->index[i]-1, new_i->f); // recopie
+    }
+
+    rewind(f);
+
+    /* On renvoit la structure */
+    return new_i;
+}
+
+static t_index* index_file_large(FILE *f, const char* f_name) {
+
     /* On initialise */
     t_index *new_i = (t_index*)malloc(sizeof(t_index));
-
-    new_i->f_name = (char*)malloc(sizeof(char)*(strlen(f_name)+1));
-    strcpy(new_i->f_name, f_name);
 
     char tmp = 0;
     unsigned int i = 0;
 
+    new_i->f_name = (char*)malloc(sizeof(char)*(strlen(f_name)+1));
+    strcpy(new_i->f_name, f_name);
+
     /* Valeurs de base */
     new_i->f = f;
     new_i->line_max = index_size(new_i->f);
+    new_i->lines = NULL;
     new_i->index = (unsigned int*)malloc(sizeof(int)*new_i->line_max);
     new_i->line = 0;
     new_i->c_func = NULL;
     new_i->c_func_nb = 0;
 
     /* Rapide test pour vérifier si le fichier n'est pas vide */
-    if(f && ((tmp = getc(f)) != EOF)) {
+    if(((tmp = getc(f)) != EOF)) {
 
         rewind(f);
 
@@ -153,6 +197,15 @@ void index_display(t_index *f) {
             printf("\tLigne %d : %d -> %d\n", i, f->index[i], f->index[i+1]-1);
         }
         printf("\tLigne %d : %d -> EOF\n", i, f->index[i]);
+
+        if(f->lines) {
+            printf("Fichier de petite taille en mémoire :");
+
+            for(i = 0; i < f->line_max; i++)
+                printf("\n%s", f->lines[i]);
+
+            putchar('\n');
+        }
 
 
         if(p->show_c_function) {

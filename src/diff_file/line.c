@@ -60,12 +60,12 @@ int line_compare(t_index *l1, t_index *l2) {
         }
         line_go_to(l1, l1->line); // On revient à la ligne en cours
         line_go_to(l2, l2->line);
-        
+
         if((tmp1 == END_LINE && tmp2 == EOF) || (tmp2 == END_LINE && tmp1 == EOF))
             return 0;
         else
             return 1;
-            
+
     } else
         return -1;
 
@@ -185,28 +185,53 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
     if(f) {
         if(start <= end && end <= f->line_max) {
             for(i = start; i <= end; i++, j = 0) {
-                fseek(f->f, f->index[i], SEEK_SET);
 
                 if(line_start)
                     fputs(line_start, stdout);
 
                 if(lenght > 0) {
-                    while((c = getc(f->f)) != END_LINE && c != EOF && j < lenght) {
-                        if(p->expand_tab && c == '\t' )
-                            print_space(p->size_tab);
-                        else
-                            putchar(c);
-                        j++;
+                    if(f->lines) {
+                        for(j = 0; j < strlen(f->lines[i]) && j < lenght && j != '\n'; j++) {
+                            if(p->expand_tab && f->lines[i][j] == '\t' )
+                                print_space(p->size_tab);
+                            else
+                                putchar(f->lines[i][j]);
+                        }
+
+                        putchar('\n');
+                    } else {
+                        fseek(f->f, f->index[i], SEEK_SET);
+
+                        while((c = getc(f->f)) != END_LINE && c != EOF && j < lenght) {
+                            if(p->expand_tab && c == '\t')
+                                print_space(p->size_tab);
+                            else
+                                putchar(c);
+                            j++;
+                        }
+
+                        putchar('\n');
                     }
                 } else {
-                    while((c = getc(f->f)) != END_LINE && c != EOF)
-                        if(p->expand_tab && c == '\t' )
-                            print_space(p->size_tab);
-                        else
-                            putchar(c);
-                }
+                    if(f->lines) {
+                        fputs(f->lines[i],stdout);
 
-                putchar('\n');
+                        j = strlen(f->lines[i]);
+                        if(j == 0 || f->lines[i][j-1] != '\n')
+                            fputc((int)'\n', stdout);
+
+                    } else {
+                        while((c = getc(f->f)) != END_LINE && c != EOF) {
+                            if(p->expand_tab && c == '\t' )
+                                print_space(p->size_tab);
+                            else
+                                putchar(c);
+                        }
+
+                        if(c == END_LINE)
+                            putchar('\n');
+                    }
+                }
             }
         }
     }
@@ -214,7 +239,7 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
 
 void print_space(unsigned int n) {
     unsigned int i = 0;
-    
+
     for(i = 0; i < n; i++)
         fputc(' ', stdout);
 }
