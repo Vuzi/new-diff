@@ -487,8 +487,10 @@ static void diff_display_columns_common(int start_1, int start_2, unsigned int l
             /* Ligne de f1 */
             for(j = 0; j < char_ligne; j++){
                 /* On affiche jusqu'à la fin de ligne */
-                if((tmp = fgetc(f1->f)) != '\n' && tmp != EOF)
+                if(!(f1->lines) && (tmp = fgetc(f1->f)) != '\n' && tmp != EOF)
                     putchar((int)tmp);
+                else if(f1->lines && f1->lines[f1->line][j] != '\n' && f1->lines[f1->line][j] != '\0')
+                    putchar((int)f1->lines[f1->line][j]);
                 else
                     break;
             }
@@ -517,8 +519,10 @@ static void diff_display_columns_common(int start_1, int start_2, unsigned int l
             if(op != ' ' || (op == ' ' && !(p->left_column))) {
                 for(; j < char_ligne; j++){
                     /* On affiche jusqu'à la fin de ligne */
-                    if((tmp = fgetc(f2->f)) != '\n' && tmp != EOF)
+                    if(!(f2->lines) && (tmp = fgetc(f2->f)) != '\n' && tmp != EOF)
                         putchar((int)tmp);
+                    else if(f2->lines && f2->lines[f2->line][j] != '\n' && f2->lines[f2->line][j] != '\0')
+                        putchar((int)f2->lines[f2->line][j]);
                     else
                         break;
                 }
@@ -556,8 +560,10 @@ static void diff_display_columns_added(int start, unsigned int lenght, t_index *
 
         /* Ligne ajoutée */
         for(j = 0; j < char_ligne; j++) {
-            if((tmp = fgetc(f->f)) != '\n' && tmp != EOF)
+            if(!(f->lines) && (tmp = fgetc(f->f)) != '\n' && tmp != EOF)
                 putchar((int)tmp);
+            else if(f->lines && f->lines[f->line][j] != '\n' && f->lines[f->line][j] != '\0')
+                putchar((int)f->lines[f->line][j]);
             else
                 break;
         }
@@ -580,8 +586,10 @@ static void diff_display_columns_deleted(int start, unsigned int lenght, t_index
 
         /* Ligne supprimmées */
         for(j = 0; j < char_ligne; j++) {
-            if((tmp = fgetc(f->f)) != '\n' && tmp != EOF)
+            if(!(f->lines) && (tmp = fgetc(f->f)) != '\n' && tmp != EOF)
                 putchar((int)tmp);
+            else if(f->lines && f->lines[f->line][j] != '\n' && f->lines[f->line][j] != '\0')
+                putchar((int)f->lines[f->line][j]);
             else
                 break;
         }
