@@ -79,6 +79,7 @@ Params* initialize_params();
 int check_params(int argc, char **argv, Params *parameters);
 int read_param(char *parameter, Params* parameters, int lc);
 int write_params(char* params, char* value, Params *parameter);
+void free_params_glob(void);
 
 char* append_char(char* src, char append);
 void print_params(Params* parameters);

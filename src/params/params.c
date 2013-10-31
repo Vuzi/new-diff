@@ -36,6 +36,8 @@ Params* initialize_params() {
 	return_params->pathLeft = NULL;
 	return_params->pathRight = NULL;
 
+	atexit(free_params_glob); // Ajout à la liste
+
 	return return_params;
 }
 
@@ -451,4 +453,13 @@ void print_params(Params* parameters) {
 	printf("Path left : %s\n", parameters->pathLeft);
 	printf("Path right : %s\n", parameters->pathRight);
 	printf("-----\n");
+}
+
+void free_params_glob(void) {
+
+    if(p) {
+        /* Ici libérer tout les char* et cie */
+        free(p);
+        p = NULL;
+    }
 }
