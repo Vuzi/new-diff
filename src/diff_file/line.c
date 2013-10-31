@@ -86,7 +86,8 @@ line_error line_next(t_index *f) {
     if(f) {
         if(f->line+1 < f->line_max) {
             f->line++;
-            fseek(f->f, f->index[f->line], SEEK_SET);
+            if(!(f->lines))
+                fseek(f->f, f->index[f->line], SEEK_SET);
             return _NO_ERROR;
         } else
             return END_FILE;
@@ -109,7 +110,8 @@ line_error line_previous(t_index *f) {
     if(f) {
         if(f->line > 0) {
             f->line--;
-            fseek(f->f, f->index[f->line], SEEK_SET);
+            if(!(f->lines))
+                fseek(f->f, f->index[f->line], SEEK_SET);
             return _NO_ERROR;
         } else
             return START_FILE;
@@ -136,11 +138,13 @@ line_error line_go_to(t_index *f, unsigned int n) {
     if(f) {
         if(n >= f->line_max) {
             f->line = f->line_max-1;
-            fseek(f->f, f->index[f->line], SEEK_SET);
+            if(!(f->lines))
+                fseek(f->f, f->index[f->line], SEEK_SET);
             return END_FILE;
         } else {
             f->line = n;
-            fseek(f->f, f->index[f->line], SEEK_SET);
+            if(!(f->lines))
+                fseek(f->f, f->index[f->line], SEEK_SET);
             return _NO_ERROR;
         }
     } else
