@@ -23,4 +23,6 @@ int line_search(t_index *line, t_index *f1);
 void lines_display(t_index *f, unsigned int start, unsigned int end, const char *line_start);
 void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, const char *line_start, unsigned int lenght);
 
+void print_space(unsigned int n);
+
 #endif // LINE_H_INCLUDED
