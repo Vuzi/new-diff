@@ -13,7 +13,7 @@ typedef enum _output_style {
 } output_style;
 
 typedef struct _params {
-	//Mode brief;
+
 	short brief;
 	short report_identical_files;
 

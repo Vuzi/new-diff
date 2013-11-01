@@ -58,7 +58,7 @@ void sec_fclose(FILE *f) {
 static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
 
     int line = 0;
-    int val_supp = INT_MAX, val_add = INT_MAX, val_modif = INT_MAX;
+    int val_supp = INT_MAX, val_add = INT_MAX, val_modif = INT_MAX; // Par défaut on force les valeurs à être au maximum
     t_diff *diff_supp = NULL, *diff_add_ = NULL, *diff_modif = NULL;
 
     unsigned int save = 0;
@@ -189,8 +189,8 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
             return diff_file_intern(diff_list ,f1, f2);
 
     }
-    /* Fin du fichier des deux côtés */
-     else if (l1 != _NO_ERROR && l2 == _NO_ERROR){
+    /* Fin du fichier d'un côté */
+    else if (l1 != _NO_ERROR && l2 == _NO_ERROR){
         diff_add(diff_list, ADDED_LINE, f1->line_max-1, f1->line_max-1, f2->line, f2->line_max-1);
         return ((f2->line_max-1) - (f2->line-1));
 
@@ -198,7 +198,9 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
         diff_add(diff_list, DELETED_LINE, f1->line, f1->line_max-1, f2->line_max-1, f2->line_max-1);
         return ((f1->line_max-1) - (f1->line-1));
 
-    } else
+    }
+    /* Fin du fichier des deux côtés */
+    else
         return 0;
 
 }
