@@ -14,7 +14,6 @@
 #include "diff_dir/diff.h"
 
 
-
 // 0 = identique, 1 = différents, 2 = erreur
 int main(int argc, char** argv){
 
