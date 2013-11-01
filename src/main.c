@@ -27,6 +27,8 @@ int main(int argc, char** argv){
         return 2;
     }
 
+    check_params(argc, argv, p);
+
     // + tard, check les params
     if(p->o_style == NOT_SELECTED) {
         if(p->show_c_function)
@@ -37,29 +39,29 @@ int main(int argc, char** argv){
     }
 
     // File & File
-    if((ret = check_and_type_paths((const char **)(argv+1))) == 0) {
-        return diff_file((const char *)(*(argv+1)), (const char *)(*(argv+2)));
+    if((ret = check_and_type_paths((const char *)p->pathLeft, (const char *)p->pathRight)) == 0) {
+        return diff_file((const char *)p->pathLeft, (const char *)p->pathRight);
     }
     // Dir & Dir
     else if (ret == 1) {
-        return diff_dir((const char *)(*(argv+1)), (const char *)(*(argv+2)));
+        return diff_dir((const char *)p->pathLeft, (const char *)p->pathRight);
     }
     // Dir & File
     else if (ret == 2) {
-        tmp = (char*)malloc(sizeof(char)*(sizeof(*(argv+1))+sizeof(*(argv+2))+2));
-        sprintf(tmp, "%s/%s",*(argv+1), *(argv+2));
+        tmp = (char*)malloc(sizeof(char)*(sizeof(p->pathLeft)+sizeof(p->pathRight)+2));
+        sprintf(tmp, "%s/%s",p->pathLeft, p->pathRight);
 
-        ret = diff_file(tmp, *(argv+2));
+        ret = diff_file(tmp, p->pathRight);
 
         free(tmp);
         return ret;
     }
     // File & Dir
     else if (ret == 3) {
-        tmp = (char*)malloc(sizeof(char)*(sizeof(*(argv+1))+sizeof(*(argv+2))+2));
-        sprintf(tmp, "%s/%s",*(argv+2), *(argv+1));
+        tmp = (char*)malloc(sizeof(char)*(sizeof(p->pathLeft)+sizeof(p->pathRight)+2));
+        sprintf(tmp, "%s/%s",p->pathRight, p->pathLeft);
 
-        ret = diff_file(*(argv+1), tmp);
+        ret = diff_file(p->pathLeft, tmp);
 
         free(tmp);
         return ret;
