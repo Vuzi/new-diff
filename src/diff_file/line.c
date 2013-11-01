@@ -224,11 +224,14 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
                         if(j == 0 || f->lines[i][j-1] != '\n')
                             fputc((int)'\n', stdout);
 
+
                     } else {
+                        fseek(f->f, f->index[i], SEEK_SET);
+
                         while((c = getc(f->f)) != END_LINE && c != EOF) {
                             if(p->expand_tab && c == '\t' )
                                 print_space(p->size_tab);
-                            else
+                            else if(c != '\r')
                                 putchar(c);
                         }
 

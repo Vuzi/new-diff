@@ -81,7 +81,7 @@ t_index* index_file(FILE *f, const char* f_name) {
     struct stat st;
 
     if(stat(f_name, &st) == 0) {
-        if(st.st_size >= 1048576)
+        if(st.st_size >= /*1048576*/ 1) // 1Mo
             return index_file_large(f, f_name);
         else
             return index_file_small(f, f_name);
@@ -103,12 +103,20 @@ static t_index* index_file_small(FILE *f, const char* f_name) {
         /* Pour les premières lignes */
         for(i = 0; i < new_i->line_max+1; i++) {
             new_i->lines[i] = (char*)calloc(1, sizeof(char)*(new_i->index[i+1]-new_i->index[i]+1)); // alloc
-            fread(new_i->lines[i], 1, new_i->index[i+1]-new_i->index[i]-1, new_i->f); // recopie
+            if(fread(new_i->lines[i], 1, new_i->index[i+1]-new_i->index[i]-1, new_i->f) != new_i->index[i+1]-new_i->index[i]-1) { // recopie
+                if(ferror(new_i->f)) {
+                    printf("%s : fread() error. Program will try to continue.\n", f_name);
+                }
+            }
         }
         /* Pour la dernière ligne */
         fseek(new_i->f, 0, SEEK_END);
         new_i->lines[i] = (char*)calloc(1, sizeof(char)*(ftell(new_i->f)-new_i->index[i]+1)); // alloc
-        fread(new_i->lines[i], 1, ftell(new_i->f)-new_i->index[i]-1, new_i->f); // recopie
+        if(fread(new_i->lines[i], 1, ftell(new_i->f)-new_i->index[i]-1, new_i->f) != new_i->index[i+1]-new_i->index[i]-1) { // recopie
+            if(ferror(new_i->f)) {
+                printf("%s : fread() error. Program will try to continue.\n", f_name);
+            }
+        }
     }
 
     rewind(f);

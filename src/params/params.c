@@ -424,8 +424,8 @@ void print_params(Params* parameters) {
 	printf("Exclude pattern : %s\n", parameters->exclude_pattern);
 	printf("Exclude from : %s\n", parameters->exclude_from);
 
-	printf("Start compare file in dir : %d\n", parameters->start_compare_file_in_dir);
-	printf("Start compare file : %s\n", parameters->start_compare_file);
+	printf("Start compare file in dir : %s\n", parameters->start_compare_file_in_dir);
+	printf("Start compare file : %d\n", parameters->start_compare_file);
 
 	printf("Ignore case : %d\n", parameters->ignore_case);
 	printf("Ignore tab : %d\n", parameters->ignore_tab);

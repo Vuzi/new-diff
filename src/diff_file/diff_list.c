@@ -3,6 +3,7 @@
 /* Prototypes fonctions statiques */
 static void diff_display_regular(t_diff* list_e, t_index *f1, t_index *f2);
 static void diff_display_file_name(t_index *f1);
+static void diff_display_end_of_file(unsigned int end, t_index *f, short int show_msg);
 static void diff_display_current_c_func(t_index* index, unsigned int line);
 static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2);
 static void diff_display_unified(t_diff* list_e, t_index *f1, t_index *f2);
@@ -54,6 +55,21 @@ void diff_delete(t_diff* list) {
     }
 }
 
+static void diff_display_end_of_file(unsigned int end, t_index *f, short int show_msg) {
+
+    if(f->line_max > 0 && end == (f->line_max)-1) {
+        fseek(f->f, 0, SEEK_END);
+        if(getc(f->f) != '\n') { // Si on ne finit pas par un saut de ligne
+            if(show_msg)
+                puts("\n\\ No newline at end of file");
+            else
+                puts("");
+        }
+        line_go_to(f, f->line_max-1);
+    }
+
+}
+
 
 static void diff_display_file_name(t_index *f1) {
 
@@ -69,7 +85,7 @@ static void diff_display_file_name(t_index *f1) {
 
     blank_lenght = 12-(strlen(f1->f_name)%12);
 
-    printf("%s", f1->f_name, s.st_mtime);
+    printf("%s", f1->f_name);
 
     while(blank_lenght > 0) {
         fputc((int)' ', stdout);
@@ -133,15 +149,21 @@ static void diff_display_regular(t_diff* list_e, t_index *f1, t_index *f2) {
         /* Lignes affectées */
         if(list_e->type == ADDED_LINE){
             lines_display(f2, list_e->start_2, list_e->end_2, "> ");
+            diff_display_end_of_file(list_e->end_2, f2, 1);
         }
         else if(list_e->type == CHANGED_LINE){
             lines_display(f1, list_e->start_1, list_e->end_1, "< ");
+            diff_display_end_of_file(list_e->end_1, f1, 1);
+
             fputs("---\n", stdout);
             lines_display(f2, list_e->start_2, list_e->end_2, "> ");
+            diff_display_end_of_file(list_e->end_2, f2, 1);
         }
         else{
             lines_display(f1, list_e->start_1, list_e->end_1, "< ");
+            diff_display_end_of_file(list_e->end_1, f1, 1);
         }
+
 
         /* Suite de la liste */
         list_e = list_e->next;
@@ -320,22 +342,10 @@ static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2) {
         end_2 = list_e->end_2 + p->context >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 + p->context;
 
         diff_display_context_lines(1, start_1, end_1, diff, f1, "*");
-
-        if(end_1 == ((signed)f1->line_max)-1) {
-            fseek(f1->f, 0, SEEK_END);
-            if(getc(f1->f) != '\n') // Si on ne finit pas par un saut de ligne
-                printf("\\ No newline at end of file\n");
-            line_go_to(f1, f1->line_max-1);
-        }
+        diff_display_end_of_file(end_1, f1, 1);
 
         diff_display_context_lines(2, start_2, end_2, diff, f2, "-");
-
-        if(end_2 == ((signed)f2->line_max)-1) {
-            fseek(f2->f, 0, SEEK_END);
-            if(getc(f2->f) != '\n') // Si on ne finit pas par un saut de ligne
-                printf("\\ No newline at end of file\n");
-            line_go_to(f2, f2->line_max-1);
-        }
+        diff_display_end_of_file(end_2, f2, 1);
 
         list_e = list_e->next;
     }
@@ -459,13 +469,7 @@ static void diff_display_unified(t_diff* list_e, t_index *f1, t_index *f2) {
             end_2 = list_e->end_2 + p->unifier >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 + p->unifier;
 
         diff_display_unified_lines(f1, start_1, end_1, f2, start_2, end_2, diff);
-
-        if(end_1 == ((signed)f1->line_max)-1) {
-            fseek(f1->f, 0, SEEK_END);
-            if(getc(f1->f) != '\n') // Si on ne finit pas par un saut de ligne
-                printf("\\ No newline at end of file\n");
-            line_go_to(f1, f1->line_max-1);
-        }
+        diff_display_end_of_file(end_1, f1, 1);
 
         list_e = list_e->next;
     }
@@ -701,6 +705,7 @@ static void diff_display_ed(t_diff* list_e, t_index *f) {
                 printf("%d,%da\n", tmp->start_1+1, tmp->end_1 - tmp->start_1 + 1);
 
             lines_display(f,tmp->start_2, tmp->end_2, "");
+            diff_display_end_of_file(tmp->end_2, f, 0);
 
             puts(".");
         } else if(tmp->type == CHANGED_LINE) {
@@ -710,6 +715,7 @@ static void diff_display_ed(t_diff* list_e, t_index *f) {
                 printf("%d,%dc\n", tmp->start_1+1, tmp->end_1 - tmp->start_1 + 1);
 
             lines_display(f,tmp->start_2, tmp->end_2, "");
+            diff_display_end_of_file(tmp->end_2, f, 0);
 
             puts(".");
         } else {
