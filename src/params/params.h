@@ -1,7 +1,8 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-#include "constant.h"
+#include <sys/types.h>
+#include <regex2.h>
 
 typedef enum _mode {
 	NORMAL, IDENTICAL, DIFFERENT
@@ -54,7 +55,7 @@ typedef struct _params {
 	short ignore_change_space;
 	short ignore_all_space;
 	short ignore_blank_lines;
-	char* ignore_regex_match;
+	regex_t *ignore_regex_match;
 
 	short type_text;
 	short remove_backspace_enter;
@@ -75,10 +76,14 @@ typedef struct _params {
 	char* pathRight;
 } Params;
 
-Params* initialize_params();
-int check_params(int argc, char **argv, Params *parameters);
-int read_param(char *parameter, Params* parameters, int lc);
-int write_params(char* params, char* value, Params *parameter);
+
+#include "../constant.h"
+
+/* Prototypes */
+void diff_init(int argc, char** argv);
+
+void initialize_params(void);
+int check_params(int argc, char **argv);
 void free_params_glob(void);
 
 char* append_char(char* src, char append);

@@ -20,9 +20,9 @@ static int get_type_path(const char* path) {
 
 }
 
-file_arg_case check_and_type_paths(const char** paths) {
+file_arg_case check_and_type_paths(const char* path1, const char* path2) {
 
-    int val1 = get_type_path(paths[0]), val2 = get_type_path(paths[1]);
+    int val1 = get_type_path(path1), val2 = get_type_path(path2);
 
     if(val1 == 1) {
         if(val2 == 1)
@@ -37,20 +37,20 @@ file_arg_case check_and_type_paths(const char** paths) {
     }
 
     if(val1 == 0) {
-        printf("%s : not a file or a directory", paths[0]);
+        set_error(path1, "not a file or a directory");
         return NONE;
     }
     else if(val1 == -1) {
-        perror(paths[0]);
+        perror(path1);
         return NONE;
     }
 
     if(val2 == 0) {
-        printf("%s : not a file or a directory", paths[1]);
+        set_error(path2, "not a file or a directory");
         return NONE;
     }
     else {
-        perror(paths[1]);
+        perror(path1);
         return NONE;
     }
 

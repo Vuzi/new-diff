@@ -4,6 +4,7 @@
 /* Prototype des statiques */
 static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2);
 
+
 /* ===============================================
                       sec_fopen
 
@@ -20,10 +21,11 @@ FILE* sec_fopen(const char* path, const char* mode) {
     FILE* f = fopen(path, mode);
 
     if(!f)
-        perror(path);
+        set_error(path, NULL);
 
     return f;
 }
+
 
 /* ===============================================
                       sec_fclose
@@ -36,8 +38,9 @@ FILE* sec_fopen(const char* path, const char* mode) {
 void sec_fclose(FILE *f) {
 
     if(fclose(f) != 0)
-        perror("fclose()");
+        set_error("fclose()", NULL);
 }
+
 
 /* ===============================================
                diff_file_make_intern
@@ -53,7 +56,7 @@ void sec_fclose(FILE *f) {
     Retourne le nombre minimum de mouvement de ligne
     pour passer de f1 à f2 à partir de la position
     courante de f1 et de f2 (f1->line et f2->line)
-    et indique la liste d'opération dans diff_list.
+    et indique la liste d'opération(s) dans diff_list.
    =============================================== */
 static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
 
@@ -206,6 +209,19 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
 }
 
 
+/* ===============================================
+                     diff_file
+
+    Affiche la comparaison entre le fichier f1_name
+    et f2_name suivant les options d'affichages
+    définies par les paramètres.
+    ----------------------------------------------
+    const char* f1_name : Premier fichier
+    const char* f2_name : Second fichier
+    ----------------------------------------------
+    Retourne 0 en cas de fichier identiques, 1 en
+    cas de fichier différents, ou 2 en cas d'erreur.
+   =============================================== */
 int diff_file(const char* f1_name, const char* f2_name) {
 
     int ret = 0;

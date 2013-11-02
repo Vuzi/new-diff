@@ -7,6 +7,10 @@
 #include <sys/stat.h>
 #include <string.h>
 
+#define CREATE_PARAMETERS
+
+#include "constant.h"
+
 enum e_file_arg_case {
     NONE = -1,
     FILE_FILE = 0,
@@ -18,6 +22,6 @@ enum e_file_arg_case {
 typedef enum e_file_arg_case file_arg_case;
 
 /* Prototypes */
-file_arg_case check_and_type_paths(const char** paths);
+file_arg_case check_and_type_paths(const char* path1, const char* path2);
 
 #endif // PATH_TEST_H_INCLUDED

@@ -30,6 +30,15 @@ static unsigned int index_size(FILE *f) {
     return cpt;
 }
 
+/* ===============================================
+                index_file_c_func
+
+    Permet d'indexer les fonctions C du fichier
+    indexé par f.
+    ----------------------------------------------
+    t_index *f     : index
+    ----------------------------------------------
+   =============================================== */
 void index_file_c_func(t_index* index) {
 
     unsigned int i = 0, *tmp = NULL;
@@ -90,6 +99,17 @@ t_index* index_file(FILE *f, const char* f_name) {
 }
 
 
+/* ===============================================
+                index_file_small
+
+    Permet d'indexer le fichier f en le chargeant
+    dans la mémoire pour plus de rapidité.
+    ----------------------------------------------
+    FILE *f        : fichier à indexer
+    c char* f_name : nom fichier à indexer
+    ----------------------------------------------
+    Retourne l'indexation du fichier.
+   =============================================== */
 static t_index* index_file_small(FILE *f, const char* f_name) {
 
     /* On initialise */
@@ -105,7 +125,7 @@ static t_index* index_file_small(FILE *f, const char* f_name) {
             new_i->lines[i] = (char*)calloc(1, sizeof(char)*(new_i->index[i+1]-new_i->index[i]+1)); // alloc
             if(fread(new_i->lines[i], 1, new_i->index[i+1]-new_i->index[i]-1, new_i->f) != new_i->index[i+1]-new_i->index[i]-1) { // recopie
                 if(ferror(new_i->f)) {
-                    printf("%s : fread() error. Program will try to continue.\n", f_name);
+                    fprintf(stderr, "%s : fread() error. Program will try to continue.\n", f_name);
                 }
             }
         }
@@ -114,7 +134,7 @@ static t_index* index_file_small(FILE *f, const char* f_name) {
         new_i->lines[i] = (char*)calloc(1, sizeof(char)*(ftell(new_i->f)-new_i->index[i]+1)); // alloc
         if(fread(new_i->lines[i], 1, ftell(new_i->f)-new_i->index[i]-1, new_i->f) != new_i->index[i+1]-new_i->index[i]-1) { // recopie
             if(ferror(new_i->f)) {
-                printf("%s : fread() error. Program will try to continue.\n", f_name);
+                fprintf(stderr, "%s : fread() error. Program will try to continue.\n", f_name);
             }
         }
     }
@@ -125,6 +145,18 @@ static t_index* index_file_small(FILE *f, const char* f_name) {
     return new_i;
 }
 
+
+/* ===============================================
+                index_file_large
+
+    Permet d'indexer le fichier f sans le charger
+    dans la mémoire.
+    ----------------------------------------------
+    FILE *f        : fichier à indexer
+    c char* f_name : nom fichier à indexer
+    ----------------------------------------------
+    Retour l'indexation du fichier.
+   =============================================== */
 static t_index* index_file_large(FILE *f, const char* f_name) {
 
     /* On initialise */

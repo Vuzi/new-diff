@@ -9,7 +9,7 @@
 
 #define CREATE_PARAMETERS
 
-#include "../params/constant.h"
+#include "../constant.h"
 
 #define END_LINE '\n'
 

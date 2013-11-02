@@ -1,98 +1,113 @@
-#include "constant.h"
+
 #include "params.h"
 
-Params* initialize_params() {
-	Params* return_params = NULL;
+static int read_param(char *parameter, Params* parameters, int lc);
+static int write_params(char* params, char* value, Params *parameter);
 
-	return_params = (Params*) calloc(1, sizeof(Params));
-
-	/* Certain en dur à des fins de test */
-	return_params->brief = 0;
-	return_params->report_identical_files = 0;
-
-	return_params->o_style = NOT_SELECTED;
-	return_params->context = 3;
-	return_params->unifier = 3;
-
-	return_params->show_max_char = 130;
-	return_params->left_column = 0;
-	return_params->suppress_common_lines = 0; /* Ne pas afficher les lignes identiques */
-
-	return_params->show_c_function = 0;
-	return_params->show_function_line = NULL;
-	return_params->label = NULL;
-
-	return_params->exclude_pattern = NULL;
-	return_params->exclude_from = NULL;
-
-	return_params->start_compare_file_in_dir = NULL;
-	return_params->ignore_regex_match = NULL;
-	return_params->show_diferent_fusion = NULL;
-
-	return_params->group_format_GFMT = NULL;
-	return_params->line_format_LFMT = NULL;
-	return_params->line_type_format_LFMT = NULL;
-
-	return_params->pathLeft = NULL;
-	return_params->pathRight = NULL;
+void diff_init(int argc, char** argv) {
 
 	atexit(free_params_glob); // Ajout à la liste
+    atexit(diff_error);
 
-	return return_params;
+    initialize_params();
+    check_params(argc, argv);
+
+    /* A mettre plus tard au bon endroit */
+    if(p->o_style == NOT_SELECTED) {
+        if(p->show_c_function)
+            p->o_style = CONTEXT;
+        else
+            p->o_style = REGULAR;
+
+    }
 }
 
-int check_params(int argc, char **argv, Params *parameters) {
+
+void initialize_params() {
+	p = (Params*) calloc(1, sizeof(Params));
+
+	/* Certain en dur à des fins de test */
+	p->brief = 0;
+	p->report_identical_files = 0;
+
+	p->o_style = NOT_SELECTED;
+	p->context = 3;
+	p->unifier = 3;
+
+	p->show_max_char = 130;
+	p->left_column = 0;
+	p->suppress_common_lines = 0; /* Ne pas afficher les lignes identiques */
+
+	p->show_c_function = 0;
+	p->show_function_line = NULL;
+	p->label = NULL;
+
+	p->exclude_pattern = NULL;
+	p->exclude_from = NULL;
+
+	p->start_compare_file_in_dir = NULL;
+	p->ignore_regex_match = NULL;
+	p->show_diferent_fusion = NULL;
+
+	p->group_format_GFMT = NULL;
+	p->line_format_LFMT = NULL;
+	p->line_type_format_LFMT = NULL;
+
+	p->pathLeft = NULL;
+	p->pathRight = NULL;
+
+}
+
+int check_params(int argc, char **argv) {
 	int i = 0;
 	int j = 0;
 	int long_continue = 0;
 	int result = 0;
 
-	if (parameters != NULL) {
+	char param_error[512] = {0};
 
-		if (argc < 3) {
-			return 0;
-		}
+	if (p != NULL) {
 
 		for (i = 1; i < argc; i += 1) {
 			printf("Reading a parameter : %s\n", argv[i]);
 
 			if (result != 2) {
-				result = read_param(argv[i], parameters, long_continue);
+				result = read_param(argv[i], p, long_continue);
 
 				if (result == 3) {
 					j = 0;
-					if (parameters->pathLeft != NULL) {
-						parameters->pathRight = (char*) calloc(strlen(argv[i]) + 1, sizeof(char) );
-						parameters->pathRight[strlen(argv[i])] = '\0';
+					if (p->pathLeft != NULL) {
+						p->pathRight = (char*) calloc(strlen(argv[i]) + 1, sizeof(char) );
+						p->pathRight[strlen(argv[i])] = '\0';
 
 						while (argv[i][j] != '\0') {
-							parameters->pathRight[j] = argv[i][j];
+							p->pathRight[j] = argv[i][j];
 							j += 1;
 						}
 					}
 					else if (result == 4) {
 						if ((i + 1) < argc) {
-							write_params(argv[i], argv[(i + 1)], parameters);
+							write_params(argv[i], argv[(i + 1)], p);
 						}
 					}
 					else {
-						parameters->pathLeft = (char*) calloc(strlen(argv[i]) + 1, sizeof(char) );
-						parameters->pathLeft[strlen(argv[i])] = '\0';
+						p->pathLeft = (char*) calloc(strlen(argv[i]) + 1, sizeof(char) );
+						p->pathLeft[strlen(argv[i])] = '\0';
 						while (argv[i][j] != '\0') {
-							parameters->pathLeft[j] = argv[i][j];
+							p->pathLeft[j] = argv[i][j];
 							j += 1;
 						}
 					}
 				}
 			}
 			else {
-				result = read_param(argv[i], parameters, long_continue);
+				result = read_param(argv[i], p, long_continue);
 
 				if (result == 3) {
-					write_params(((argv[i - 1]) + 1), argv[i], parameters);
+					write_params(((argv[i - 1]) + 1), argv[i], p);
 				}
 				else {
-					write_params(((argv[i - 1]) + 1), NULL, parameters);
+					write_params(((argv[i - 1]) + 1), NULL, p);
 				}
 			}
 
@@ -103,6 +118,12 @@ int check_params(int argc, char **argv, Params *parameters) {
 			else if (result == -1) {
 				return 0;
 			}
+		}
+
+		if(i < 3 ) { // Si <3, il manque des opérateurs
+            show_help();
+            sprintf(param_error, "missing operand after '%s'", argv[i - 1]); // Fonctionne car >= 1
+            send_error(NULL, param_error);
 		}
 
 		return 1;
@@ -164,7 +185,7 @@ char* append_char(char* src, char append) {
 	return r;
 }
 
-int read_param(char *parameter, Params* parameters, int lc) {
+static int read_param(char *parameter, Params* parameters, int lc) {
 
 	char test_dash = '-';
 	char test_end = '\0';
@@ -259,11 +280,13 @@ int read_param(char *parameter, Params* parameters, int lc) {
 	return 0;
 }
 
-int write_params(char* parameter, char* value, Params* parameters) {
+static int write_params(char* parameter, char* value, Params* parameters) {
 
 	int i = 0;
 	int val = 0;
 	short use_value = -1;
+
+	char param_error[512] = {0};
 
 	printf("-----\nParameter test : %s\n", parameter);
 
@@ -283,7 +306,7 @@ int write_params(char* parameter, char* value, Params* parameters) {
 		parameters->brief = 1;
 	}
 	else if (!strcmp(parameter, "report-identical-files") || !strcmp(parameter, "s")) {
-		parameters->brief = 2;
+		parameters->report_identical_files = 1;
 	}
 	else if (!strcmp(parameter, "context") || !strcmp(parameter, "c") || !strcmp(parameter, "C")) {
 		if (value == NULL || val < 0 || !strcmp(parameter, "c")) {
@@ -354,8 +377,18 @@ int write_params(char* parameter, char* value, Params* parameters) {
 		parameters->ignore_blank_lines = 1;
 	}
 	else if (!strcmp(parameter, "ignore-matching-lines") || !strcmp(parameter, "I")) {
-		parameters->ignore_regex_match = value;
-		use_value = 1;
+
+		parameters->ignore_regex_match = (regex_t*)malloc(sizeof(regex_t));
+		if(regcomp(parameters->ignore_regex_match, value, REG_NOSUB | REG_EXTENDED) == 0) {
+            use_value = 1;
+		}else {
+            fputs("diff: error when compiling the regex expression\n", stderr);
+            exit(2);
+		}
+	} else {
+        show_help();
+        sprintf(param_error, "invalid option -- '%s'", parameter);
+        send_error(NULL, param_error);
 	}
 
 	if (use_value == 0) {
@@ -459,6 +492,10 @@ void free_params_glob(void) {
 
     if(p) {
         /* Ici libérer tout les char* et cie */
+
+        if(p->ignore_regex_match)
+            regfree(p->ignore_regex_match);
+
         free(p);
         p = NULL;
     }

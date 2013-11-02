@@ -6,12 +6,15 @@
 
 #define CREATE_PARAMETERS
 
-#include "params/constant.h"
+#include "constant.h"
 
 #include "path_test.h"
 
 #include "diff_file/diff.h"
 #include "diff_dir/diff.h"
+
+#include <regex2.h>
+
 
 
 // 0 = identique, 1 = différents, 2 = erreur
@@ -20,23 +23,9 @@ int main(int argc, char** argv){
     int ret = 0;
     char *tmp = NULL;
 
-    p = initialize_params();
+    diff_init(argc, argv);
 
-    if(argc < 3) {
-        printf("Pas assez d'arguments");
-        return 2;
-    }
-
-    check_params(argc, argv, p);
-
-    // + tard, check les params
-    if(p->o_style == NOT_SELECTED) {
-        if(p->show_c_function)
-            p->o_style = CONTEXT;
-        else
-            p->o_style = REGULAR;
-
-    }
+    getchar();
 
     // File & File
     if((ret = check_and_type_paths((const char *)p->pathLeft, (const char *)p->pathRight)) == 0) {

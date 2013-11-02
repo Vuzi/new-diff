@@ -7,7 +7,7 @@
 
 #define CREATE_PARAMETERS
 
-#include "../params/constant.h"
+#include "../constant.h"
 #include "diff_list.h"
 
 /* Prototypes */

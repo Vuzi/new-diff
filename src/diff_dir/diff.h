@@ -10,7 +10,7 @@
 
 #define CREATE_PARAMETERS
 
-#include "../params/constant.h"
+#include "../constant.h"
 
 
 /* Prototypes */

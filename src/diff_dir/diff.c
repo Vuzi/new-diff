@@ -7,7 +7,8 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
 void sec_closedir(DIR *d) {
 
     if(closedir(d) == -1)
-        perror("closedir()");
+        set_error("closedir()", NULL);
+
 }
 
 DIR *sec_opendir(const char* path) {
@@ -15,7 +16,7 @@ DIR *sec_opendir(const char* path) {
     DIR *d = opendir(path);
 
     if(!d)
-        perror(path);
+        set_error(path, NULL);
 
     return d;
 }
@@ -166,11 +167,11 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
             ret = 1;
         }
     }
-    
+
     /* Fichier dans d2 en plus */
     while((dr2 = readdir(d2)) != NULL) {
         printf("Only in %s: %s\n", d2_name, dr2->d_name);
     }
-    
+
     return ret;
 }

@@ -49,6 +49,8 @@ int line_compare(t_index *l1, t_index *l2) {
         line_go_to(l1, l1->line);
         line_go_to(l2, l2->line);
 
+        // Ajouter cas pour les petit fichiers. Bloqué tant que pas implémenté
+
         /* On compare */
         while((tmp1 = fgetc(l1->f)) == (tmp2 = fgetc(l2->f))) {
             /* Si fin de ligne, on saute */
@@ -187,14 +189,14 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
     char c = 0;
 
     if(f) {
-        if(start <= end && end <= f->line_max) {
-            for(i = start; i <= end; i++, j = 0) {
+        if(start <= end && end <= f->line_max) { // Si taille possible
+            for(i = start; i <= end; i++, j = 0) { // Pour chacune des lignes à afficher
 
                 if(line_start)
                     fputs(line_start, stdout);
 
-                if(lenght > 0) {
-                    if(f->lines) {
+                if(lenght > 0) { // Si long. limitée
+                    if(f->lines) { // Fichier courts
                         for(j = 0; j < strlen(f->lines[i]) && j < lenght && j != '\n'; j++) {
                             if(p->expand_tab && f->lines[i][j] == '\t' )
                                 print_space(p->size_tab);
@@ -203,7 +205,7 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
                         }
 
                         putchar('\n');
-                    } else {
+                    } else { // Fichiers longs
                         fseek(f->f, f->index[i], SEEK_SET);
 
                         while((c = getc(f->f)) != END_LINE && c != EOF && j < lenght) {
@@ -216,8 +218,8 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
 
                         putchar('\n');
                     }
-                } else {
-                    if(f->lines) {
+                } else { // Sinon
+                    if(f->lines) { // Fichiers cours
                         fputs(f->lines[i],stdout);
 
                         j = strlen(f->lines[i]);
@@ -225,7 +227,7 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
                             fputc((int)'\n', stdout);
 
 
-                    } else {
+                    } else { // Fichiers longs
                         fseek(f->f, f->index[i], SEEK_SET);
 
                         while((c = getc(f->f)) != END_LINE && c != EOF) {
@@ -235,8 +237,7 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
                                 putchar(c);
                         }
 
-                        if(c == END_LINE)
-                            putchar('\n');
+                        putchar('\n');
                     }
                 }
             }
@@ -244,6 +245,14 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
     }
 }
 
+/* ===============================================
+                    print_space
+
+    Permet d'afficher simplement un nombre donné
+    d'espace sur la sortie standard
+    ----------------------------------------------
+    u int n : nombre d'espaces
+   =============================================== */
 void print_space(unsigned int n) {
     unsigned int i = 0;
 

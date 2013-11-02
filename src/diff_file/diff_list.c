@@ -2,7 +2,7 @@
 
 /* Prototypes fonctions statiques */
 static void diff_display_regular(t_diff* list_e, t_index *f1, t_index *f2);
-static void diff_display_file_name(t_index *f1);
+static void diff_display_file_name(t_index *f);
 static void diff_display_end_of_file(unsigned int end, t_index *f, short int show_msg);
 static void diff_display_current_c_func(t_index* index, unsigned int line);
 static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2);
@@ -14,14 +14,29 @@ static void diff_display_columns_deleted(int start, unsigned int lenght, t_index
 static void diff_display_ed(t_diff* list_e, t_index *f);
 static t_diff* diff_display_ed_get_diff(t_diff* list_e, unsigned int n);
 
-void diff_add(t_diff** list_e, diff_type type, int start_1, int end_1, int start_2, int end_2) {
+
+/* ===============================================
+                    diff_add
+
+    Ajoute un élément à la liste list. Si la liste
+    est vide, elle sera crée.
+    ----------------------------------------------
+    t_diff** list  : liste à traiter
+    diff_type type : type de différence
+    int start_1    : début changement f1
+    int end_1      : fin changement f1
+    int start_2    : début changement f2
+    int end_2      : fin changement f2
+    ----------------------------------------------
+   =============================================== */
+void diff_add(t_diff** list, diff_type type, int start_1, int end_1, int start_2, int end_2) {
 
     t_diff *new_d = (t_diff*)malloc(sizeof(t_diff));
 
-    if(*list_e) {
-        diff_last(*list_e)->next = new_d;
+    if(*list) {
+        diff_last(*list)->next = new_d;
     } else {
-        *list_e = new_d;
+        *list = new_d;
     }
 
     new_d->next = NULL;
@@ -32,18 +47,35 @@ void diff_add(t_diff** list_e, diff_type type, int start_1, int end_1, int start
     new_d->type = type;
 }
 
-t_diff *diff_last(t_diff* list_e) {
+/* ===============================================
+                    diff_last
 
-    if(list_e) {
-        while(list_e->next) {
-            list_e = list_e->next;
+    Retourne le dernière élément de la liste.
+    ----------------------------------------------
+    t_diff* list : liste à traiter
+    ----------------------------------------------
+   =============================================== */
+t_diff *diff_last(t_diff* list) {
+
+    if(list) {
+        while(list->next) {
+            list = list->next;
         }
 
-        return list_e;
+        return list;
     } else
         return NULL;
 }
 
+
+/* ===============================================
+                    diff_delete
+
+    Vide et libère la liste list.
+    ----------------------------------------------
+    t_diff* list : liste à vider
+    ----------------------------------------------
+   =============================================== */
 void diff_delete(t_diff* list) {
 
     t_diff* tmp = NULL;
@@ -55,13 +87,27 @@ void diff_delete(t_diff* list) {
     }
 }
 
+
+/* ===============================================
+             diff_display_end_of_file
+
+    Si la fin du fichier indexé par f est atteinte
+    affiche, affiche un saut de ligne ou le message
+    "\ No newline at end of file" si show_msg est
+    a 1.
+    ----------------------------------------------
+    u int end      : ligne
+    t_index *f     : index
+    s int show_msg : Si on doit afficher le message
+    ----------------------------------------------
+   =============================================== */
 static void diff_display_end_of_file(unsigned int end, t_index *f, short int show_msg) {
 
     if(f->line_max > 0 && end == (f->line_max)-1) {
         fseek(f->f, 0, SEEK_END);
         if(getc(f->f) != '\n') { // Si on ne finit pas par un saut de ligne
             if(show_msg)
-                puts("\n\\ No newline at end of file");
+                puts("\\ No newline at end of file");
             else
                 puts("");
         }
@@ -71,7 +117,16 @@ static void diff_display_end_of_file(unsigned int end, t_index *f, short int sho
 }
 
 
-static void diff_display_file_name(t_index *f1) {
+/* ===============================================
+             diff_display_file_name
+
+    Permet d'afficher le nom du fichier indexé par
+    f, ainsi qu'un timestamp.
+    ----------------------------------------------
+    t_index *f     : index
+    ----------------------------------------------
+   =============================================== */
+static void diff_display_file_name(t_index *f) {
 
     int blank_lenght = 0;
 
@@ -79,13 +134,13 @@ static void diff_display_file_name(t_index *f1) {
     char stat_time[512] = {0};
     struct tm *stat_tm = NULL;
 
-    stat(f1->f_name, &s);
+    stat(f->f_name, &s);
     stat_tm = localtime(&(s.st_mtime));
     strftime(stat_time, 512, "%Y-%m-%d %H:%M:%S", stat_tm);
 
-    blank_lenght = 12-(strlen(f1->f_name)%12);
+    blank_lenght = 12-(strlen(f->f_name)%12);
 
-    printf("%s", f1->f_name);
+    printf("%s", f->f_name);
 
     while(blank_lenght > 0) {
         fputc((int)' ', stdout);
@@ -100,6 +155,16 @@ static void diff_display_file_name(t_index *f1) {
 }
 
 
+/* ===============================================
+             diff_display_file_name
+
+    Permet d'afficher le nom de la fonction C
+    présente à cette ligne.
+    ----------------------------------------------
+    t_index *f     : index
+    u int line     : ligne actuelle
+    ----------------------------------------------
+   =============================================== */
 static void diff_display_current_c_func(t_index* index, unsigned int line) {
 
     unsigned int i = 1;
@@ -112,7 +177,7 @@ static void diff_display_current_c_func(t_index* index, unsigned int line) {
             while(i < index->c_func_nb && index->c_func[i] < line)
                 i++;
 
-            lines_display_lenght(index, index->c_func[i-1], index->c_func[i-1], "", 40);
+            lines_display_lenght(index, index->c_func[i-1], index->c_func[i-1], "", 40); // On affiche
         }
     }
 
@@ -351,6 +416,22 @@ static void diff_display_context(t_diff* list_e, t_index *f1, t_index *f2) {
     }
 }
 
+/* ===============================================
+             diff_display_unified_lines
+
+    Permet d'afficher les lignes au format unifié
+    en respectant le contexte spécifié dans les
+    paramètres.
+    ----------------------------------------------
+    t_index *f1       : Premier fichier
+    int start_1       : Début dans premier fichier
+    int end_1         : Fin dans premier fichier
+    t_index *f2       : Second fichier
+    int start_2       : Début dans second fichier
+    int end_2         : Fin dans second fichier
+    t_diff* diff      : liste des modifications
+    ----------------------------------------------
+   =============================================== */
 static void diff_display_unified_lines(t_index *f1, int start_1, int end_1, t_index *f2, int start_2, int end_2, t_diff* diff){
 
     char no_change[3] = " ";
@@ -422,6 +503,19 @@ static void diff_display_unified_lines(t_index *f1, int start_1, int end_1, t_in
 
 }
 
+
+/* ===============================================
+             diff_display_unified
+
+    Permet d'afficher les différences entre le
+    premier fichier et le second fichier sous la
+    forme unifiée.
+    ----------------------------------------------
+    t_diff* list_e    : liste des modifications
+    t_index *f1       : Premier fichier
+    t_index *f2       : Second fichier
+    ----------------------------------------------
+   =============================================== */
 static void diff_display_unified(t_diff* list_e, t_index *f1, t_index *f2) {
 
     int start_1;
@@ -476,6 +570,21 @@ static void diff_display_unified(t_diff* list_e, t_index *f1, t_index *f2) {
 
 }
 
+
+/* ===============================================
+             diff_display_columns_common
+
+    Permet d'afficher les lignes communes sous
+    formes de colonnes.
+    ----------------------------------------------
+    int start         : Premier ligne à afficher
+    u int lenght      : Nombre de lignes à afficher
+    t_index *f1       : Premier fichier
+    t_index *f2       : Second fichier
+    u int char_ligne  : Largeur d'une ligne
+    u int char_center : Largeur centre
+    ----------------------------------------------
+   =============================================== */
 static void diff_display_columns_common(int start_1, int start_2, unsigned int length, t_index *f1, t_index *f2, unsigned int char_ligne, unsigned int char_center, char op) {
 
     unsigned int i = 0, j = 0;
@@ -541,6 +650,20 @@ static void diff_display_columns_common(int start_1, int start_2, unsigned int l
     }
 }
 
+
+/* ===============================================
+             diff_display_columns_added
+
+    Permet d'afficher les lignes ajoutées sous
+    formes de colonnes.
+    ----------------------------------------------
+    int start         : Premier ligne à afficher
+    u int lenght      : Nombre de lignes à afficher
+    t_index *f        : Second fichier
+    u int char_ligne  : Largeur d'une ligne
+    u int char_center : Largeur centre
+    ----------------------------------------------
+   =============================================== */
 static void diff_display_columns_added(int start, unsigned int lenght, t_index *f, unsigned int char_ligne, unsigned int char_center) {
 
     unsigned int i = 0, j = 0;
@@ -580,6 +703,20 @@ static void diff_display_columns_added(int start, unsigned int lenght, t_index *
     }
 }
 
+
+/* ===============================================
+             diff_display_columns_deleted
+
+    Permet d'afficher les lignes supprimées sous
+    formes de colonnes.
+    ----------------------------------------------
+    int start         : Premier ligne à afficher
+    u int lenght      : Nombre de lignes à afficher
+    t_index *f        : Premier fichier
+    u int char_ligne  : Largeur d'une ligne
+    u int char_center : Largeur centre
+    ----------------------------------------------
+   =============================================== */
 static void diff_display_columns_deleted(int start, unsigned int lenght, t_index *f, unsigned int char_ligne, unsigned int char_center) {
 
     unsigned int i = 0, j = 0;
@@ -619,6 +756,20 @@ static void diff_display_columns_deleted(int start, unsigned int lenght, t_index
     }
 }
 
+
+/* ===============================================
+                    diff_display_columns
+
+    Permet d'afficher la liste des modification pour
+    passer du premier au second fichier sous la forme
+    de colonnes comparatives.
+    ----------------------------------------------
+    t_diff* list_e    : liste des modifications
+    t_index *f1       : index du premier fichier
+    t_index *f2       : index du second fichier
+    int show_max_char : largeur colones maximum
+    ----------------------------------------------
+   =============================================== */
 static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int show_max_char) {
 
     unsigned int char_ligne = (show_max_char - 5) >= 0 ? (show_max_char - 3) : 0; // Nombre de colonnes
@@ -673,6 +824,16 @@ static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int s
 }
 
 
+/* ===============================================
+             diff_display_ed_get_diff
+
+    Permet de parcourir la liste des différences
+    suivant un indice.
+    ----------------------------------------------
+    t_diff* list_e : liste des modifications
+    u int n        : indice
+    ----------------------------------------------
+   =============================================== */
 static t_diff* diff_display_ed_get_diff(t_diff* list_e, unsigned int n) {
 
     while(n > 0) {
@@ -683,6 +844,18 @@ static t_diff* diff_display_ed_get_diff(t_diff* list_e, unsigned int n) {
     return list_e;
 }
 
+
+/* ===============================================
+                    diff_display_ed
+
+    Permet d'afficher la liste des modification pour
+    passer du premier au second fichier sous la forme
+    d'un edit_script.
+    ----------------------------------------------
+    t_diff* list_e : liste des modifications
+    t_index *f    : index du second fichier
+    ----------------------------------------------
+   =============================================== */
 static void diff_display_ed(t_diff* list_e, t_index *f) {
 
     t_diff *tmp = list_e;
@@ -728,6 +901,19 @@ static void diff_display_ed(t_diff* list_e, t_index *f) {
     }
 }
 
+/* ===============================================
+                      diff_display
+
+    Permet d'afficher la liste des modification pour
+    passer du fichier indexé par f1 au fichier indexé
+    par f2 en utilisant le style et les options
+    défini par les paramètres.
+    ----------------------------------------------
+    t_diff* list_e : liste des modifications
+    t_index *f1    : index du premier fichier
+    t_index *f2    : index du second fichier
+    ----------------------------------------------
+   =============================================== */
 void diff_display(t_diff* list_e, t_index *f1, t_index *f2) {
 
     /* Format de sortie contextuel */
