@@ -1,0 +1,5 @@
+Fichiers compilés pour tester sur Windows:
+ - L'un en mode debug
+ - L'autre en mode release
+ 
+y1.txt et y2.txt sont des fichiers d'exemple pouvant être testés.
