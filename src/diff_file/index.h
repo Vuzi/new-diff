@@ -40,6 +40,9 @@ typedef struct s_index t_index;
 t_index* index_file(FILE *f, const char* f_name);
 void index_file_c_func(t_index* index);
 void index_free(t_index* index);
+
+#ifdef DEBUG
 void index_display(t_index *f);
+#endif
 
 #endif // INDEX_H_INCLUDED

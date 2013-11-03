@@ -219,6 +219,7 @@ void index_free(t_index* index) {
     }
 }
 
+#ifdef DEBUG
 /* ===============================================
                   display_index_file
 
@@ -231,7 +232,7 @@ void index_display(t_index *f) {
     unsigned int i = 0;
 
     if(f){
-        printf("Fichier de %d ligne(s) :\n", f->line_max);
+        printf("Index :\nFichier '%s' de %d ligne(s) :\n", f->f_name, f->line_max);
 
         for(i = 0; i+1 < f->line_max; i++) {
             printf("\tLigne %d : %d -> %d\n", i, f->index[i], f->index[i+1]-1);
@@ -248,8 +249,8 @@ void index_display(t_index *f) {
         }
 
 
-        if(p->show_c_function) {
-            printf("Fonctions C :");
+        if(p->show_c_function && f->c_func_nb) {
+            printf("Fonctions C :\n");
 
             for(i = 0; i+1 < f->c_func_nb; i++) {
                 printf("\tFonction %d : %d -> %d\n", i, f->c_func[i], f->c_func[i+1]-1);
@@ -259,3 +260,4 @@ void index_display(t_index *f) {
         }
     }
 }
+#endif

@@ -1,16 +1,31 @@
 
 #include "params.h"
 
-static int read_param(char *parameter, Params* parameters, int lc);
-static int write_params(char* params, char* value, Params *parameter);
+/* Prototypes fonctions statiques  */
+static void initialize_params(void);
+static void make_params(int argc, char **argv);
+static int make_param(char* option, char* argument);
+
+static void set_file_name(char *name);
+static void set_output_style(output_style style);
+static void set_context(char* val);
+static void set_width(char* val);
+
+#ifdef DEBUG
+void print_params(Params* parameters);
+#endif
 
 void diff_init(int argc, char** argv) {
 
-	atexit(free_params_glob); // Ajout à la liste
-    atexit(diff_error);
+    #ifdef DEBUG
+        printf("Start of the options analysing...\n");
+    #endif
 
     initialize_params();
-    check_params(argc, argv);
+
+	atexit(free_params_glob); // Ajout à la liste
+
+    make_params(argc, argv);
 
     /* A mettre plus tard au bon endroit */
     if(p->o_style == NOT_SELECTED) {
@@ -20,25 +35,29 @@ void diff_init(int argc, char** argv) {
             p->o_style = REGULAR;
 
     }
+
+    #ifdef DEBUG
+    printf("... options analysing completed\n--------------\n");
+
+    if(p->d_show_params) {
+        print_params(p);
+        if(p->d_interactive_mode) {
+            printf("Press enter to continue...\n");
+            getchar();
+        }
+    }
+    #endif
 }
 
 
-void initialize_params() {
+static void initialize_params(void) {
 	p = (Params*) calloc(1, sizeof(Params));
-
-	/* Certain en dur à des fins de test */
-	p->brief = 0;
-	p->report_identical_files = 0;
 
 	p->o_style = NOT_SELECTED;
 	p->context = 3;
-	p->unifier = 3;
 
 	p->show_max_char = 130;
-	p->left_column = 0;
-	p->suppress_common_lines = 0; /* Ne pas afficher les lignes identiques */
 
-	p->show_c_function = 0;
 	p->show_function_line = NULL;
 	p->label = NULL;
 
@@ -58,387 +77,392 @@ void initialize_params() {
 
 }
 
-int check_params(int argc, char **argv) {
-	int i = 0;
-	int j = 0;
-	int long_continue = 0;
-	int result = 0;
 
-	char param_error[512] = {0};
+static void make_params(int argc, char **argv) {
 
-	if (p != NULL) {
+    int i = 1, j = 0, arg_lenght;
+    short int no_more_op = 0;
 
-		for (i = 1; i < argc; i += 1) {
-			printf("Reading a parameter : %s\n", argv[i]);
+    char short_tmp[2] = {0};
+    char *arg_tmp = NULL;
 
-			if (result != 2) {
-				result = read_param(argv[i], p, long_continue);
+    /* Pour chacun des arguments */
+    for (i = 1; i < argc; i++) {
 
-				if (result == 3) {
-					j = 0;
-					if (p->pathLeft != NULL) {
-						p->pathRight = (char*) calloc(strlen(argv[i]) + 1, sizeof(char) );
-						p->pathRight[strlen(argv[i])] = '\0';
+        arg_lenght = strlen(argv[i]);
 
-						while (argv[i][j] != '\0') {
-							p->pathRight[j] = argv[i][j];
-							j += 1;
-						}
-					}
-					else if (result == 4) {
-						if ((i + 1) < argc) {
-							write_params(argv[i], argv[(i + 1)], p);
-						}
-					}
-					else {
-						p->pathLeft = (char*) calloc(strlen(argv[i]) + 1, sizeof(char) );
-						p->pathLeft[strlen(argv[i])] = '\0';
-						while (argv[i][j] != '\0') {
-							p->pathLeft[j] = argv[i][j];
-							j += 1;
-						}
-					}
-				}
-			}
-			else {
-				result = read_param(argv[i], p, long_continue);
+        /* Si on commence par un tiret */
+        if(!no_more_op && arg_lenght > 0 && argv[i][0] == '-') {
+            /* Si on a un second tiret, argument long */
+            if(arg_lenght > 1 && argv[i][1] == '-') {
+                /* Si ce double tiret est tout seul, les options sont terminées */
+                if(arg_lenght == 2) {
+                    no_more_op = 1;
+                }
+                /* Argument long */
+                else {
 
-				if (result == 3) {
-					write_params(((argv[i - 1]) + 1), argv[i], p);
-				}
-				else {
-					write_params(((argv[i - 1]) + 1), NULL, p);
-				}
-			}
+                    if(argv[i][2] == '=') {
+                        exit_help();
+                        exit_error(NULL, "option '%s' is ambigous", argv[i]);
+                    }
 
-			if (result == 1) {
-				/* Last paramters "--PARAM[=VALUE] return 1" */
-				long_continue = 1;
-			}
-			else if (result == -1) {
-				return 0;
-			}
-		}
+                    arg_tmp = strchr(argv[i]+2, (int)'=');
 
-		if(i < 3 ) { // Si <3, il manque des opérateurs
-            show_help();
-            sprintf(param_error, "missing operand after '%s'", argv[i - 1]); // Fonctionne car >= 1
-            send_error(NULL, param_error);
-		}
+                    if(arg_tmp) {
+                        arg_tmp = '\0';
+                        arg_tmp++; // Pour couper en deux une même chaine
+                        make_param(argv[i]+2, arg_tmp);
+                    } else {
+                        if(argc < i+1)
+                            i += make_param(argv[i]+2, argv[i+1]);
+                        else
+                            make_param(argv[i]+2, NULL);
+                    }
+                }
+            }
+            /* Tiret seul : stdin comme nom de fichier */
+            else if(arg_lenght == 1) {
+                set_file_name(argv[i]);
+            }
+            /* Argument(s) court(s) */
+            else {
+                /* Plusieurs : valeurs ignorées */
+                if(arg_lenght > 2) {
+                    /* On peut en mettre plusieurs à la suite */
+                    for(j = 1; j < arg_lenght; j++) {
+                        short_tmp[0] = argv[i][j];
 
-		return 1;
-	}
-	else {
-		return 0;
-	}
+                        if(j+1 < arg_lenght) {
+                            if(make_param(short_tmp, argv[i]+j+1)) // argument + suite ligne
+                                j = arg_lenght-1;
+                        } else if(i+1 < argc)
+                            i += make_param(short_tmp, argv[i+1]); // argument + suivant
+                        else
+                            make_param(short_tmp, NULL);
+                    }
+                }
+                /* Un seul : On peut avoir des valeurs à la suite */
+                else {
+                    if(i+1 < argc)
+                        i += make_param(argv[i]+1, argv[i+1]);
+                    else
+                        make_param(argv[i]+1, NULL);
+                }
+            }
+        }
+        /* Pas de tiret, c'est un nom de fichier */
+        else {
+            set_file_name(argv[i]);
+        }
+
+    }
+
+    if(p->o_style == NOT_SELECTED) {
+        if(p->show_c_function)
+            p->o_style = CONTEXT;
+        else
+            p->o_style = REGULAR;
+    }
+
+    if(!(p->pathLeft)) {
+        exit_help();
+        exit_error(NULL, "missing operand after 'diff'", NULL);
+    } else if (!(p->pathRight)) {
+        exit_help();
+        exit_error(NULL, "missing operand after '%s'", p->pathLeft);
+    }
 }
 
-char toUpper(char c) {
-	if (c >= 'a' && c <= 'z')
-		return (c - ('a' - 'A'));
 
-	return c;
+static void set_file_name(char *name) {
+
+    char *name_copy = NULL;
+
+    #ifdef DEBUG
+        printf("Filename : %s\n--------\n", name);
+    #endif
+
+    if(p) {
+        name_copy = (char*)malloc(sizeof(char)*(strlen(name)+1));
+        strcpy(name_copy, name);
+
+        if(!(p->pathLeft)) {
+            p->pathLeft = name_copy;
+        } else if(!(p->pathRight)) {
+            p->pathRight = name_copy;
+        } else {
+            free(name_copy);
+            exit_help();
+            exit_error(NULL, "extra operand '%s'", name);
+        }
+    }
 }
 
-char toLower(char c) {
-	if (c >= 'A' && c <= 'Z')
-		return (c + ('a' - 'A'));
 
-	return c;
+static void set_output_style(output_style style) {
+    if(p->o_style != NOT_SELECTED && style != p->o_style) {
+        exit_help();
+        exit_error(NULL, "conflicting output style options", NULL);
+    } else
+        p->o_style = style;
 }
 
-char* append_char(char* src, char append) {
-	int i = 0;
-	int s = 0;
-	char* r = NULL;
 
-	if (append == '\0') {
-		return r;
-	}
+static void set_context(char* val) {
 
-	if (src != NULL) {
-		s = (strlen(src));
-	}
-	else {
-		s = 0;
-	}
-	r = (char*) calloc(s + 2, sizeof(char) );
+    long int n = 0;
+    char* str;
 
-	if (r != NULL) {
-		r[s + 1] = '\0';
-		r[s] = append;
+    n = strtol(val, &str, 10);
 
-		if (src == NULL) {
-			return r;
-		}
-
-		while (src[i] != '\0' && i < s) {
-			r[i] = src[i];
-			i += 1;
-		}
-
-		free(src);
-		src = NULL;
-
-	}
-
-	return r;
+    if(val[0] != '\0' && *str == '\0') {
+        if(n >= 0)
+            p->context = (int)n;
+    } else {
+        exit_help();
+        exit_error(NULL, "invalid context length '%s'", val);
+    }
 }
 
-static int read_param(char *parameter, Params* parameters, int lc) {
+static void set_width(char* val) {
 
-	char test_dash = '-';
-	char test_end = '\0';
-	//char test_space = ' ';
-	char test_equals = '=';
-	char *pointer_char = (char*) malloc(sizeof(char) * 2);
+    long int n = 0;
+    char* str;
 
-	int count = 0;
-	int size = strlen(parameter);
+    n = strtol(val, &str, 10);
 
-	unsigned short swap = 0;
-	char *param = NULL;
-	char* value = NULL;
-
-	pointer_char[0] = '\0';
-	pointer_char[1] = '\0';
-
-	if (parameter[0] == test_dash && parameter[1] == test_dash) {
-		if (size == 2) {
-			if (parameters->pathLeft == NULL) {
-				parameters->pathLeft = (char*) malloc(sizeof(char) * 2);
-				parameters->pathLeft[0] = '-';
-				parameters->pathLeft[1] = '\0';
-			}
-			if (parameters->pathRight == NULL) {
-				parameters->pathRight = (char*) malloc(sizeof(char) * 2);
-				parameters->pathRight[0] = '-';
-				parameters->pathRight[1] = '\0';
-			}
-			return 3;
-		}
-
-		if (lc == 1) {
-			return 0;
-		}
-
-		count = 2;
-		while (parameter[count] != test_end) {
-			if (swap) {
-				/* Add a letter for a value */
-				value = append_char(value, parameter[count]);
-			}
-			else {
-				if (parameter[count] == test_equals) {
-					swap = 1;
-				}
-				else {
-					/* Add a letter for a param */
-					param = append_char(param, parameter[count]);
-				}
-			}
-			count += 1;
-		}
-
-		if (write_params(param, value, parameters) == 4) {
-			return 4;
-		}
-		return 1;
-	}
-	else if (parameter[0] == test_dash) {
-		if (size == 1) {
-			/* Entry read */
-
-			if (parameters->pathLeft != NULL) {
-				parameters->pathRight = (char*) malloc(sizeof(char) * 2);
-				parameters->pathRight[0] = '-';
-				parameters->pathRight[1] = '\0';
-			}
-			else {
-				parameters->pathLeft = (char*) malloc(sizeof(char) * 2);
-				parameters->pathLeft[0] = '-';
-				parameters->pathLeft[1] = '\0';
-			}
-		}
-
-		if (size < 3) {
-			return 2;
-		}
-		else {
-			count = 1;
-			while (parameter[count] != '\0') {
-				pointer_char[0] = parameter[count];
-				write_params(pointer_char, NULL, parameters);
-				count += 1;
-			}
-		}
-	}
-	else {
-		return 3;
-	}
-
-	return 0;
+    if(val[0] != '\0' && *str == '\0') {
+        if(n >= 0)
+            p->context = (int)n;
+        else if (n == 0) {
+            exit_help();
+            exit_error(NULL, "invalid width '%s'", val);
+        }
+    } else {
+        exit_help();
+        exit_error(NULL, "invalid width '%s'", val);
+    }
 }
 
-static int write_params(char* parameter, char* value, Params* parameters) {
+static int make_param(char* option, char* argument) {
 
-	int i = 0;
-	int val = 0;
-	short use_value = -1;
+    #ifdef DEBUG
+        printf("Option : %s\nArgument : %s\n--------\n", option, argument);
+    #endif
 
-	char param_error[512] = {0};
+    if(p) {
+        if (!strcmp(option, "normal")) {
+            set_output_style(REGULAR);
+            return 0;
+        }
+        else if (!strcmp(option, "brief") || !strcmp(option, "q")) {
+            p->brief = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "report-identical-files") || !strcmp(option, "s")) {
+            p->report_identical_files = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "c")) {
+            set_output_style(CONTEXT);
+            return 0;
+        }
+        else if (!strcmp(option, "C")) {
 
-	printf("-----\nParameter test : %s\n", parameter);
+            if(!argument) {
+                exit_help();
+                exit_error(NULL, "option requires an argument -- '%s'", option);
+            }
 
-	if (value != NULL) {
-		val = atoi(value);
-		use_value = 0;
-		printf("Value (text) : %s\n", value);
-		printf("Parameter value : %i\n", val);
-	}
-	printf("-----\n");
+            set_output_style(CONTEXT);
+            set_context(argument);
+            return 1;
 
-	/* Writing a list of */
-	if (!strcmp(parameter, "normal")) {
-		parameters->o_style = REGULAR;
-	}
-	else if (!strcmp(parameter, "brief") || !strcmp(parameter, "q")) {
-		parameters->brief = 1;
-	}
-	else if (!strcmp(parameter, "report-identical-files") || !strcmp(parameter, "s")) {
-		parameters->report_identical_files = 1;
-	}
-	else if (!strcmp(parameter, "context") || !strcmp(parameter, "c") || !strcmp(parameter, "C")) {
-		if (value == NULL || val < 0 || !strcmp(parameter, "c")) {
-			val = 3;
-		}
+        }
+        else if (!strcmp(option, "context")) {
 
-		parameters->context = val;
-		parameters->o_style = CONTEXT;
-		use_value = 1;
-	}
-	else if (!strcmp(parameter, "unified") || !strcmp(parameter, "u") || !strcmp(parameter, "U")) {
-		if (value == NULL || val < 0 || !strcmp(parameter, "u")) {
-			val = 3;
-		}
+            set_output_style(CONTEXT);
 
-		parameters->unifier = val;
-		parameters->o_style = UNIFIED;
-		use_value = 1;
-	}
-	else if (!strcmp(parameter, "ed") || !strcmp(parameter, "e") || !strcmp(parameter, "C")) {
-		parameters->generate_script = 1;
-	}
-	else if (!strcmp(parameter, "rcs") || !strcmp(parameter, "n")) {
-		parameters->generate_diff_file = 1;
-	}
-	else if (!strcmp(parameter, "side-by-side") || !strcmp(parameter, "y")) {
-		parameters->o_style = COLUMNS;
-	}
-	else if (!strcmp(parameter, "width") || !strcmp(parameter, "W")) {
-		if (value == NULL || val < 1 || !strcmp(parameter, "W")) {
-			val = 130;
-		}
+            if(argument) {
+                set_context(argument);
+                return 1;
+            }
 
-		parameters->show_max_char = val;
-		use_value = 1;
-	}
-	else if (!strcmp(parameter, "left-column")) {
-		parameters->o_style = COLUMNS;
-		parameters->left_column = 1;
-	}
-	else if (!strcmp(parameter, "suppress-common-lines")) {
-		parameters->o_style = COLUMNS;
-		parameters->suppress_common_lines = 1;
-	}
-	else if (!strcmp(parameter, "show-c-function") || !strcmp(parameter, "p")) {
-		parameters->show_c_function = 1;
-	}
-	else if (!strcmp(parameter, "label")) {
-		parameters->label = NULL;
-		return 4; // Special return
-	}
-	else if (!strcmp(parameter, "ignore-case") || !strcmp(parameter, "i")) {
-		parameters->ignore_case = 1;
-	}
-	else if (!strcmp(parameter, "ignore-tab-expansion") || !strcmp(parameter, "E")) {
-		parameters->ignore_tab = 1;
-	}
-	else if (!strcmp(parameter, "ignore-trailing-space") || !strcmp(parameter, "Z")) {
-		parameters->ignore_end_space = 1;
-	}
-	else if (!strcmp(parameter, "ignore-space-change") || !strcmp(parameter, "b")) {
-		parameters->ignore_change_space = 1;
-	}
-	else if (!strcmp(parameter, "ignore-all-space") || !strcmp(parameter, "w")) {
-		parameters->ignore_all_space = 1;
-	}
-	else if (!strcmp(parameter, "ignore-blank-lines") || !strcmp(parameter, "B")) {
-		parameters->ignore_blank_lines = 1;
-	}
-	else if (!strcmp(parameter, "ignore-matching-lines") || !strcmp(parameter, "I")) {
+            return 0;
+        }
+        else if (!strcmp(option, "u")) {
+            set_output_style(UNIFIED);
+        }
+        else if (!strcmp(option, "U")) {
 
-		parameters->ignore_regex_match = (regex_t*)malloc(sizeof(regex_t));
-		if(regcomp(parameters->ignore_regex_match, value, REG_NOSUB | REG_EXTENDED) == 0) {
-            use_value = 1;
-		}else {
-            fputs("diff: error when compiling the regex expression\n", stderr);
-            exit(2);
-		}
-	} else {
-        show_help();
-        sprintf(param_error, "invalid option -- '%s'", parameter);
-        send_error(NULL, param_error);
-	}
+            if(!argument) {
+                exit_help();
+                exit_error(NULL, "option requires an argument -- '%s'", option);
+            }
 
-	if (use_value == 0) {
-		if (parameters->pathLeft != NULL) {
+            set_output_style(UNIFIED);
+            set_context(argument);
+            return 1;
 
-			if (parameters->pathRight != NULL) {
-				return 0;
-			}
+        }
+        else if (!strcmp(option, "unified")) {
 
-			parameters->pathRight = (char*) calloc(strlen(value) + 1, sizeof(char) );
-			parameters->pathRight[strlen(value)] = '\0';
+            set_output_style(UNIFIED);
 
-			while (value[i] != '\0' && i < (int) (strlen(value) + 1)) {
-				parameters->pathRight[i] = value[i];
-				i += 1;
-			}
+            if(argument) {
+                set_context(argument);
+                return 1;
+            }
 
-		}
-		else {
-			parameters->pathLeft = (char*) calloc(strlen(value) + 1, sizeof(char) );
-			parameters->pathLeft[strlen(value)] = '\0';
+            return 0;
+        }
+        else if (!strcmp(option, "ed") || !strcmp(option, "e")) {
+            set_output_style(EDIT_SCRIPT);
+            return 0;
+        }
+        else if (!strcmp(option, "rcs") || !strcmp(option, "n")) {
+            set_output_style(RCS);
+            return 0;
+        }
+        else if (!strcmp(option, "side-by-side") || !strcmp(option, "y")) {
+            set_output_style(COLUMNS);
+            return 0;
+        }
+        else if (!strcmp(option, "width") || !strcmp(option, "W")) {
 
-			while (value[i] != '\0' && i < (int) (strlen(value) + 1)) {
-				parameters->pathLeft[i] = value[i];
-				i += 1;
-			}
+            if(!argument) {
+                exit_help();
+                exit_error(NULL, "option requires an argument -- '%s'", option);
+            }
 
-		}
-	}
-	return 0;
+            set_width(argument);
+            return 1;
+        }
+        else if (!strcmp(option, "left-column")) {
+            p->left_column = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "suppress-common-lines")) {
+            p->suppress_common_lines = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "show-c-function") || !strcmp(option, "p")) {
+            p->show_c_function = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "label")) {
+
+            if(!argument) {
+                exit_help();
+                exit_error(NULL, "option '%s' requires an argument", option);
+            }
+
+            p->label = argument;
+            return 1;
+        }
+        else if (!strcmp(option, "ignore-case") || !strcmp(option, "i")) {
+            p->ignore_case = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "ignore-tab-expansion") || !strcmp(option, "E")) {
+            p->ignore_tab = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "ignore-trailing-space") || !strcmp(option, "Z")) {
+            p->ignore_end_space = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "ignore-space-change") || !strcmp(option, "b")) {
+            p->ignore_change_space = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "ignore-all-space") || !strcmp(option, "w")) {
+            p->ignore_all_space = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "ignore-blank-lines") || !strcmp(option, "B")) {
+            p->ignore_blank_lines = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "ignore-matching-lines")) {
+
+            if(!argument) {
+                exit_help();
+                exit_error(NULL, "option '%s' requires an argument", option);
+            }
+
+            p->ignore_regex_match = (regex_t*)malloc(sizeof(regex_t)); // regex
+
+            if(regcomp(p->ignore_regex_match, argument, REG_NOSUB | REG_EXTENDED) != 0) { // Compilation
+                exit_help();
+                exit_error(NULL, "regex '%s' is invalid", argument);
+            }
+
+            return 1;
+        }
+        else if (!strcmp(option, "I")) {
+
+            if(!argument) {
+                exit_help();
+                exit_error(NULL, "option requires an argument -- '%s'", option);
+            }
+
+            p->ignore_regex_match = (regex_t*)malloc(sizeof(regex_t)); // regex
+
+            if(regcomp(p->ignore_regex_match, argument, REG_NOSUB | REG_EXTENDED) != 0) { // Compilation
+                exit_help();
+                exit_error(NULL, "regex '%s' is invalid", argument);
+            }
+
+            return 1;
+        }
+        #ifdef DEBUG
+        else if (!strcmp(option, "debug-show-options")) {
+            p->d_show_params = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "debug-show-index")) {
+            p->d_show_index = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "debug-show-diff")) {
+            p->d_show_diff = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "debug-interactive-mode")) {
+            p->d_interactive_mode = 1;
+            return 0;
+        }
+        #endif
+        else {
+            exit_help();
+            if(strlen(option) < 2) {
+                exit_error(NULL, "invalid option -- '%s'", option); // court
+            } else {
+                exit_error(NULL, "unrecognized option '%s'", option); // long
+            }
+        }
+    }
+
+    return 0;
+
 }
 
+#ifdef DEBUG
 void print_params(Params* parameters) {
 	if (parameters == NULL) {
 		return;
 	}
 
-	printf("-----\n");
-	printf("Mode : %d\n", parameters->brief);
+	printf("Options list : \n");
 
+	printf("Output Style : %d\n", parameters->o_style);
+	printf("Brief : %d\n", parameters->brief);
 	printf("Context : %d\n", parameters->context);
-	printf("Unifier : %d\n", parameters->unifier);
-	printf("Generate script : %d\n", parameters->generate_script);
-	printf("generate diff file : %d\n", parameters->generate_diff_file);
 
-	//printf("Show colomns : %d\n", parameters->show_colomns);
 	printf("Show max char : %d\n", parameters->show_max_char);
-	//	printf("Show left identical : %d\n", parameters->show_left_identical); /* Ligne identique colonne de gauche */
 
-	//	printf("Remove identical : %d\n", parameters->remove_identical);
 	printf("Show C function : %d\n", parameters->show_c_function);
 	printf("Show function line : %s\n", parameters->show_function_line);
 	printf("Label : %s\n", parameters->label);
@@ -477,7 +501,7 @@ void print_params(Params* parameters) {
 	printf("Line type format LFMT : %s\n", parameters->line_type_format_LFMT);
 
 	printf("Minimal diference : %d\n", parameters->minimal_diference);
-	printf("Horizontal lines : %d\n", parameters->horizontal_lines); /* Retire N lignes ayant des préfixes et suffixes identiques */
+	printf("Horizontal lines : %d\n", parameters->horizontal_lines);
 	printf("Speed large files : %d\n", parameters->speed_large_files);
 
 	printf("Show help : %d\n", parameters->show_help);
@@ -485,8 +509,9 @@ void print_params(Params* parameters) {
 
 	printf("Path left : %s\n", parameters->pathLeft);
 	printf("Path right : %s\n", parameters->pathRight);
-	printf("-----\n");
+
 }
+#endif
 
 void free_params_glob(void) {
 
@@ -499,4 +524,8 @@ void free_params_glob(void) {
         free(p);
         p = NULL;
     }
+
+    #ifdef DEBUG
+        printf("Exit of the program\n");
+    #endif
 }

@@ -6,8 +6,9 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
 
 void sec_closedir(DIR *d) {
 
-    if(closedir(d) == -1)
-        set_error("closedir()", NULL);
+    if(closedir(d) == -1) {
+        send_error("closedir()", NULL, NULL);
+    }
 
 }
 
@@ -15,8 +16,9 @@ DIR *sec_opendir(const char* path) {
 
     DIR *d = opendir(path);
 
-    if(!d)
-        set_error(path, NULL);
+    if(!d) {
+        send_error(path, NULL, NULL);
+    }
 
     return d;
 }

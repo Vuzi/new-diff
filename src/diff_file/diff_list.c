@@ -541,26 +541,26 @@ static void diff_display_unified(t_diff* list_e, t_index *f1, t_index *f2) {
         diff = list_e;
 
         /* Début */
-        start_2 = (list_e->start_2 - p->unifier > 0) ? list_e->start_2 - p->unifier : 0 ;
+        start_2 = (list_e->start_2 - p->context > 0) ? list_e->start_2 - p->context : 0 ;
 
         if(diff->type == ADDED_LINE) // Décalage d'ajout de lignes (Les lignes supprimées sont naturellements comptées dans le fichier 1)
-                start_1 = ((list_e->start_1 + 1) - p->unifier > 0) ? (list_e->start_1 + 1) - p->unifier : 0 ;
+                start_1 = ((list_e->start_1 + 1) - p->context > 0) ? (list_e->start_1 + 1) - p->context : 0 ;
         else
-            start_1 = (list_e->start_1 - p->unifier > 0) ? list_e->start_1 - p->unifier : 0 ;
+            start_1 = (list_e->start_1 - p->context > 0) ? list_e->start_1 - p->context : 0 ;
 
         while( list_e->next && // Tant qu'on a un élement suivant & qu'il est assez prêt du précédent
-             ((p->unifier > 0) && ((list_e->next->start_1 - list_e->end_1 - 1 <= (2*p->unifier)) || (list_e->next->start_2 - list_e->end_2 - 1 <= (2*p->unifier))))) {
+             ((p->context > 0) && ((list_e->next->start_1 - list_e->end_1 - 1 <= (2*p->context)) || (list_e->next->start_2 - list_e->end_2 - 1 <= (2*p->context))))) {
 
             list_e = list_e->next;
         }
 
         /* Fin */
-        end_1 = list_e->end_1 + p->unifier >= (signed)(f1->line_max) ? (signed)(f1->line_max-1) : list_e->end_1 + p->unifier;
+        end_1 = list_e->end_1 + p->context >= (signed)(f1->line_max) ? (signed)(f1->line_max-1) : list_e->end_1 + p->context;
 
-        if(diff->type == DELETED_LINE && p->unifier == 0) // Cas spécial
-            end_2 = list_e->end_2 - 1 + p->unifier >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 - 1 + p->unifier;
+        if(diff->type == DELETED_LINE && p->context == 0) // Cas spécial
+            end_2 = list_e->end_2 - 1 + p->context >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 - 1 + p->context;
         else
-            end_2 = list_e->end_2 + p->unifier >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 + p->unifier;
+            end_2 = list_e->end_2 + p->context >= (signed)(f2->line_max) ? (signed)(f2->line_max-1) : list_e->end_2 + p->context;
 
         diff_display_unified_lines(f1, start_1, end_1, f2, start_2, end_2, diff);
         diff_display_end_of_file(end_1, f1, 1);
@@ -916,6 +916,10 @@ static void diff_display_ed(t_diff* list_e, t_index *f) {
    =============================================== */
 void diff_display(t_diff* list_e, t_index *f1, t_index *f2) {
 
+    #ifdef DEBUG
+        printf("Start of the result display...\n");
+    #endif
+
     /* Format de sortie contextuel */
     if(p->o_style == CONTEXT)
         diff_display_context(list_e, f1, f2);
@@ -931,5 +935,9 @@ void diff_display(t_diff* list_e, t_index *f1, t_index *f2) {
     /* Format pas défaut */
     else
         diff_display_regular(list_e, f1, f2);
+
+    #ifdef DEBUG
+        printf("...display completed\n--------------\n");
+    #endif
 
 }

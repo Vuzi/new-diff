@@ -19,8 +19,8 @@ typedef struct _params {
 	short report_identical_files;
 
 	output_style o_style;
-	short context;
-	short unifier;
+	int context;
+
 	short generate_script;
 	short generate_diff_file;
 
@@ -74,6 +74,14 @@ typedef struct _params {
 
 	char* pathLeft;
 	char* pathRight;
+
+	#ifdef DEBUG
+	short d_show_index;
+	short d_show_options;
+	short d_show_diff;
+	short d_interactive_mode;
+	#endif
+
 } Params;
 
 
@@ -81,15 +89,6 @@ typedef struct _params {
 
 /* Prototypes */
 void diff_init(int argc, char** argv);
-
-void initialize_params(void);
-int check_params(int argc, char **argv);
 void free_params_glob(void);
-
-char* append_char(char* src, char append);
-void print_params(Params* parameters);
-
-char toUpper(char c);
-char toLower(char c);
 
 #endif /* PARAMS_H */
