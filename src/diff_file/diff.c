@@ -68,14 +68,15 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
     t_diff *diff_supp = NULL, *diff_add_ = NULL, *diff_modif = NULL;
 
     unsigned int save = 0;
+    unsigned int save_1 = 0, save_2 = 0;
 
-    unsigned int save_1 = 0;
-    unsigned int save_2 = 0;
+    line_error l1 = _NO_ERROR, l2 = _NO_ERROR;
 
-    /* On avance */
-    line_error l1 = line_go_to(f1, f1->line+1);
-    line_error l2 = line_go_to(f2, f2->line+1);
-
+    /* On avance & passe les lignes identiques */
+    do {
+        l1 = line_next(f1);
+        l2 = line_next(f2);
+    }while(l1 == _NO_ERROR && l2 == _NO_ERROR && line_compare(f1, f2) == 0);
 
     /* Il reste des lignes */
     if(l1 == _NO_ERROR && l2 == _NO_ERROR ) {
@@ -83,42 +84,42 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
         save_1 = f1->line;
         save_2 = f2->line;
 
-        /* Test d'égalité */
-        if(line_compare(f1, f2) != 0) {
+        /* Test de la suppression */
+        if((line = line_search(f2, f1)) >= 0) {
 
-            /* Test de la suppression */
-            if((line = line_search(f2, f1)) >= 0) {
+            /* Suppression de la ligne de f1 dans f2 possible */
+            val_supp = ((unsigned)line) - f1->line;
+            diff_add(&diff_supp, DELETED_LINE, f1->line, (unsigned)line-1, f2->line-1, f2->line-1);
 
-                /* Suppression de la ligne de f1 dans f2 possible */
-                val_supp = ((unsigned)line) - f1->line;
-                diff_add(&diff_supp, DELETED_LINE, f1->line, (unsigned)line-1, f2->line-1, f2->line-1);
+            /* Déplacement */
+            line_go_to(f1, (unsigned)(line)); //Possible sans test, car correspondance trouvée à line
 
-                /* Déplacement */
-                line_go_to(f1, (unsigned)(line)); //Possible sans test, car correspondance trouvée à line
+            val_supp = val_supp + diff_file_intern(&diff_supp, f1, f2); // On relance
+        }
 
-                val_supp = val_supp + diff_file_intern(&diff_supp, f1, f2);
-            }
+        f1->line = save_1;
+        f2->line = save_2;
 
-            f1->line = save_1;
-            f2->line = save_2;
+        /* Test de l'ajout */
+        if((line = line_search(f1, f2)) >= 0) {
 
-            /* Test de l'ajout */
-            if((line = line_search(f1, f2)) >= 0) {
+            /* Ajout des lignes avant correspondance possible */
+            val_add = ((unsigned)line) - f2->line;
+            diff_add(&diff_add_, ADDED_LINE, f1->line-1, f1->line-1, f2->line, (unsigned)line-1);
 
-                /* Ajout des lignes avant correspondance possible */
-                val_add = ((unsigned)line) - f2->line;
-                diff_add(&diff_add_, ADDED_LINE, f1->line-1, f1->line-1, f2->line, (unsigned)line-1);
+            /* Déplacement */
+            line_go_to(f2, (unsigned)(line)); //Possible sans test, car correspondance trouvée à line
 
-                /* Déplacement */
-                line_go_to(f2, (unsigned)(line)); //Possible sans test, car correspondance trouvée à line
+            val_add = val_add + diff_file_intern(&diff_add_ ,f1, f2); // On relance
+        }
 
-                val_add = val_add + diff_file_intern(&diff_add_ ,f1, f2);
-            }
+        f1->line = save_1;
+        f2->line = save_2;
 
-            f1->line = save_1;
-            f2->line = save_2;
+        /* Test de la modification - Produit toujours au moins 2 différences,
+           inutile de tester si un des deux arbres à déjà une solution forcément <= 2 */
+        if(val_supp > 2 && val_add > 2) {
 
-            /* Test de la modification - Toujours possible */
             save = f1->line;
 
             do {
@@ -133,6 +134,10 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
 
                 /* On remonte de la ligne dépassée */
                 line_previous(f1);
+                /* On place f2 sur la bonne ligne */
+                line_go_to(f2, (unsigned)(line-1));
+
+                val_modif = val_modif + diff_file_intern(&diff_modif ,f1, f2); // On relance
             }
             /* Pas de correspondance jusqu'à fin du fichier */
             else {
@@ -142,57 +147,51 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
                 line_go_to(f2, f2->line_max-1); // On va à la fin
                 line_go_to(f1, f1->line_max-1);
             }
-
-            val_modif = val_modif + diff_file_intern(&diff_modif ,f1, f2);
-
-
-            /* On sélectionne le test ayant causé le moins de mouvement */
-            if(val_supp <= val_add && val_supp <= val_modif) {
-                /* Suppression */
-
-                diff_delete(diff_add_);
-                diff_delete(diff_modif);
-
-                /* Ajout */
-                if(*diff_list)
-                    diff_last(*diff_list)->next = diff_supp;
-                else
-                    (*diff_list) = diff_supp;
-
-                return val_supp;
-
-            } else if(val_add <= val_supp && val_add <= val_modif) {
-                /* Ajout */
-
-                diff_delete(diff_supp);
-                diff_delete(diff_modif);
-
-                /* Ajout */
-                if(*diff_list)
-                    diff_last(*diff_list)->next = diff_add_;
-                else
-                    (*diff_list) = diff_add_;
-
-                return val_add;
-
-            } else {
-                /* Modification */
-
-                diff_delete(diff_supp);
-                diff_delete(diff_add_);
-
-                /* Ajout */
-                if(*diff_list)
-                    diff_last(*diff_list)->next = diff_modif;
-                else
-                    (*diff_list) = diff_modif;
-
-                return val_modif;
-            }
         }
-        /* Lignes égales */
-        else
-            return diff_file_intern(diff_list ,f1, f2);
+
+        /* On sélectionne le test ayant causé le moins de mouvement */
+        if(val_supp <= val_add && val_supp <= val_modif) {
+            /* Suppression */
+
+            diff_delete(diff_add_);
+            diff_delete(diff_modif);
+
+            /* Ajout */
+            if(*diff_list)
+                diff_last(*diff_list)->next = diff_supp;
+            else
+                (*diff_list) = diff_supp;
+
+            return val_supp;
+
+        } else if(val_add <= val_supp && val_add <= val_modif) {
+            /* Ajout */
+
+            diff_delete(diff_supp);
+            diff_delete(diff_modif);
+
+            /* Ajout */
+            if(*diff_list)
+                diff_last(*diff_list)->next = diff_add_;
+            else
+                (*diff_list) = diff_add_;
+
+            return val_add;
+
+        } else {
+            /* Modification */
+
+            diff_delete(diff_supp);
+            diff_delete(diff_add_);
+
+            /* Ajout */
+            if(*diff_list)
+                diff_last(*diff_list)->next = diff_modif;
+            else
+                (*diff_list) = diff_modif;
+
+            return val_modif;
+        }
 
     }
     /* Fin du fichier d'un côté */
@@ -208,7 +207,6 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
     /* Fin du fichier des deux côtés */
     else
         return 0;
-
 }
 
 
@@ -229,7 +227,7 @@ int diff_file(const char* f1_name, const char* f2_name) {
 
     int ret = 0;
 
-    FILE* f1 = sec_fopen(f1_name, "r+"), *f2 = sec_fopen(f2_name, "r+");
+    FILE* f1 = sec_fopen(f1_name, "rb+"), *f2 = sec_fopen(f2_name, "rb+"); // Binaire pour les fins de lignes
 
     t_index *i1 = NULL, *i2 = NULL;
 
@@ -274,6 +272,19 @@ int diff_file(const char* f1_name, const char* f2_name) {
             #ifdef DEBUG
                 printf("Start of files comparison...\n");
             #endif
+
+            /* Tentative d'optimisation - ne fonctionne que dans le cas d'une modif, fait gagner beaucoup de temps
+            char a, b;
+            int line = 0;
+
+            while((a = getc(i1->f)) == (b = getc(i2->f))) {
+                if(a == '\n')
+                    line++;
+            }
+
+            line_go_to(i1, line - 1);
+            line_go_to(i2, line - 1);
+            */
 
             /* Fichiers identiques */
             if(diff_file_intern(&diff_list, i1, i2) > 0) {

@@ -39,7 +39,7 @@ void diff_init(int argc, char** argv) {
     #ifdef DEBUG
     printf("... options analysing completed\n--------------\n");
 
-    if(p->d_show_params) {
+    if(p->d_show_options) {
         print_params(p);
         if(p->d_interactive_mode) {
             printf("Press enter to continue...\n");
@@ -419,7 +419,7 @@ static int make_param(char* option, char* argument) {
         }
         #ifdef DEBUG
         else if (!strcmp(option, "debug-show-options")) {
-            p->d_show_params = 1;
+            p->d_show_options = 1;
             return 0;
         }
         else if (!strcmp(option, "debug-show-index")) {

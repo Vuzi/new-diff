@@ -45,7 +45,7 @@ file_arg_case check_and_type_paths(const char* path1, const char* path2) {
         return NONE;
     }
     else if(val1 == -1) {
-        perror(path1);
+        send_error(path1, NULL, NULL);
         return NONE;
     }
 
@@ -54,7 +54,7 @@ file_arg_case check_and_type_paths(const char* path1, const char* path2) {
         return NONE;
     }
     else {
-        perror(path1);
+        send_error(path1, NULL, NULL);
         return NONE;
     }
 

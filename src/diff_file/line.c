@@ -186,7 +186,7 @@ void lines_display(t_index *f, unsigned int start, unsigned int end, const char 
    =============================================== */
 void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, const char *line_start, unsigned int lenght) {
     unsigned int i = 0, j = 0;
-    char c = 0;
+    int c = 0;
 
     if(f) {
         if(start <= end && end <= f->line_max) { // Si taille possible
@@ -230,12 +230,15 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
                     } else { // Fichiers longs
                         fseek(f->f, f->index[i], SEEK_SET);
 
-                        while((c = getc(f->f)) != END_LINE && c != EOF) {
+                        while((c = getc(f->f)) != END_LINE && c != '\r' && c != EOF) {
+
+
                             if(p->expand_tab && c == '\t' )
                                 print_space(p->size_tab);
                             else if(c != '\r')
                                 putchar(c);
                         }
+
 
                         putchar('\n');
                     }

@@ -5,6 +5,31 @@ static unsigned int index_size(FILE *f);
 static t_index* index_file_small(FILE *f, const char* f_name);
 static t_index* index_file_large(FILE *f, const char* f_name);
 
+short int is_end_line(FILE *f) {
+
+    int c = getc(f);
+
+    if(c == '\n') {
+        /* Ligne UNIX */
+        return 1;
+    } else if(c == '\r') {
+        c = getc(f);
+        if(c == '\n') {
+            /* Ligne Windows */
+            return 1;
+        } else {
+            /* Ligne Mac OS 9 */
+            fseek(f, (long)-1, SEEK_CUR);
+            return 1;
+        }
+    }
+
+    /* Sinon on revient */
+    fseek(f, (long)-1, SEEK_CUR);
+
+    return 0;
+}
+
 /* ===============================================
                     index_size
 
@@ -20,7 +45,7 @@ static unsigned int index_size(FILE *f) {
     char c = 0;
 
     while((c = getc(f)) != EOF) {
-        if(c == END_LINE)
+        if(c == '\r')
             cpt++;
     }
     cpt++; // Dernière ligne
@@ -163,7 +188,7 @@ static t_index* index_file_large(FILE *f, const char* f_name) {
     t_index *new_i = (t_index*)malloc(sizeof(t_index));
 
     char tmp = 0;
-    unsigned int i = 0;
+    unsigned int i = 0, cpt = 0;
 
     new_i->f_name = (char*)malloc(sizeof(char)*(strlen(f_name)+1));
     strcpy(new_i->f_name, f_name);
@@ -186,14 +211,31 @@ static t_index* index_file_large(FILE *f, const char* f_name) {
         new_i->index[i] = 0;
         i++;
 
-        /* Pour chaque char */
-        while((tmp = getc(f)) != EOF) {
-            /* Si nouvelle ligne */
-            if(tmp == END_LINE) {
-                /* On rempli la case */
-                new_i->index[i] = ftell(new_i->f);
+        while((tmp = fgetc(new_i->f)) != EOF) {
+            /* Fin de ligne Unix */
+            if(tmp == '\n') {
+                new_i->index[i] = cpt+1;
                 i++;
             }
+            /* Windows ou Mac OS 9 */
+            else if(tmp == '\r') {
+
+                tmp = fgetc(new_i->f);
+
+                /* Windows */
+                if(tmp == '\n') {
+                    cpt++;
+                    new_i->index[i] = cpt+1;
+                    i++;
+                }
+                /* Mac OS 9 */
+                else {
+                    new_i->index[i] = cpt+1;
+                    i++;
+                    fseek(new_i->f, ftell(new_i->f)-1, SEEK_SET);
+                }
+            }
+            cpt++;
         }
 
     }
