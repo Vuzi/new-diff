@@ -23,7 +23,7 @@ void diff_init(int argc, char** argv) {
 
     initialize_params();
 
-	atexit(free_params_glob); // Ajout Ã  la liste
+	atexit(free_params_glob); // Ajout à la liste
 
     make_params(argc, argv);
 
@@ -95,7 +95,7 @@ static void make_params(int argc, char **argv) {
         if(!no_more_op && arg_lenght > 0 && argv[i][0] == '-') {
             /* Si on a un second tiret, argument long */
             if(arg_lenght > 1 && argv[i][1] == '-') {
-                /* Si ce double tiret est tout seul, les options sont terminÃ©es */
+                /* Si ce double tiret est tout seul, les options sont terminées */
                 if(arg_lenght == 2) {
                     no_more_op = 1;
                 }
@@ -111,7 +111,7 @@ static void make_params(int argc, char **argv) {
 
                     if(arg_tmp) {
                         arg_tmp = '\0';
-                        arg_tmp++; // Pour couper en deux une mÃªme chaine
+                        arg_tmp++; // Pour couper en deux une même chaine
                         make_param(argv[i]+2, arg_tmp);
                     } else {
                         if(argc < i+1)
@@ -127,9 +127,9 @@ static void make_params(int argc, char **argv) {
             }
             /* Argument(s) court(s) */
             else {
-                /* Plusieurs : valeurs ignorÃ©es */
+                /* Plusieurs : valeurs ignorées */
                 if(arg_lenght > 2) {
-                    /* On peut en mettre plusieurs Ã  la suite */
+                    /* On peut en mettre plusieurs à la suite */
                     for(j = 1; j < arg_lenght; j++) {
                         short_tmp[0] = argv[i][j];
 
@@ -142,7 +142,7 @@ static void make_params(int argc, char **argv) {
                             make_param(short_tmp, NULL);
                     }
                 }
-                /* Un seul : On peut avoir des valeurs Ã  la suite */
+                /* Un seul : On peut avoir des valeurs à la suite */
                 else {
                     if(i+1 < argc)
                         i += make_param(argv[i]+1, argv[i+1]);
@@ -490,7 +490,11 @@ void print_params(Params* parameters) {
 	printf("Ignore change space : %d\n", parameters->ignore_change_space);
 	printf("Ignore all space : %d\n", parameters->ignore_all_space);
 	printf("Ignore blank lines : %d\n", parameters->ignore_blank_lines);
-	printf("Ignore regex match : %s\n", parameters->ignore_regex_match);
+
+	if(parameters->ignore_regex_match)
+        fputs("Ignore regex match : 1\n", stdout);
+    else
+        fputs("Ignore regex match : 0\n", stdout);
 
 	printf("Type text : %d\n", parameters->type_text);
 	printf("Remove backspace enter : %d\n", parameters->remove_backspace_enter);
@@ -516,7 +520,7 @@ void print_params(Params* parameters) {
 void free_params_glob(void) {
 
     if(p) {
-        /* Ici libÃ©rer tout les char* et cie */
+        /* Ici libérer tout les char* et cie */
 
         if(p->ignore_regex_match)
             regfree(p->ignore_regex_match);

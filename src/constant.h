@@ -17,6 +17,6 @@ Params *p = NULL;
 short int diff_stderr_show_help = 0;
 #endif
 
-#include "err.h"
+#include "err/err.h"
 
 #endif /* CONSTANT_H */

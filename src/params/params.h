@@ -2,7 +2,7 @@
 #define PARAMS_H
 
 #include <sys/types.h>
-#include <regex2.h>
+#include <regex.h>
 
 typedef enum _mode {
 	NORMAL, IDENTICAL, DIFFERENT

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="projet C - last" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/projet C - last" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DDEBUG" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/projet C - last" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-O3" />
+			<Add option="-Wshadow" />
+			<Add option="-Winit-self" />
+			<Add option="-Wredundant-decls" />
+			<Add option="-Wcast-align" />
+			<Add option="-Wundef" />
+			<Add option="-Wfloat-equal" />
+			<Add option="-Winline" />
+			<Add option="-Wmissing-declarations" />
+			<Add option="-Wmissing-include-dirs" />
+			<Add option="-Wswitch-enum" />
+			<Add option="-Wswitch-default" />
+			<Add option="-Wmain" />
+			<Add option="-Wfatal-errors" />
+			<Add option="-Wextra" />
+			<Add option="-Wall" />
+		</Compiler>
+		<Linker>
+			<Add library="C:\Program Files (x86)\CodeBlocks\MinGW\lib\libregex.dll.a" />
+		</Linker>
+		<Unit filename="constant.h" />
+		<Unit filename="diff_dir/diff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="diff_dir/diff.h" />
+		<Unit filename="diff_file/diff.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="diff_file/diff.h" />
+		<Unit filename="diff_file/diff_list.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="diff_file/diff_list.h" />
+		<Unit filename="diff_file/index.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="diff_file/index.h" />
+		<Unit filename="diff_file/line.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="diff_file/line.h" />
+		<Unit filename="err.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="err.h" />
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="params/params.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="params/params.h" />
+		<Unit filename="path_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="path_test.h" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
+			<envvars />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

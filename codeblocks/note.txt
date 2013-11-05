@@ -1,0 +1,3 @@
+Crée un dossier, ajouter les fichiers de ../src dedans, puis le project codeblocks.
+Copier les includes/la lib dans le bon repertoire.
+Ouvrir le projet !

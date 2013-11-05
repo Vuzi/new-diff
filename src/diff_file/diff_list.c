@@ -147,7 +147,11 @@ static void diff_display_file_name(t_index *f) {
         blank_lenght--;
     }
 
-    printf("%s.%llu ", stat_time, (unsigned long long)s.st_mtime);
+    #ifdef _WIN32
+        printf("%s.%I64u ", stat_time, (unsigned long long)s.st_mtime);
+    #else
+        printf("%s.%llu ", stat_time, (unsigned long long)s.st_mtime);
+    #endif
 
     strftime(stat_time, 512, "%z", stat_tm);
     printf("%s\n", stat_time);

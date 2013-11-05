@@ -1,18 +1,5 @@
-#ifndef H_ERR
-#define H_ERR
+#include "err.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <stdarg.h>
-
-#define CREATE_PARAMETERS
-
-#include "constant.h"
-
-/* Defines */
 
 /* ===============================================
                     exit_error
@@ -25,9 +12,17 @@
     const char* title : Titre de l'erreur
     const char* msg   : Contenu de l'erreur
    =============================================== */
-#define exit_error(title, msg, ...); \
-            send_error(title, msg, __VA_ARGS__); \
-            exit(2);
+void exit_error(const char* title, const char* msg, ...) {
+
+    va_list args;
+    va_start(args, msg);
+
+    send_error(title, msg, args);
+
+    va_end(args);
+
+    exit(2);
+}
 
 
 /* ===============================================
@@ -40,20 +35,30 @@
     const char* title : Titre de l'erreur
     const char* msg   : Contenu de l'erreur
    =============================================== */
-#define send_error(title, msg, ...); \
-            fprintf(stderr,"diff: "); \
-            if( title != NULL ) { \
-                fprintf(stderr,"%s: ", title); \
-            } \
-            if( msg != NULL ) { \
-                fprintf(stderr, msg, __VA_ARGS__); \
-                fputs("\n", stderr); \
-            } else { \
-                perror(NULL); \
-            } \
-            if(diff_stderr_show_help) { \
-                fprintf(stderr, "diff: Try 'diff --help' for more information.\n"); \
-            }
+void send_error(const char* title, const char* msg, ...) {
+
+    va_list args;
+    va_start(args, msg);
+
+    fprintf(stderr,"diff: ");
+
+    if( title != NULL ) {
+        fprintf(stderr,"%s: ", title);
+    }
+
+    if( msg != NULL ) {
+        vfprintf(stderr, msg, args);
+        fputs("\n", stderr);
+    } else {
+        perror(NULL);
+    }
+
+    if(diff_stderr_show_help) {
+        fprintf(stderr, "diff: Try 'diff --help' for more information.\n");
+    }
+
+    va_end(args);
+}
 
 /* ===============================================
                     exit_help
@@ -63,7 +68,6 @@
     après l'affichage de l'erreur.
     ----------------------------------------------
    =============================================== */
-#define exit_help(); \
+void exit_help(void) {
         diff_stderr_show_help = 1;
-
-#endif // H_ERR
+}
