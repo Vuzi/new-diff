@@ -7,8 +7,8 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/projet C - last" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/Debug/" />
+				<Option output="bin\Debug\projet C - last" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj\Debug\" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -17,8 +17,8 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/projet C - last" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/Release/" />
+				<Option output="bin\Release\projet C - last" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj\Release\" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -48,40 +48,40 @@
 			<Add option="-Wall" />
 		</Compiler>
 		<Linker>
-			<Add library="C:\Program Files (x86)\CodeBlocks\MinGW\lib\libregex.dll.a" />
+			<Add library="lib\libregex.dll.a" />
 		</Linker>
 		<Unit filename="constant.h" />
-		<Unit filename="diff_dir/diff.c">
+		<Unit filename="diff_dir\diff.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="diff_dir/diff.h" />
-		<Unit filename="diff_file/diff.c">
+		<Unit filename="diff_dir\diff.h" />
+		<Unit filename="diff_file\diff.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="diff_file/diff.h" />
-		<Unit filename="diff_file/diff_list.c">
+		<Unit filename="diff_file\diff.h" />
+		<Unit filename="diff_file\diff_list.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="diff_file/diff_list.h" />
-		<Unit filename="diff_file/index.c">
+		<Unit filename="diff_file\diff_list.h" />
+		<Unit filename="diff_file\index.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="diff_file/index.h" />
-		<Unit filename="diff_file/line.c">
+		<Unit filename="diff_file\index.h" />
+		<Unit filename="diff_file\line.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="diff_file/line.h" />
-		<Unit filename="err.c">
+		<Unit filename="diff_file\line.h" />
+		<Unit filename="err\err.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="err.h" />
+		<Unit filename="err\err.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="params/params.c">
+		<Unit filename="params\params.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="params/params.h" />
+		<Unit filename="params\params.h" />
 		<Unit filename="path_test.c">
 			<Option compilerVar="CC" />
 		</Unit>
