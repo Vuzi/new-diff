@@ -104,8 +104,10 @@ void diff_delete(t_diff* list) {
 static void diff_display_end_of_file(unsigned int end, t_index *f, short int show_msg) {
 
     if(f->line_max > 0 && end == (f->line_max)-1) {
-        fseek(f->f, 0, SEEK_END);
-        if(getc(f->f) != '\n') { // Si on ne finit pas par un saut de ligne
+        fseek(f->f, -1, SEEK_END);
+        end = getc(f->f);
+
+        if(!(IS_EL_START(end))) { // Si on ne finit pas par un saut de ligne
             if(show_msg)
                 puts("\\ No newline at end of file");
             else

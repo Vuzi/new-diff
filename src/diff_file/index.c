@@ -5,29 +5,37 @@ static unsigned int index_size(FILE *f);
 static t_index* index_file_small(FILE *f, const char* f_name);
 static t_index* index_file_large(FILE *f, const char* f_name);
 
-short int is_end_line(FILE *f) {
+/* ===============================================
+                    get_end_line
 
-    int c = getc(f);
+    Permet de récupérer le type de fin de ligne
+    quand une fin de ligne est rencontrée. Doit
+    être appellé avec forcément '\r' ou '\n'.
+    Se place sur le premier caractère de la prochaine ligne.
+    ----------------------------------------------
+    FILE *f : fichier à tester.
+    char c  : premier symbole de fin de ligne.
+    ----------------------------------------------
+    Retour : Retourne le type de fin de ligne.
+   =============================================== */
+END_LINE get_end_line(FILE *f, char c) {
 
     if(c == '\n') {
         /* Ligne UNIX */
-        return 1;
-    } else if(c == '\r') {
+        return LF;
+    } else {
         c = getc(f);
         if(c == '\n') {
             /* Ligne Windows */
-            return 1;
+            return CRLF;
         } else {
             /* Ligne Mac OS 9 */
             fseek(f, (long)-1, SEEK_CUR);
-            return 1;
+            return CR;
         }
     }
 
-    /* Sinon on revient */
-    fseek(f, (long)-1, SEEK_CUR);
-
-    return 0;
+    return -1;
 }
 
 /* ===============================================
@@ -42,11 +50,13 @@ short int is_end_line(FILE *f) {
    =============================================== */
 static unsigned int index_size(FILE *f) {
     unsigned int cpt = 0;
-    char c = 0;
+    int c = 0;
 
     while((c = getc(f)) != EOF) {
-        if(c == '\r')
+        if(IS_EL_START(c)) {
+            get_end_line(f, c);
             cpt++;
+        }
     }
     cpt++; // Dernière ligne
 
@@ -187,7 +197,7 @@ static t_index* index_file_large(FILE *f, const char* f_name) {
     /* On initialise */
     t_index *new_i = (t_index*)malloc(sizeof(t_index));
 
-    char tmp = 0;
+    int tmp = 0;
     unsigned int i = 0, cpt = 0;
 
     new_i->f_name = (char*)malloc(sizeof(char)*(strlen(f_name)+1));
@@ -211,36 +221,27 @@ static t_index* index_file_large(FILE *f, const char* f_name) {
         new_i->index[i] = 0;
         i++;
 
-        while((tmp = fgetc(new_i->f)) != EOF) {
-            /* Fin de ligne Unix */
-            if(tmp == '\n') {
-                new_i->index[i] = cpt+1;
+        /* On indexe chaque ligne */
+        while((tmp = getc(new_i->f)) != EOF) {
+            cpt++;
+
+            if(IS_EL_START(tmp)) {
+                if(get_end_line(new_i->f, tmp) == CRLF) {
+                    cpt++;
+                }
+                new_i->index[i] = cpt;
                 i++;
             }
-            /* Windows ou Mac OS 9 */
-            else if(tmp == '\r') {
-
-                tmp = fgetc(new_i->f);
-
-                /* Windows */
-                if(tmp == '\n') {
-                    cpt++;
-                    new_i->index[i] = cpt+1;
-                    i++;
-                }
-                /* Mac OS 9 */
-                else {
-                    new_i->index[i] = cpt+1;
-                    i++;
-                    fseek(new_i->f, ftell(new_i->f)-1, SEEK_SET);
-                }
-            }
-            cpt++;
         }
 
-    }
+        /* Derniere ligne vide */
+        if(new_i->index[i-1] == cpt)
+            new_i->line_max--;
 
-    rewind(f);
+    } else
+        new_i->index[i] = 0;
+
+    rewind(new_i->f);
 
     /* On renvoit la structure */
     return new_i;

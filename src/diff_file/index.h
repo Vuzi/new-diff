@@ -11,7 +11,14 @@
 
 #include "../constant.h"
 
-#define END_LINE '\n'
+#define IS_EL_START(c) \
+        (c == '\r' || c == '\n')
+
+enum _END_LINE {
+    LF /* \n */, CR /* \r */, CRLF /* \r\n */
+};
+
+typedef enum _END_LINE END_LINE;
 
 /* Structure de parcours des fichiers */
 struct s_index {
@@ -37,7 +44,7 @@ struct s_index {
 typedef struct s_index t_index;
 
 /* Prototypes */
-short int is_end_line(FILE *f);
+END_LINE get_end_line(FILE *f, char c);
 
 t_index* index_file(FILE *f, const char* f_name);
 void index_file_c_func(t_index* index);

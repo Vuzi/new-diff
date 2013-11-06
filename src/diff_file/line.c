@@ -1,5 +1,36 @@
 #include "line.h"
 
+void lines_next_diff(t_index *i1, line_error *l1, t_index *i2, line_error *l2) {
+
+    if(i1 && i2) {
+        int c1 = 0, c2 = 0;
+        int line = 0;
+
+        while((c1 = getc(i1->f)) == (c2 = getc(i2->f)) || (IS_EL_START(c1) && IS_EL_START(c2))) {
+            if(IS_EL_START(c1)) {
+                if(get_end_line(i1->f, c1) == get_end_line(i2->f, c2) || p->strip_trailing_cr)
+                    line++;
+                else
+                    break;
+            } else if(c1 == EOF)
+                break;
+        }
+
+        if(c1 == EOF )
+            *l1 = END_FILE;
+        else
+            *l1 = _NO_ERROR;
+
+        if(c2 == EOF)
+            *l2 = END_FILE;
+        else
+            *l2 = _NO_ERROR;
+
+        line_go_to(i1, i1->line + line);
+        line_go_to(i2, i2->line + line);
+    }
+
+}
 
 /* ===============================================
                     line_search
@@ -42,7 +73,7 @@ int line_search(t_index *line, t_index *f1) {
    =============================================== */
 int line_compare(t_index *l1, t_index *l2) {
 
-    char tmp1 = 0, tmp2 = 0;
+    int tmp1 = 0, tmp2 = 0, ret = -1;
 
     if(l1 && l2) {
         /* On se place */
@@ -53,23 +84,36 @@ int line_compare(t_index *l1, t_index *l2) {
 
         /* On compare */
         while((tmp1 = fgetc(l1->f)) == (tmp2 = fgetc(l2->f))) {
+
             /* Si fin de ligne, on saute */
-            if(tmp1 == END_LINE || tmp1 == EOF) {
-                line_go_to(l1, l1->line); // On revient à la ligne en cours
-                line_go_to(l2, l2->line);
-                return 0;
+            if(IS_EL_START(tmp1)) {
+                if((p->strip_trailing_cr || get_end_line(l1->f, (char)tmp1) == get_end_line(l2->f, (char)tmp2)))
+                    ret = 0;
+                else
+                    ret = 1;
+                break;
+            }
+            /* Si fin de fichier aussi */
+            else if (tmp1 == EOF) {
+                ret = 0;
+                break;
             }
         }
+
+        if( ret == -1 ) {
+            /* Si différence de fin de ligne */
+            if(p->strip_trailing_cr && IS_EL_START(tmp1) && IS_EL_START(tmp2))
+                ret = 0;
+            else
+                ret = 1;
+        }
+
         line_go_to(l1, l1->line); // On revient à la ligne en cours
         line_go_to(l2, l2->line);
 
-        if((tmp1 == END_LINE && tmp2 == EOF) || (tmp2 == END_LINE && tmp1 == EOF))
-            return 0;
-        else
-            return 1;
+    }
 
-    } else
-        return -1;
+    return ret;
 
 }
 
@@ -188,6 +232,7 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
     unsigned int i = 0, j = 0;
     int c = 0;
 
+
     if(f) {
         if(start <= end && end <= f->line_max) { // Si taille possible
             for(i = start; i <= end; i++, j = 0) { // Pour chacune des lignes à afficher
@@ -197,6 +242,8 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
 
                 if(lenght > 0) { // Si long. limitée
                     if(f->lines) { // Fichier courts
+
+                        /*
                         for(j = 0; j < strlen(f->lines[i]) && j < lenght && j != '\n'; j++) {
                             if(p->expand_tab && f->lines[i][j] == '\t' )
                                 print_space(p->size_tab);
@@ -205,40 +252,47 @@ void lines_display_lenght(t_index *f, unsigned int start, unsigned int end, cons
                         }
 
                         putchar('\n');
+                        */
+
                     } else { // Fichiers longs
                         fseek(f->f, f->index[i], SEEK_SET);
+                        c = getc(f->f);
 
-                        while((c = getc(f->f)) != END_LINE && c != EOF && j < lenght) {
+                        while( !(IS_EL_START(c)) && c != EOF && j < lenght) {
                             if(p->expand_tab && c == '\t')
                                 print_space(p->size_tab);
                             else
                                 putchar(c);
+
+                            c = getc(f->f);
                             j++;
                         }
 
                         putchar('\n');
                     }
-                } else { // Sinon
+                } else { // Sinon pas de limite
                     if(f->lines) { // Fichiers cours
+                        /*
                         fputs(f->lines[i],stdout);
 
                         j = strlen(f->lines[i]);
                         if(j == 0 || f->lines[i][j-1] != '\n')
                             fputc((int)'\n', stdout);
-
+                        */
 
                     } else { // Fichiers longs
                         fseek(f->f, f->index[i], SEEK_SET);
+                        c = getc(f->f);
 
-                        while((c = getc(f->f)) != END_LINE && c != '\r' && c != EOF) {
-
-
+                        /* Tant qu'on a pas de saut de ligne, on affiche */
+                        while( !(IS_EL_START(c)) && c != EOF ) {
                             if(p->expand_tab && c == '\t' )
                                 print_space(p->size_tab);
-                            else if(c != '\r')
+                            else
                                 putchar(c);
-                        }
 
+                            c = getc(f->f);
+                        }
 
                         putchar('\n');
                     }

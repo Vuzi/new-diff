@@ -2,7 +2,7 @@
 #define PARAMS_H
 
 #include <sys/types.h>
-#include <regex.h>
+#include "../include/regex.h"
 
 typedef enum _mode {
 	NORMAL, IDENTICAL, DIFFERENT
@@ -58,8 +58,7 @@ typedef struct _params {
 	regex_t *ignore_regex_match;
 
 	short type_text;
-	short remove_backspace_enter;
-	char* show_diferent_fusion;
+	short strip_trailing_cr;
 
 	char* group_format_GFMT;
 	char* line_format_LFMT;

@@ -73,10 +73,10 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
     line_error l1 = _NO_ERROR, l2 = _NO_ERROR;
 
     /* On avance & passe les lignes identiques */
-    do {
-        l1 = line_next(f1);
-        l2 = line_next(f2);
-    }while(l1 == _NO_ERROR && l2 == _NO_ERROR && line_compare(f1, f2) == 0);
+    l1 = line_next(f1);
+    l2 = line_next(f2);
+
+    lines_next_diff(f1, &l1, f2, &l2);
 
     /* Il reste des lignes */
     if(l1 == _NO_ERROR && l2 == _NO_ERROR ) {
@@ -273,20 +273,7 @@ int diff_file(const char* f1_name, const char* f2_name) {
                 printf("Start of files comparison...\n");
             #endif
 
-            /* Tentative d'optimisation - ne fonctionne que dans le cas d'une modif, fait gagner beaucoup de temps
-            char a, b;
-            int line = 0;
-
-            while((a = getc(i1->f)) == (b = getc(i2->f))) {
-                if(a == '\n')
-                    line++;
-            }
-
-            line_go_to(i1, line - 1);
-            line_go_to(i2, line - 1);
-            */
-
-            /* Fichiers identiques */
+            /* Fichiers différents */
             if(diff_file_intern(&diff_list, i1, i2) > 0) {
                 ret = 1;
 
@@ -308,7 +295,7 @@ int diff_file(const char* f1_name, const char* f2_name) {
                 else
                     diff_display(diff_list, i1 ,i2);
             }
-            /* Fichiers différents */
+            /* Fichiers identiques */
             else {
                 ret = 0;
 

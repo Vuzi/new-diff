@@ -18,6 +18,7 @@ line_error line_next(t_index *f);
 line_error line_previous(t_index *f);
 line_error line_go_to(t_index *f, unsigned int n);
 
+void lines_next_diff(t_index *i1, line_error *l1, t_index *i2, line_error *l2);
 int line_compare(t_index *l1, t_index *l2);
 int line_search(t_index *line, t_index *f1);
 void lines_display(t_index *f, unsigned int start, unsigned int end, const char *line_start);

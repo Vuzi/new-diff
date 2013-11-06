@@ -66,7 +66,6 @@ static void initialize_params(void) {
 
 	p->start_compare_file_in_dir = NULL;
 	p->ignore_regex_match = NULL;
-	p->show_diferent_fusion = NULL;
 
 	p->group_format_GFMT = NULL;
 	p->line_format_LFMT = NULL;
@@ -177,22 +176,16 @@ static void make_params(int argc, char **argv) {
 
 static void set_file_name(char *name) {
 
-    char *name_copy = NULL;
-
     #ifdef DEBUG
         printf("Filename : %s\n--------\n", name);
     #endif
 
     if(p) {
-        name_copy = (char*)malloc(sizeof(char)*(strlen(name)+1));
-        strcpy(name_copy, name);
-
         if(!(p->pathLeft)) {
-            p->pathLeft = name_copy;
+            p->pathLeft = name;
         } else if(!(p->pathRight)) {
-            p->pathRight = name_copy;
+            p->pathRight = name;
         } else {
-            free(name_copy);
             exit_help();
             exit_error(NULL, "extra operand '%s'", name);
         }
@@ -417,6 +410,10 @@ static int make_param(char* option, char* argument) {
 
             return 1;
         }
+        else if (!strcmp(option, "strip-trailing-cr")) {
+            p->strip_trailing_cr = 1;
+            return 0;
+        }
         #ifdef DEBUG
         else if (!strcmp(option, "debug-show-options")) {
             p->d_show_options = 1;
@@ -497,8 +494,7 @@ void print_params(Params* parameters) {
         fputs("Ignore regex match : 0\n", stdout);
 
 	printf("Type text : %d\n", parameters->type_text);
-	printf("Remove backspace enter : %d\n", parameters->remove_backspace_enter);
-	printf("Show different fusion : %s\n", parameters->show_diferent_fusion);
+	printf("Strip trailing cr : %d\n", parameters->strip_trailing_cr);
 
 	printf("Group format GFMT : %s\n", parameters->group_format_GFMT);
 	printf("Line format LFMT : %s\n", parameters->line_format_LFMT);
