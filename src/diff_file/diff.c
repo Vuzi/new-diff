@@ -3,7 +3,8 @@
 
 /* Prototype des statiques */
 static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2);
-
+static short int diff_file_brief(t_index *i1, t_index *i2);
+static short int diff_file_binary(FILE *f1, FILE* f2);
 
 /* ===============================================
                       sec_fopen
@@ -44,6 +45,44 @@ void sec_fclose(FILE *f) {
 
 }
 
+static short int diff_file_binary(FILE *f1, FILE* f2) {
+
+    int c1 = 0, c2 = 0;
+
+    fseek(f1, 0, SEEK_END);
+    fseek(f2, 0, SEEK_END);
+
+    /* Si même taille */
+    if(ftell(f1) == ftell(f2)) {
+
+        rewind(f1);
+        rewind(f2);
+
+        while((c1 = getc(f1)) == (c2 = getc(f2))) {
+            if(c1 == EOF)
+                return 0;
+        }
+    }
+
+    return 1;
+}
+
+static short int diff_file_brief(t_index *i1, t_index *i2) {
+
+    line_error l1 = _NO_ERROR, l2 = _NO_ERROR;
+
+    if(i1->line_max == i2->line_max) {
+        lines_next_diff(i1, &l1, i2, &l2);
+
+        /* Si on arrive en fin de fichier sans différence */
+        if(l1 == END_FILE && l2 == END_FILE)
+            return 0;
+        else
+            return 1;
+    } else
+        return 1;
+
+}
 
 /* ===============================================
                diff_file_make_intern
@@ -73,10 +112,12 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
     line_error l1 = _NO_ERROR, l2 = _NO_ERROR;
 
     /* On avance & passe les lignes identiques */
+
     l1 = line_next(f1);
     l2 = line_next(f2);
 
-    lines_next_diff(f1, &l1, f2, &l2);
+    if(l1 == _NO_ERROR && l2 == _NO_ERROR )
+        lines_next_diff(f1, &l1, f2, &l2);
 
     /* Il reste des lignes */
     if(l1 == _NO_ERROR && l2 == _NO_ERROR ) {
@@ -122,6 +163,7 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
 
             save = f1->line;
 
+            // Très très lent, à refaire !
             do {
                 if(line_next(f1) != _NO_ERROR)
                     break; // Si on ne peut plus avancer, on saute
@@ -235,83 +277,148 @@ int diff_file(const char* f1_name, const char* f2_name) {
 
     if(f1) {
         if(f2) {
-            #ifdef DEBUG
-                printf("Start of files indexing...\n");
-            #endif
-            i1 = index_file(f1, f1_name);
-            i2 = index_file(f2, f2_name);
-            #ifdef DEBUG
-                printf("...files indexing completed\n--------------\n");
-            #endif
 
-            /* Si on doit afficher une fonction C */
-            if(p->show_c_function) {
+            /* Fichier binaire ou forcé binaire */
+            if(p->binary || (!(p->text) && (is_binary(f1) || is_binary(f2)))) {
                 #ifdef DEBUG
-                    printf("Start of c function indexing...\n");
+                    printf("Binary files detected\n--------------\nStart of files comparison...\n");
                 #endif
-                index_file_c_func(i1);
-                #ifdef DEBUG
-                    printf("...indexing of c function completed\n--------------\n");
-                #endif
-            }
 
-            #ifdef DEBUG
-                if(p->d_show_index) {
-                    index_display(i1);
-                    index_display(i2);
-                    if(p->d_interactive_mode) {
-                        printf("Press enter to continue...\n");
-                        getchar();
+                if(diff_file_binary(f1, f2)) {
+                    ret = 1;
+                    #ifdef DEBUG
+                        printf("Binary files are different\n...comparison of files completed\n--------------\n");
+                    #endif
+                    if(!p->label)
+                        printf("Binary files %s and %s differ\n", f1_name, f2_name);
+                    else
+                        printf("Binary files %s and %s differ\n", p->label, f2_name);
+
+                } else {
+                    ret = 0;
+                    #ifdef DEBUG
+                        printf("Binary files are identical\n...comparison of files completed\n--------------\n");
+                    #endif
+
+                    if(p->report_identical_files) {
+                        if(p->label)
+                            printf("Binary files %s and %s are identical\n", p->label, f2_name);
+                        else
+                            printf("Binary files %s and %s are identical\n", f1_name, f2_name);
                     }
                 }
-            #endif
-
-            i1->line = -1;
-            i2->line = -1;
-
-            #ifdef DEBUG
-                printf("Start of files comparison...\n");
-            #endif
-
-            /* Fichiers différents */
-            if(diff_file_intern(&diff_list, i1, i2) > 0) {
-                ret = 1;
+            }
+            /* Fichier texte ou forcé texte */
+            else {
 
                 #ifdef DEBUG
-                    printf("Files are different\n...comparison of files completed\n--------------\n");
+                    printf("Text files detected\n--------------\nStart of files indexing...\n");
+                #endif
+                i1 = index_file(f1, f1_name);
+                i2 = index_file(f2, f2_name);
+                #ifdef DEBUG
+                    printf("...files indexing completed\n--------------\n");
+                #endif
 
-                    if(p->d_show_diff) {
-                        index_display(i1);
-                        index_display(i2);
-                        if(p->d_interactive_mode) {
-                            printf("Press enter to continue...\n");
-                            getchar();
+                if(p->brief) {
+                    #ifdef DEBUG
+                        printf("Start of brief comparison...\n");
+                    #endif
+                    if(diff_file_brief(i1, i2)) {
+                        ret = 1;
+                        #ifdef DEBUG
+                            printf("Files are different\n...comparison of files completed\n--------------\n");
+                        #endif
+                        if(!(p->label))
+                            printf("Files %s and %s differ\n", f1_name, f2_name);
+                        else
+                            printf("Files %s and %s differ\n", p->label, f2_name);
+                    }
+                    else {
+                        ret = 0;
+                        #ifdef DEBUG
+                            printf("Files are identical\n...comparison of files completed\n--------------\n");
+                        #endif
+                        if(p->report_identical_files) {
+                            if(!(p->label))
+                                printf("Files %s and %s are identical\n", f1_name, f2_name);
+                            else
+                                printf("Files %s and %s are identical\n", p->label, f2_name);
                         }
                     }
-                #endif
+                } else {
 
-                if(p->brief) // Si pas d'affichage
-                    printf("Files %s and %s differ\n", f1_name, f2_name);
-                else
-                    diff_display(diff_list, i1 ,i2);
+                    /* Si on doit afficher une fonction C */
+                    if(p->show_c_function) {
+                        #ifdef DEBUG
+                            printf("Start of c function indexing...\n");
+                        #endif
+                        index_file_c_func(i1);
+                        #ifdef DEBUG
+                            printf("...indexing of c function completed\n--------------\n");
+                        #endif
+                    }
+
+                    #ifdef DEBUG
+                        if(p->d_show_index) {
+                            index_display(i1);
+                            index_display(i2);
+                            if(p->d_interactive_mode) {
+                                printf("Press enter to continue...\n");
+                                getchar();
+                            }
+                        }
+                    #endif
+
+                    i1->line = -1;
+                    i2->line = -1;
+
+                    #ifdef DEBUG
+                        printf("Start of files comparison...\n");
+                    #endif
+
+                    /* Fichiers différents */
+                    if(diff_file_intern(&diff_list, i1, i2) > 0) {
+                        ret = 1;
+
+                        #ifdef DEBUG
+                            printf("Files are different\n...comparison of files completed\n--------------\n");
+
+                            if(p->d_show_diff) {
+                                diff_debug(diff_list);
+                                if(p->d_interactive_mode) {
+                                    printf("Press enter to continue...\n");
+                                    getchar();
+                                }
+                            }
+                        #endif
+
+                        diff_display(diff_list, i1 ,i2);
+                    }
+                    /* Fichiers identiques */
+                    else {
+                        ret = 0;
+
+                        #ifdef DEBUG
+                            printf("Files are identicals\n...comparison of files completed\n--------------\n");
+                        #endif
+
+                        if(p->o_style == COLUMNS) // Même si le fichier est identique, il faut l'afficher
+                            diff_display(diff_list, i1, i2);
+
+                        if(p->report_identical_files) { // Doit s'ajouter à l'affichage par colonnes
+                            if(p->label)
+                                printf("Files %s and %s are identical\n", p->label, f2_name);
+                            else
+                                printf("Files %s and %s are identical\n", f1_name, f2_name);
+                        }
+                    }
+                }
+
+                index_free(i1);
+                index_free(i2);
+
             }
-            /* Fichiers identiques */
-            else {
-                ret = 0;
-
-                #ifdef DEBUG
-                    printf("Files are identicals\n...comparison of files completed\n--------------\n");
-                #endif
-
-                if(p->o_style == COLUMNS) // Même si le fichier est identique, il faut l'afficher
-                    diff_display(diff_list, i1, i2);
-
-                if(p->report_identical_files) // Doit s'ajouter à l'affichage par colonnes
-                    printf("Files %s and %s are identical\n", f1_name, f2_name);
-            }
-
-            index_free(i1);
-            index_free(i2);
 
             sec_fclose(f1);
             sec_fclose(f2);

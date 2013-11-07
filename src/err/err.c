@@ -17,7 +17,22 @@ void exit_error(const char* title, const char* msg, ...) {
     va_list args;
     va_start(args, msg);
 
-    send_error(title, msg, args);
+    fprintf(stderr,"diff: ");
+
+    if( title != NULL ) {
+        fprintf(stderr,"%s: ", title);
+    }
+
+    if( msg != NULL ) {
+        vfprintf(stderr, msg, args);
+        fputs("\n", stderr);
+    } else {
+        perror(NULL);
+    }
+
+    if(diff_stderr_show_help) {
+        fprintf(stderr, "diff: Try 'diff --help' for more information.\n");
+    }
 
     va_end(args);
 

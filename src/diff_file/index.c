@@ -5,6 +5,24 @@ static unsigned int index_size(FILE *f);
 static t_index* index_file_small(FILE *f, const char* f_name);
 static t_index* index_file_large(FILE *f, const char* f_name);
 
+short int is_binary(FILE *f) {
+
+    int i = 0, c = getc(f);
+
+    while(i < 4 && c == (int)'\0' && c != EOF) {
+        i++;
+        c = getc(f);
+    }
+
+    rewind(f);
+
+    if(i < 4)
+        return 0;
+    else
+        return 1;
+
+}
+
 /* ===============================================
                     get_end_line
 

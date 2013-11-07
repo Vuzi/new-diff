@@ -45,6 +45,7 @@ typedef struct s_index t_index;
 
 /* Prototypes */
 END_LINE get_end_line(FILE *f, char c);
+short int is_binary(FILE *f);
 
 t_index* index_file(FILE *f, const char* f_name);
 void index_file_c_func(t_index* index);

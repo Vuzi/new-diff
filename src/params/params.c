@@ -410,6 +410,26 @@ static int make_param(char* option, char* argument) {
 
             return 1;
         }
+        else if (!strcmp(option, "text") || !strcmp(option, "a")) {
+
+            if(p->binary) {
+                exit_help();
+                exit_error(NULL, "conflicting analyse options", NULL);
+            }
+
+            p->text = 1;
+            return 0;
+        }
+        else if (!strcmp(option, "binary")) {
+
+            if(p->text) {
+                exit_help();
+                exit_error(NULL, "conflicting analyse options", NULL);
+            }
+
+            p->binary = 1;
+            return 0;
+        }
         else if (!strcmp(option, "strip-trailing-cr")) {
             p->strip_trailing_cr = 1;
             return 0;
@@ -493,7 +513,7 @@ void print_params(Params* parameters) {
     else
         fputs("Ignore regex match : 0\n", stdout);
 
-	printf("Type text : %d\n", parameters->type_text);
+	printf("Type text : %d\n", parameters->text);
 	printf("Strip trailing cr : %d\n", parameters->strip_trailing_cr);
 
 	printf("Group format GFMT : %s\n", parameters->group_format_GFMT);

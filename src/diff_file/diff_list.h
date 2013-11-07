@@ -36,7 +36,11 @@ typedef struct s_diff t_diff;
 /* Prototypes */
 void diff_add(t_diff** list, diff_type type, int start_1, int end_1, int start_2, int end_2);
 t_diff *diff_last(t_diff* list);
-void diff_display(t_diff* list, t_index *f1, t_index *f2);
+void diff_display(t_diff* diff, t_index *f1, t_index *f2);
 void diff_delete(t_diff* list);
+
+#ifdef DEBUG
+void diff_debug(t_diff* diff);
+#endif
 
 #endif // DIFF_LIST_H_INCLUDED

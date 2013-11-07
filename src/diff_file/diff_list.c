@@ -11,8 +11,8 @@ static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int s
 static void diff_display_columns_common(int start_1, int start_2, unsigned int length, t_index *f1, t_index *f2, unsigned int char_ligne, unsigned int char_center, char op);
 static void diff_display_columns_added(int start, unsigned int lenght, t_index *f, unsigned int char_ligne, unsigned int char_center);
 static void diff_display_columns_deleted(int start, unsigned int lenght, t_index *f, unsigned int char_ligne, unsigned int char_center);
-static void diff_display_ed(t_diff* list_e, t_index *f);
-static t_diff* diff_display_ed_get_diff(t_diff* list_e, unsigned int n);
+static void diff_display_ed(t_diff* diff, t_index *f);
+static t_diff* diff_display_ed_get_diff(t_diff* diff, unsigned int n);
 
 
 /* ===============================================
@@ -836,18 +836,18 @@ static void diff_display_columns(t_diff* list_e, t_index *f1, t_index *f2, int s
     Permet de parcourir la liste des différences
     suivant un indice.
     ----------------------------------------------
-    t_diff* list_e : liste des modifications
+    t_diff* diff   : liste des modifications
     u int n        : indice
     ----------------------------------------------
    =============================================== */
-static t_diff* diff_display_ed_get_diff(t_diff* list_e, unsigned int n) {
+static t_diff* diff_display_ed_get_diff(t_diff* diff, unsigned int n) {
 
     while(n > 0) {
         n--;
-        list_e = list_e->next;
+        diff = diff->next;
     }
 
-    return list_e;
+    return diff;
 }
 
 
@@ -858,13 +858,13 @@ static t_diff* diff_display_ed_get_diff(t_diff* list_e, unsigned int n) {
     passer du premier au second fichier sous la forme
     d'un edit_script.
     ----------------------------------------------
-    t_diff* list_e : liste des modifications
+    t_diff* diff  : liste des modifications
     t_index *f    : index du second fichier
     ----------------------------------------------
    =============================================== */
-static void diff_display_ed(t_diff* list_e, t_index *f) {
+static void diff_display_ed(t_diff* diff, t_index *f) {
 
-    t_diff *tmp = list_e;
+    t_diff *tmp = diff;
     unsigned int diff_len = 0, i = 0;
 
     /* ed fonctionne à l'envers, on doit garder le nombre de diff disponible */
@@ -875,7 +875,7 @@ static void diff_display_ed(t_diff* list_e, t_index *f) {
 
     /* Pour chaque diff */
     for(i = 0; i < diff_len; i++) {
-        tmp = diff_display_ed_get_diff(list_e, (diff_len - i) - 1);
+        tmp = diff_display_ed_get_diff(diff, (diff_len - i) - 1);
 
         if(tmp->type == ADDED_LINE) {
             if(tmp->end_1 - tmp->start_1 + 1 == 1)
@@ -915,12 +915,12 @@ static void diff_display_ed(t_diff* list_e, t_index *f) {
     par f2 en utilisant le style et les options
     défini par les paramètres.
     ----------------------------------------------
-    t_diff* list_e : liste des modifications
+    t_diff* diff   : liste des modifications
     t_index *f1    : index du premier fichier
     t_index *f2    : index du second fichier
     ----------------------------------------------
    =============================================== */
-void diff_display(t_diff* list_e, t_index *f1, t_index *f2) {
+void diff_display(t_diff* diff, t_index *f1, t_index *f2) {
 
     #ifdef DEBUG
         printf("Start of the result display...\n");
@@ -928,22 +928,43 @@ void diff_display(t_diff* list_e, t_index *f1, t_index *f2) {
 
     /* Format de sortie contextuel */
     if(p->o_style == CONTEXT)
-        diff_display_context(list_e, f1, f2);
+        diff_display_context(diff, f1, f2);
     /* Format de sortie unifé */
     else if(p->o_style == UNIFIED)
-        diff_display_unified(list_e, f1, f2);
+        diff_display_unified(diff, f1, f2);
     /* Format edit script */
     else if(p->o_style == EDIT_SCRIPT)
-        diff_display_ed(list_e, f2);
+        diff_display_ed(diff, f2);
     /* Format en colonnes */
     else if(p->o_style == COLUMNS)
-        diff_display_columns(list_e, f1, f2, p->show_max_char);
+        diff_display_columns(diff, f1, f2, p->show_max_char);
     /* Format pas défaut */
     else
-        diff_display_regular(list_e, f1, f2);
+        diff_display_regular(diff, f1, f2);
 
     #ifdef DEBUG
         printf("...display completed\n--------------\n");
     #endif
 
 }
+
+#ifdef DEBUG
+void diff_debug(t_diff* diff) {
+
+    puts("Affichage des differences :");
+
+    while(diff) {
+
+        if(diff->type == ADDED_LINE)
+            fputs("Ligne(s) ajoutee(s) : ", stdout);
+        else if(diff->type == DELETED_LINE)
+            fputs("Ligne(s) supprimee(s) : ", stdout);
+        else
+            fputs("Ligne(s) modifiée(s) : ", stdout);
+
+        printf("%d a %d et %d a %d\n", diff->start_1, diff->end_1, diff->start_2, diff->end_2);
+
+        diff = diff->next;
+    }
+}
+#endif

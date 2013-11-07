@@ -57,7 +57,8 @@ typedef struct _params {
 	short ignore_blank_lines;
 	regex_t *ignore_regex_match;
 
-	short type_text;
+	short text;
+	short binary;
 	short strip_trailing_cr;
 
 	char* group_format_GFMT;
