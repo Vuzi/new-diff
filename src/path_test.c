@@ -28,6 +28,10 @@ file_arg_case check_and_type_paths(const char* path1, const char* path2) {
 
     int val1 = get_type_path(path1), val2 = get_type_path(path2);
 
+    #ifdef DEBUG
+        printf("... paths analysing completed\n");
+    #endif
+
     if(val1 == 1) {
         if(val2 == 1)
             return DIR_DIR;
@@ -40,26 +44,16 @@ file_arg_case check_and_type_paths(const char* path1, const char* path2) {
             return FILE_FILE;
     }
 
-    if(val1 == 0) {
+    if(val1 == 0)
         send_error(path1, "not a file or a directory", NULL);
-        return NONE;
-    }
-    else if(val1 == -1) {
+    else
         send_error(path1, NULL, NULL);
-        return NONE;
-    }
 
-    if(val2 == 0) {
+    if(val2 == 0)
         send_error(path2, "not a file or a directory", NULL);
-        return NONE;
-    }
-    else {
-        send_error(path1, NULL, NULL);
-        return NONE;
-    }
+    else
+        send_error(path2, NULL, NULL);
 
-    #ifdef DEBUG
-        printf("... paths analysing completed\n");
-    #endif
+    return NONE;
 
 }

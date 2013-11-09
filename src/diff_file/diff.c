@@ -106,7 +106,7 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
     int val_supp = INT_MAX, val_add = INT_MAX, val_modif = INT_MAX; // Par défaut on force les valeurs à être au maximum
     t_diff *diff_supp = NULL, *diff_add_ = NULL, *diff_modif = NULL;
 
-    unsigned int save = 0;
+    unsigned int tmp_1 = 0, tmp_2 = 0;
     unsigned int save_1 = 0, save_2 = 0;
 
     line_error l1 = _NO_ERROR, l2 = _NO_ERROR;
@@ -161,30 +161,24 @@ static int diff_file_intern(t_diff **diff_list, t_index *f1, t_index *f2) {
            inutile de tester si un des deux arbres à déjà une solution forcément <= 2 */
         if(val_supp > 2 && val_add > 2) {
 
-            save = f1->line;
-
-            // Très très lent, à refaire !
-            do {
-                if(line_next(f1) != _NO_ERROR)
-                    break; // Si on ne peut plus avancer, on saute
-            }while((line = line_search(f1, f2)) < 0);
+            tmp_1 = f1->line;
+            tmp_2 = f2->line;
 
             /* On a trouvé */
-            if(line >= 0) {
-                val_modif = (f1->line - save) + (((unsigned)(line)) - f2->line);
-                diff_add(&diff_modif, CHANGED_LINE, save, f1->line-1, f2->line, (unsigned)(line-1));
+            if(lines_next_identical(f1, f2)) {
+                val_modif = (f1->line - tmp_1) + (f2->line - tmp_2);
+                diff_add(&diff_modif, CHANGED_LINE, f1->line, tmp_1-1, f2->line, tmp_2-1);
 
                 /* On remonte de la ligne dépassée */
-                line_previous(f1);
-                /* On place f2 sur la bonne ligne */
-                line_go_to(f2, (unsigned)(line-1));
+               /* line_previous(f1);
+                line_previous(f2);*/
 
                 val_modif = val_modif + diff_file_intern(&diff_modif ,f1, f2); // On relance
             }
             /* Pas de correspondance jusqu'à fin du fichier */
             else {
-                val_modif = ((f1->line_max) - save) + ((f2->line_max) - f2->line);
-                diff_add(&diff_modif, CHANGED_LINE, save, f1->line_max-1, f2->line, f2->line_max-1);
+                val_modif = ((f1->line_max) - tmp_1) + ((f2->line_max) - tmp_2);
+                diff_add(&diff_modif, CHANGED_LINE, tmp_1, f1->line_max-1, tmp_2, f2->line_max-1);
 
                 line_go_to(f2, f2->line_max-1); // On va à la fin
                 line_go_to(f1, f1->line_max-1);

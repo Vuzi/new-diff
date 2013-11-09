@@ -1,10 +1,45 @@
 #include "line.h"
 
+short int lines_next_identical(t_index *t1, t_index*t2) {
+
+    unsigned int i = 0, j = 0;
+    int c1 = 0, c2 = 0;
+
+    if(t1 && t2) {
+
+        for(i = t1->line; i < t1->line_max; i++) {
+            fseek(t1->f, t1->index[i], SEEK_SET);
+
+            for(j = t2->line; j < t2->line_max; j++) {
+                fseek(t2->f, t2->index[j], SEEK_SET);
+
+                while((c1 = getc(t1->f)) == (c2 = getc(t2->f))){
+                    if(IS_EL_START(c1) || c1 == EOF) {
+                        line_go_to(t1, i);
+                        line_go_to(t2, j);
+                        return 1;
+                    }
+                }
+
+                if(IS_EL_START(c1) && IS_EL_START(c2) && p->strip_trailing_cr){
+                    line_go_to(t1, i);
+                    line_go_to(t2, j);
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return 0;
+
+}
+
 void lines_next_diff(t_index *i1, line_error *l1, t_index *i2, line_error *l2) {
 
+    int c1 = 0, c2 = 0;
+    int line = 0;
+
     if(i1 && i2) {
-        int c1 = 0, c2 = 0;
-        int line = 0;
 
         while((c1 = getc(i1->f)) == (c2 = getc(i2->f)) || (IS_EL_START(c1) && IS_EL_START(c2))) {
             if(IS_EL_START(c1)) {
