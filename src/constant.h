@@ -1,22 +1,13 @@
-#ifndef CONSTANT_H
-#define CONSTANT_H
+#ifndef _H_CONSTANT
+#define _H_CONSTANT
 
-/* libraries */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "params/params.h"
-
-/* Personal global fields */
-#ifdef CREATE_PARAMETERS
-extern Params *p;
-extern short int diff_stderr_show_help;
-#else
-Params *p = NULL;
-short int diff_stderr_show_help = 0;
-#endif
-
+/* == Inlcudes == */
+#include "my_types.h"
+#include "init/params.h"
 #include "err/err.h"
 
-#endif /* CONSTANT_H */
+/* == Var Globales == */
+extern Params *p;
+extern suint diff_stderr_show_help;
+
+#endif

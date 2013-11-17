@@ -36,7 +36,7 @@ void exit_error(const char* title, const char* msg, ...) {
 
     va_end(args);
 
-    exit(2);
+    exit(EXIT_ERROR);
 }
 
 
