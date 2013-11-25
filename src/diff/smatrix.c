@@ -44,10 +44,10 @@ static void smatrix_free_intern(Smatrix *s) {
     }
 }
 
-void smatrix_free(Smatrix s[], ulint lenght) {
+void smatrix_free(Smatrix s[], ulint length) {
 
-    for(; lenght > 0; lenght--)
-        smatrix_free_intern(s[lenght-1].next);
+    for(; length > 0; length--)
+        smatrix_free_intern(s[length-1].next);
 
     free(s);
 }
@@ -65,9 +65,9 @@ static Smatrix* smatrix_at(Smatrix *s, ulint y) {
 
 ulint smatrix_to_index(Smatrix s[], Index *i1, Index *i2, ulint start) {
 
-    ulint i = 0, j = 0, max_lenght = 0, max_start = 0;
+    ulint i = 0, j = 0, max_length = 0, max_start = 0;
     Smatrix *tmp = NULL;
-    ulint tmp_lenght = 0, tmp_start = 0;
+    ulint tmp_length = 0, tmp_start = 0;
 
     ulint changes = start;
 
@@ -90,23 +90,23 @@ ulint smatrix_to_index(Smatrix s[], Index *i1, Index *i2, ulint start) {
 
         /* Si elle contient au moins une valeur */
         if(tmp->value == 1) {
-            max_lenght = 0; //Pour être certain que le premier cas est valide
+            max_length = 0; //Pour être certain que le premier cas est valide
 
             do {
-                tmp_lenght = 1;
+                tmp_length = 1;
                 tmp_start = tmp->y;
 
                 for(j = i+1; j < i1->line_max; j++) {
                     /* On cherche le suivant en diagonale */
-                    if(smatrix_at(&s[i], tmp_start + tmp_lenght) != NULL)
-                        tmp_lenght++;
+                    if(smatrix_at(&s[i], tmp_start + tmp_length) != NULL)
+                        tmp_length++;
                     else
                         break; // Plus rien, on sort
                 }
 
                 /* Si on dépassé le max */
-                if(tmp_lenght > max_lenght) {
-                    max_lenght = tmp_lenght;
+                if(tmp_length > max_length) {
+                    max_length = tmp_length;
                     max_start = tmp_start;
                 }
 
@@ -114,15 +114,15 @@ ulint smatrix_to_index(Smatrix s[], Index *i1, Index *i2, ulint start) {
             } while((tmp = tmp->next));
 
             /* On marque les lignes */
-            for(j = i; j < i + max_lenght; j++)
+            for(j = i; j < i + max_length; j++)
                 i1->lines[j].modified = 0;
 
-            for(j = max_start; j < max_start + max_lenght; j++)
+            for(j = max_start; j < max_start + max_length; j++)
                 i2->lines[j].modified = 0;
 
             /* On avance */
-            changes += max_lenght;
-            i += max_lenght-1;
+            changes += max_length;
+            i += max_length-1;
         }
     }
 

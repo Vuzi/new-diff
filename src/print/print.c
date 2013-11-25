@@ -4,7 +4,7 @@
 static void print_diff_regular(File files[]);
 static void print_space(uint n);
 static void print_lines(File *file, ulint start, ulint end, const char *line_start, _bool show_end_of_file);
-static void print_lines_lenght(File *file, ulint start, ulint end, const char *line_start, ulint lenght, _bool show_end_of_file);
+static void print_lines_length(File *file, ulint start, ulint end, const char *line_start, ulint length, _bool show_end_of_file);
 static void print_current_c_func(File *file, ulint line);
 static void print_file_name(struct stat *st, char* name);
 static void print_diff_context(File files[]);
@@ -26,15 +26,15 @@ static void print_diff_ed(File files[]);
     char* line_start : à afficher avant chaque ligne
    =============================================== */
 static void print_lines(File *file, ulint start, ulint end, const char *line_start, _bool show_end_of_file) {
-    print_lines_lenght(file, start, end, line_start, 0, show_end_of_file);
+    print_lines_length(file, start, end, line_start, 0, show_end_of_file);
 }
 
 /* ===============================================
-                lines_display_lenght
+                lines_display_length
 
     Affiche les lignes de f de start à end (compris)
     en ajoutant line_start avant chaque ligne avec
-    un maximum de lenght caractères. 0 permet de ne
+    un maximum de length caractères. 0 permet de ne
     pas utiliser de limitation.
     Saute une ligne après chaque ligne écrite.
     ----------------------------------------------
@@ -42,9 +42,9 @@ static void print_lines(File *file, ulint start, ulint end, const char *line_sta
     u int start      : première ligne.
     u int end        : dernière ligne.
     char* line_start : à afficher avant chaque ligne
-    u int lenght     : nombre de char max
+    u int length     : nombre de char max
    =============================================== */
-static void print_lines_lenght(File *file, ulint start, ulint end, const char *line_start, ulint lenght, _bool show_end_of_file) {
+static void print_lines_length(File *file, ulint start, ulint end, const char *line_start, ulint length, _bool show_end_of_file) {
 
     ulint i = 0, j = 0, l = 0;
     int c = 0;
@@ -56,8 +56,8 @@ static void print_lines_lenght(File *file, ulint start, ulint end, const char *l
             if(line_start)
                 fputs(line_start, stdout);
 
-            if(file->i->lines[i].lenght > 0 ) {
-                l = (lenght > 0 && lenght <= file->i->lines[i].lenght ? lenght : file->i->lines[i].lenght);
+            if(file->i->lines[i].length > 0 ) {
+                l = (length > 0 && length <= file->i->lines[i].length ? length : file->i->lines[i].length);
 
                 #ifdef _WIN32
                 fseeko64(file->f, (long long)file->i->lines[i].start, SEEK_SET);
@@ -75,7 +75,7 @@ static void print_lines_lenght(File *file, ulint start, ulint end, const char *l
             putchar('\n');
         }
 
-        if(show_end_of_file && lenght == 0 && i == file->i->line_max && file->i->lines[i-1].end_line == END_OF_FILE)
+        if(show_end_of_file && length == 0 && i == file->i->line_max && file->i->lines[i-1].end_line == END_OF_FILE)
             puts("\\ No newline at end of file");
     }
 }
@@ -91,7 +91,7 @@ static void print_current_c_func(File *file, ulint line) {
     }
 
     if(c_func > 0 || (line == 0 && file->i->line_max >= 1 && file->i->lines[0].is_c_func))
-        print_lines_lenght(file, c_func, c_func, "", 40, _false);
+        print_lines_length(file, c_func, c_func, "", 40, _false);
 
 }
 
@@ -188,7 +188,7 @@ static void print_diff_regular(File files[]) {
 
             /* Lignes supprimées */
             if(files[0].i->lines[i].modified == LINE_DEL) {
-                if((length_1 = diff_get_lenght(files[0].i, i)) == 1)
+                if((length_1 = diff_get_length(files[0].i, i)) == 1)
                     printf("%"SHOW_ulint"d%"SHOW_ulint"\n", i+1, j);
                 else
                     printf("%"SHOW_ulint",%"SHOW_ulint"d%"SHOW_ulint"\n", i+1, length_1 + i, j);
@@ -197,7 +197,7 @@ static void print_diff_regular(File files[]) {
             }
             /* Lignes ajoutées */
             else if(files[1].i->lines[j].modified == LINE_ADD) {
-                if((length_2 = diff_get_lenght(files[1].i, j)) == 1)
+                if((length_2 = diff_get_length(files[1].i, j)) == 1)
                     printf("%"SHOW_ulint"a%"SHOW_ulint"\n",i , j+1);
                 else
                     printf("%"SHOW_ulint"a%"SHOW_ulint",%"SHOW_ulint"\n",i,  j+1, length_2 + j);
@@ -206,12 +206,12 @@ static void print_diff_regular(File files[]) {
             }
             /* Lignes modifiées */
             else {
-                if((length_1 = diff_get_lenght(files[0].i, i)) == 1)
+                if((length_1 = diff_get_length(files[0].i, i)) == 1)
                     printf("%"SHOW_ulint"c", i+1);
                 else
                     printf("%"SHOW_ulint",%"SHOW_ulint"c", i+1, length_1 + i);
 
-                if((length_2 = diff_get_lenght(files[1].i, j)) == 1)
+                if((length_2 = diff_get_length(files[1].i, j)) == 1)
                     printf("%"SHOW_ulint"\n", j+1);
                 else
                     printf("%"SHOW_ulint",%"SHOW_ulint"\n", j+1, length_2 + j);
@@ -292,12 +292,12 @@ static void print_diff_context(File files[]) {
 
                         if(files[0].i->lines[i-1].modified) {
                             is_modified_1 = _true;
-                            i = i + diff_get_lenght(files[0].i, i-1);
+                            i = i + diff_get_length(files[0].i, i-1);
                         }
 
                         if(files[1].i->lines[j-1].modified) {
                             is_modified_2 = _true;
-                            j = j + diff_get_lenght(files[1].i, j-1);
+                            j = j + diff_get_length(files[1].i, j-1);
                         }
 
                         end_1 = i + p->context - 1;
@@ -431,12 +431,12 @@ static void print_diff_unified(File files[]) {
                         c = 2 * p->context - 1;
 
                         if(files[0].i->lines[i-1].modified) {
-                            i = i + diff_get_lenght(files[0].i, i-1);
+                            i = i + diff_get_length(files[0].i, i-1);
                             is_modified_1 = _true;
                         }
 
                         if(files[1].i->lines[j-1].modified) {
-                            j = j + diff_get_lenght(files[1].i, j-1);
+                            j = j + diff_get_length(files[1].i, j-1);
                             is_modified_2 = _true;
                         }
 

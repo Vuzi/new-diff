@@ -20,7 +20,7 @@ typedef struct _Smatrix Smatrix;
 
 /* == Prototypes == */
 void smatrix_append(Smatrix *s, ulint y);
-void smatrix_free(Smatrix s[], ulint lenght);
+void smatrix_free(Smatrix s[], ulint length);
 ulint smatrix_to_index(Smatrix *s, Index *i1, Index *i2, ulint start);
 
 #endif // SUBSQ_H

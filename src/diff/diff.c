@@ -121,7 +121,7 @@ static _bool diff_file_binary(FILE *f1, FILE* f2) {
 }
 
 
-ulint diff_get_lenght(Index* index, ulint i) {
+ulint diff_get_length(Index* index, ulint i) {
 
     ulint k = i;
 
@@ -144,8 +144,8 @@ static void diff_analyse_index(Index *i1, Index *i2) {
         /* Une des deux lignes modifiée */
         if(i1->lines[i].modified || i2->lines[j].modified) {
 
-            length_1 = diff_get_lenght(i1, i);
-            length_2 = diff_get_lenght(i2, j);
+            length_1 = diff_get_length(i1, i);
+            length_2 = diff_get_length(i2, j);
 
             /* Deletions */
             if(length_2 == 0) {

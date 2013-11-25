@@ -23,7 +23,7 @@ typedef enum _END_LINE END_LINE;
 typedef struct _Line {
 
     ulint start;
-    ulint lenght;
+    ulint length;
     END_LINE end_line;
 
     hash_t h;

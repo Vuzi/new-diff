@@ -38,7 +38,7 @@ void initialize_params(void) {
 
 void make_params(int argc, char **argv) {
 
-    int i = 1, j = 0, arg_lenght;
+    int i = 1, j = 0, arg_length;
     short int no_more_op = 0;
 
     char short_tmp[2] = {0};
@@ -47,14 +47,14 @@ void make_params(int argc, char **argv) {
     /* Pour chacun des arguments */
     for (i = 1; i < argc; i++) {
 
-        arg_lenght = strlen(argv[i]);
+        arg_length = strlen(argv[i]);
 
         /* Si on commence par un tiret */
-        if(!no_more_op && arg_lenght > 0 && argv[i][0] == '-') {
+        if(!no_more_op && arg_length > 0 && argv[i][0] == '-') {
             /* Si on a un second tiret, argument long */
-            if(arg_lenght > 1 && argv[i][1] == '-') {
+            if(arg_length > 1 && argv[i][1] == '-') {
                 /* Si ce double tiret est tout seul, les options sont terminées */
-                if(arg_lenght == 2) {
+                if(arg_length == 2) {
                     no_more_op = 1;
                 }
                 /* Argument long */
@@ -80,20 +80,20 @@ void make_params(int argc, char **argv) {
                 }
             }
             /* Tiret seul : stdin comme nom de fichier */
-            else if(arg_lenght == 1) {
+            else if(arg_length == 1) {
                 set_file_name(argv[i]);
             }
             /* Argument(s) court(s) */
             else {
                 /* Plusieurs : valeurs ignorées */
-                if(arg_lenght > 2) {
+                if(arg_length > 2) {
                     /* On peut en mettre plusieurs à la suite */
-                    for(j = 1; j < arg_lenght; j++) {
+                    for(j = 1; j < arg_length; j++) {
                         short_tmp[0] = argv[i][j];
 
-                        if(j+1 < arg_lenght) {
+                        if(j+1 < arg_length) {
                             if(make_param(short_tmp, argv[i]+j+1)) // argument + suite ligne
-                                j = arg_lenght-1;
+                                j = arg_length-1;
                         } else if(i+1 < argc)
                             i += make_param(short_tmp, argv[i+1]); // argument + suivant
                         else

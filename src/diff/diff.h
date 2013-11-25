@@ -35,6 +35,6 @@ FILE* sec_fopen(const char* path, const char* mode);
 void sec_fclose(FILE *f);
 int diff_file(File files[]);
 void free_diff(File files[]);
-ulint diff_get_lenght(Index* index, ulint i);
+ulint diff_get_length(Index* index, ulint i);
 
 #endif

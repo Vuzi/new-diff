@@ -64,7 +64,7 @@ void index_file(File *file) {
                 /* \n ou \r */
                 if(IS_EL_START(tmp)) {
                     /* Fin de l'ancienne ligne */
-                    file->i->lines[j].lenght = cpt - file->i->lines[j].start;
+                    file->i->lines[j].length = cpt - file->i->lines[j].start;
                     file->i->lines[j].end_line = get_end_line(file->f, tmp);
 
                     /* Hashage du/des caracs de fin de ligne */
@@ -111,10 +111,10 @@ void index_file(File *file) {
 
             /* Fin dernière ligne */
             file->i->lines[j].end_line = END_OF_FILE;
-            file->i->lines[j].lenght = cpt - file->i->lines[j].start;
+            file->i->lines[j].length = cpt - file->i->lines[j].start;
             file->i->lines[j].h = h;
 
-            if(file->i->lines[j].lenght == 0) // Si fin de fichier avec saut de ligne
+            if(file->i->lines[j].length == 0) // Si fin de fichier avec saut de ligne
                 file->i->line_max--;
         }
     }
@@ -137,8 +137,8 @@ void index_display(File *file) {
 
     if(file->i) {
         for(; j < file->i->line_max; j++) {
-            printf("[%"SHOW_ulint"] start %05"SHOW_ulint" | lenght %05"SHOW_ulint" | hash %010"SHOW_ulint" | end_line %01d | is_c_func %01d | modified %01d\n",
-                   j, file->i->lines[j].start, file->i->lines[j].lenght, (ulint)file->i->lines[j].h,
+            printf("[%"SHOW_ulint"] start %05"SHOW_ulint" | length %05"SHOW_ulint" | hash %010"SHOW_ulint" | end_line %01d | is_c_func %01d | modified %01d\n",
+                   j, file->i->lines[j].start, file->i->lines[j].length, (ulint)file->i->lines[j].h,
                    file->i->lines[j].end_line, file->i->lines[j].is_c_func, file->i->lines[j].modified);
         }
     }
