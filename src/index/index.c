@@ -1,10 +1,10 @@
 #include "index.h"
 
-static unsigned int index_size(FILE *f);
+static ulint index_size(FILE *f);
 static END_LINE get_end_line(FILE *f, char c);
 
-static unsigned int index_size(FILE *f) {
-    unsigned int cpt = 0;
+static ulint index_size(FILE *f) {
+    ulint cpt = 0;
     int c = 0;
 
     while((c = getc(f)) != EOF) {
@@ -32,7 +32,7 @@ static END_LINE get_end_line(FILE *f, char c) {
             return CRLF;
         } else {
             /* Ligne Mac OS 9 */
-            fseek(f, (long)-1, SEEK_CUR);
+            fseeko64(f, (long long)-1, SEEK_CUR);
             return CR;
         }
     }
@@ -42,7 +42,7 @@ static END_LINE get_end_line(FILE *f, char c) {
 
 void index_file(File *file) {
 
-    uint cpt = 0, j = 0;
+    ulint cpt = 0, j = 0;
     _bool new_line = _true;
     int tmp = 0;
     hash_t h = HASH_START;
@@ -131,14 +131,14 @@ void index_free(File *file) {
 #ifdef DEBUG
 void index_display(File *file) {
 
-    uint j = 0;
+    ulint j = 0;
 
     puts("Affichage Index : ");
 
     if(file->i) {
         for(; j < file->i->line_max; j++) {
-            printf("[%d] start %05d | lenght %05d | hash %010lu | end_line %01d | is_c_func %01d | modified %01d\n",
-                   j, file->i->lines[j].start, file->i->lines[j].lenght, file->i->lines[j].h,
+            printf("[%"SHOW_ulint"] start %05"SHOW_ulint" | lenght %05"SHOW_ulint" | hash %010"SHOW_ulint" | end_line %01d | is_c_func %01d | modified %01d\n",
+                   j, file->i->lines[j].start, file->i->lines[j].lenght, (ulint)file->i->lines[j].h,
                    file->i->lines[j].end_line, file->i->lines[j].is_c_func, file->i->lines[j].modified);
         }
     }

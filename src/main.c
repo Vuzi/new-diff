@@ -9,20 +9,24 @@
 int main(int argc, char** argv){
 
     File files[2];
+    int r = 0;
 
     #ifdef DEBUG
         printf("Debug version - Compiled at %s on %s\n--------------\n",__TIME__,__DATE__);
     #endif
 
+    // Initialisation
     init_diff(argc, argv, files);
 
     if(files[0].type == T_DIR)
         printf("Dossier %s et %s\n", files[0].path, files[1].path);
-    else if(files[0].type == T_FILE) {
-        diff_file(files);
-    }
+    else if(files[0].type == T_FILE)
+        r = diff_file(files);
     else
-        puts("Autre");
+        r = EXIT_ERROR;
 
-    return 0;
+    // Libération mémoire
+    free_diff(files);
+
+    return r;
 }

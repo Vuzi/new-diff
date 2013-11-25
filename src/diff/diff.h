@@ -1,7 +1,7 @@
 /* == Inlcudes == */
 #include "../constant.h"
 #include "../index/index.h"
-#include "subsq.h"
+#include "smatrix.h"
 #include "../print/print.h"
 
 #ifndef _H_DIFF_S
@@ -34,5 +34,7 @@ typedef struct _File{
 FILE* sec_fopen(const char* path, const char* mode);
 void sec_fclose(FILE *f);
 int diff_file(File files[]);
+void free_diff(File files[]);
+ulint diff_get_lenght(Index* index, ulint i);
 
 #endif

@@ -6,8 +6,9 @@ static _bool is_binary(FILE *f);
 static _bool diff_file_binary(FILE *f1, FILE* f2);
 static _bool diff_file_brief(Index *i1, Index *i2);
 
-static uint diff_get_start(Index *i1, Index *i2);
-static void diff_file_LCS(Subsq **s, Index *i1, Index *i2, uint start);
+static void diff_analyse_index(Index *i1, Index *i2);
+static ulint diff_get_start(Index *i1, Index *i2);
+static void diff_file_LCS(Smatrix **s, Index *i1, Index *i2, ulint start);
 static _bool diff_file_regular(File file_1, File file_2);
 
 /* ===============================================
@@ -49,8 +50,24 @@ void sec_fclose(FILE *f) {
 
 }
 
+void free_diff(File files[]) {
+
+    sint i = 0;
+
+    for(; i < 2; i++) {
+        index_free(&files[i]);
+
+        if(files[i].label == files[i].path)
+            free(files[i].label);
+        else
+            free(files[i].label), free(files[i].path);
+
+        files[i].label = files[i].path = NULL;
+    }
+}
+
 static _bool diff_file_brief(Index *i1, Index *i2) {
-    uint j = 0;
+    ulint j = 0;
 
     /* Si nombre de lignes identiques */
     if(i1->line_max == i2->line_max) {
@@ -103,9 +120,62 @@ static _bool diff_file_binary(FILE *f1, FILE* f2) {
     return _true;
 }
 
-static uint diff_get_start(Index *i1, Index *i2) {
 
-    uint i = 0;
+ulint diff_get_lenght(Index* index, ulint i) {
+
+    ulint k = i;
+
+    /* On regarde jusqu'où va la zone de changements */
+    for(; k < index->line_max && index->lines[k].modified; k++);
+
+    return k - i;
+}
+
+static void diff_analyse_index(Index *i1, Index *i2) {
+
+    ulint i = 0, j = 0, k = 0;
+
+    ulint length_1 = 0, length_2 = 0;
+
+    /* Pour chaque ligne */
+    /* Fonctionne car si les lignes ajoutées sont après la fin, la dernière ligne de l'autre fichier sera modifiée */
+    for(; i < i1->line_max && j < i2->line_max; i++, j++) {
+
+        /* Une des deux lignes modifiée */
+        if(i1->lines[i].modified || i2->lines[j].modified) {
+
+            length_1 = diff_get_lenght(i1, i);
+            length_2 = diff_get_lenght(i2, j);
+
+            /* Deletions */
+            if(length_2 == 0) {
+                for(k = i; k < i+length_1; k++)
+                    i1->lines[k].modified = LINE_DEL;
+            }
+            /* Additions */
+            else if (length_1 == 0) {
+                for(k = j; k < j+length_2; k++)
+                    i2->lines[k].modified = LINE_ADD;
+            }
+            /* Changements */
+            else {
+                for(k = i; k < i+length_1; k++)
+                    i1->lines[k].modified = LINE_CHANGE;
+                for(k = j; k < j+length_2; k++)
+                    i2->lines[k].modified = LINE_CHANGE;
+            }
+
+            /* On reprend après */
+            i += length_1;
+            j += length_2;
+        }
+    }
+
+}
+
+static ulint diff_get_start(Index *i1, Index *i2) {
+
+    ulint i = 0;
 
     while(i < i1->line_max && i < i2->line_max && i1->lines[i].h == i2->lines[i].h)
         i++;
@@ -116,19 +186,19 @@ static uint diff_get_start(Index *i1, Index *i2) {
         return 0;
 }
 
-static void diff_file_LCS(Subsq **s, Index *i1, Index *i2, uint start) {
+static void diff_file_LCS(Smatrix **s, Index *i1, Index *i2, ulint start) {
 
-    uint i = 0, j = 0, start_j = 0;
+    ulint i = 0, j = 0, start_j = 0;
     _bool first_y = _true;
 
     i = start_j = start;
 
-    *s = (Subsq*)calloc(sizeof(Subsq), i1->line_max);
+    *s = (Smatrix*)calloc(sizeof(Smatrix), i1->line_max);
 
     for(; i < i1->line_max; i++) {
         for(j = start_j; j < i2->line_max; j++, first_y = _true) {
             if(i1->lines[i].h == i2->lines[j].h) {
-                subsq_append(&(*s)[i], j);
+                smatrix_append(&(*s)[i], j);
                 if(first_y) {
                     start_j = j+1;
                     first_y = _false;
@@ -141,17 +211,19 @@ static void diff_file_LCS(Subsq **s, Index *i1, Index *i2, uint start) {
 
 static _bool diff_file_regular(File file_1, File file_2) {
 
-    Subsq *s = NULL;
-    uint ret = 0, start =  diff_get_start(file_1.i, file_2.i);
+    Smatrix *s = NULL;
+    ulint ret = 0, start =  diff_get_start(file_1.i, file_2.i);
 
     diff_file_LCS(&s, file_1.i, file_2.i, start);
-    ret = subsq_to_index(s, file_1.i, file_2.i, start);
-    subsq_free(s, file_1.i->line_max);
+    ret = smatrix_to_index(s, file_1.i, file_2.i, start);
+    smatrix_free(s, file_1.i->line_max);
 
     if(file_1.i->line_max == file_2.i->line_max && file_1.i->line_max == ret)
         return _false;
-    else
+    else {
+        diff_analyse_index(file_1.i, file_2.i);
         return _true;
+    }
 }
 
 int diff_file(File files[]) {
@@ -192,20 +264,16 @@ int diff_file(File files[]) {
 
                 #ifdef DEBUG
                     printf("Text files detected\n--------------\nStart of files indexing...\n");
-                #endif
 
-            #include "time.h"
-            time_t start,end;
-            start=clock();
+                    START_TIMER;
+                #endif
 
                 index_file(&files[0]);
                 index_file(&files[1]);
 
-            end=clock();
-            printf("Timer : %.4fs\n", (end-start)/(double)CLOCKS_PER_SEC);
-
                 #ifdef DEBUG
-                    printf("...files indexing completed\n--------------\n");
+                    STOP_TIMER;
+                    printf("...files indexing completed (%.4fs) \n--------------\n", GET_TIMER_VALUE);
 
                     if(p->d_show_index) {
                         index_display(&files[0]);
@@ -246,14 +314,16 @@ int diff_file(File files[]) {
                 else {
                     #ifdef DEBUG
                         printf("Start of files comparison...\n");
+
+                        START_TIMER;
                     #endif
-            //time_t start,end;
-            start=clock();
+
                     if(diff_file_regular(files[0], files[1])) {
                         ret = EXIT_DIFFERENTS_FILES;
 
                         #ifdef DEBUG
-                            printf("Files are different\n...comparison of files completed\n--------------\n");
+                            STOP_TIMER;
+                            printf("Files are different\n...comparison of files completed (%.4fs) \n--------------\n", GET_TIMER_VALUE);
                         #endif
 
                         print_diff(files);
@@ -262,7 +332,8 @@ int diff_file(File files[]) {
                         ret = EXIT_IDENTICAL_FILES;
 
                         #ifdef DEBUG
-                            printf("Files are identicals\n...comparison of files completed\n--------------\n");
+                            STOP_TIMER;
+                            printf("Files are identicals\n...comparison of files completed (%.4fs) \n--------------\n", GET_TIMER_VALUE);
                         #endif
 
                         if(p->o_style == COLUMNS) // Même si le fichier est identique, il faut l'afficher
@@ -271,16 +342,7 @@ int diff_file(File files[]) {
                         if(p->report_identical_files)
                             printf("Files %s and %s are identical\n", files[0].label, files[1].label);
                     }
-                    end=clock();
-            printf("Timer : %.4fs\n\n", (end-start)/(double)CLOCKS_PER_SEC);
-
-                    index_display(&files[0]);
-                    index_display(&files[1]);
                 }
-
-                /* Free de l'indexe */
-                index_free(files);
-
             }
             sec_fclose(files[1].f);
 

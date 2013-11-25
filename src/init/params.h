@@ -23,7 +23,7 @@ typedef struct _params {
 	_bool report_identical_files;
 
 	output_style o_style;
-	int context;
+	uint context;
 
 	_bool generate_script;
 	_bool generate_diff_file;

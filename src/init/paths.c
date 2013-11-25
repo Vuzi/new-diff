@@ -76,9 +76,15 @@ void set_paths(File files[]) {
                 printf("..two directories detected\n--------------\n");
             #endif
 
-        } else
-            exit(EXIT_ERROR);
-    } else
-        exit(EXIT_ERROR);
+        } else {
+            exit_help();
+            send_error(files[1].path, "not a file or a directory");
+            return;
+        }
+    } else {
+        exit_help();
+        send_error(files[0].path, "not a file or a directory");
+        return;
+    }
 
 }

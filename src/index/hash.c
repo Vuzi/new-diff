@@ -7,6 +7,5 @@ hash_t hash(hash_t h_val, char c) {
 
 // sdbm
 hash_t sdbm(hash_t h_val, char c) {
-
     return c + (h_val << 6) + (h_val << 16) - h_val;
 }

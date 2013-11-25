@@ -1,9 +1,15 @@
 #include "init.h"
 
+#ifdef DEBUG
+    #include "time.h"
+    time_t debug_start_timer, debug_end_timer;
+#endif
+
 void init_diff(int argc, char** argv, File files[]) {
 
     /* Analyse des paramètres */
     #ifdef DEBUG
+        START_TIMER;
         printf("Start of the options analysing...\n");
     #endif
 
@@ -13,27 +19,18 @@ void init_diff(int argc, char** argv, File files[]) {
 
     make_params(argc, argv);
 
-    /* A mettre plus tard au bon endroit */
-    if(p->o_style == NOT_SELECTED) {
-        if(p->show_c_function)
-            p->o_style = CONTEXT;
-        else
-            p->o_style = REGULAR;
-
-    }
-
     #ifdef DEBUG
-    printf("... options analysing completed\n--------------\n");
+        STOP_TIMER;
+        printf("... options analysing completed (%.4fs) \n--------------\n", GET_TIMER_VALUE);
 
-    if(p->d_show_options) {
-        print_params(p);
-        if(p->d_interactive_mode) {
-            printf("Press enter to continue...\n");
-            getchar();
+        if(p->d_show_options) {
+            print_params(p);
+            if(p->d_interactive_mode) {
+                printf("Press enter to continue...\n");
+                getchar();
+            }
         }
-    }
     #endif
-
 
     /* Analyse des chemins */
     files[0].path = malloc(sizeof(char)*(strlen(p->pathLeft)+1));
@@ -57,5 +54,4 @@ void init_diff(int argc, char** argv, File files[]) {
     }
 
     set_paths(files);
-
 }
