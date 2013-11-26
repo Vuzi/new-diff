@@ -9,7 +9,12 @@ static _bool diff_file_brief(Index *i1, Index *i2);
 static void diff_analyse_index(Index *i1, Index *i2);
 static ulint diff_get_start(Index *i1, Index *i2);
 static void diff_file_LCS(Smatrix **s, Index *i1, Index *i2, ulint start);
-static _bool diff_file_regular(File file_1, File file_2);
+static _bool diff_file_regular(File files[]);
+
+static const char* get_type_char(struct stat* s);
+static int dir_search(const char* to_search, DIR* d);
+static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR* d2);
+
 
 /* ===============================================
                       sec_fopen
@@ -50,12 +55,61 @@ void sec_fclose(FILE *f) {
 
 }
 
+
+/* ===============================================
+                      sec_closedir
+
+    Fermeture sécurisée, affiche l'erreur s'il y
+    en a une.
+    ----------------------------------------------
+    DIR *f : Directory à fermer
+   =============================================== */
+void sec_closedir(DIR *d) {
+
+    if(closedir(d) == -1) {
+        send_error("closedir()", NULL, NULL);
+    }
+
+}
+
+
+/* ===============================================
+                      sec_opendir
+
+    Ouverture sécurisée, retour le résultat de
+    opendir et affiche l'erreur s'il y en a une.
+    ----------------------------------------------
+    c char *path : chemin
+    ----------------------------------------------
+    Retourne le résultat de opendir avec path.
+   =============================================== */
+DIR *sec_opendir(const char* path) {
+
+    DIR *d = opendir(path);
+
+    if(!d) {
+        send_error(path, NULL, NULL);
+    }
+
+    return d;
+}
+
+
+/* ===============================================
+                      free_diff
+
+    Permet de libérer de la mémoire les éléments
+    du diffs avant la fin du programme
+    ----------------------------------------------
+    files : tableau de structures File
+   =============================================== */
 void free_diff(File files[]) {
 
     sint i = 0;
 
     for(; i < 2; i++) {
-        index_free(&files[i]);
+        if(files[i].i)
+            index_free(&files[i]);
 
         if(files[i].label == files[i].path)
             free(files[i].label);
@@ -66,6 +120,19 @@ void free_diff(File files[]) {
     }
 }
 
+
+/* ===============================================
+                    diff_file_brief
+
+    Compare de manière rapide les deux indexs
+    donnés en paramètre.
+    ----------------------------------------------
+    Index i1 : index n°1
+    Index i2 : index n°2
+    ----------------------------------------------
+    Retourne true si les fichiers sont identiques,
+    et false s'il sont différents
+   =============================================== */
 static _bool diff_file_brief(Index *i1, Index *i2) {
     ulint j = 0;
 
@@ -80,6 +147,20 @@ static _bool diff_file_brief(Index *i1, Index *i2) {
         return _true;
 }
 
+
+/* ===============================================
+                    is_binary
+
+    Permet d'essayer de deviner qu'un fichier est
+    binaire en lisant les 4 premiers octets de
+    celui-ci (Par convention, un fichier binaire
+    commence par 4 fois la valeur '0').
+    ----------------------------------------------
+    FILE *f : fichier à tester
+    ----------------------------------------------
+    Retourne true si le fichiers est detecté
+    comme binaire, false sinon.
+   =============================================== */
 static _bool is_binary(FILE *f) {
 
     int i = 0, c = getc(f);
@@ -98,6 +179,21 @@ static _bool is_binary(FILE *f) {
 
 }
 
+
+/* ===============================================
+                 diff_file_binary
+
+    diff de deux fichiers binaire, permet de
+    comparer directement le contenu des deux
+    fichiers octets à octets sans se soucier de
+    l'indexation.
+    ----------------------------------------------
+    FILE *f1 : fichier à tester n°1
+    FILE *f2 : fichier à tester n°2
+    ----------------------------------------------
+    Retourne true si les fichiers sont identiques,
+    false sinon.
+   =============================================== */
 static _bool diff_file_binary(FILE *f1, FILE* f2) {
 
     int c1 = 0, c2 = 0;
@@ -121,6 +217,19 @@ static _bool diff_file_binary(FILE *f1, FILE* f2) {
 }
 
 
+/* ===============================================
+                 diff_get_length
+
+    Permet de compter le nombre de lignes
+    différentes dans un index à partir d'une ligne
+    donnée.
+    ----------------------------------------------
+    Index *index : index à traiter
+    ulint i      : début zone différente
+    ----------------------------------------------
+    Retourne le dernier index de la suite de
+    modifications.
+   =============================================== */
 ulint diff_get_length(Index* index, ulint i) {
 
     ulint k = i;
@@ -131,6 +240,18 @@ ulint diff_get_length(Index* index, ulint i) {
     return k - i;
 }
 
+
+/* ===============================================
+                 diff_analyse_index
+
+    Permet d'analyser un fichier d'index pour en
+    déduire si une ligne est ajoutée, supprimée
+    ou encore modifiée. Cette opération est faite
+    pour simplifier les traitements d'affichages.
+    ----------------------------------------------
+    Index *i1 : index à traiter n°1
+    Index *i2 : index à traiter n°2
+   =============================================== */
 static void diff_analyse_index(Index *i1, Index *i2) {
 
     ulint i = 0, j = 0, k = 0;
@@ -173,6 +294,20 @@ static void diff_analyse_index(Index *i1, Index *i2) {
 
 }
 
+
+/* ===============================================
+                 diff_get_start
+
+    Permet de savoir où commence réellement la zone
+    modifiée entres les deux fichiers indexés.
+    Cette opération permet de limiter le nombre
+    de tests du LCS.
+    ----------------------------------------------
+    Index *i1 : index à traiter n°1
+    Index *i2 : index à traiter n°2
+    ----------------------------------------------
+    Retourne le premier indexe de la zone modifiée.
+   =============================================== */
 static ulint diff_get_start(Index *i1, Index *i2) {
 
     ulint i = 0;
@@ -186,6 +321,19 @@ static ulint diff_get_start(Index *i1, Index *i2) {
         return 0;
 }
 
+
+/* ===============================================
+                  diff_file_LCS
+
+    Permet de faire le diff entre deux fichiers
+    indexés, en stockant le résultat dans une
+    matrice.
+    ----------------------------------------------
+    Smatrix **s : matrice
+    Index *i1   : index à traiter n°1
+    Index *i2   : index à traiter n°2
+    ulint start : début du traitement
+   =============================================== */
 static void diff_file_LCS(Smatrix **s, Index *i1, Index *i2, ulint start) {
 
     ulint i = 0, j = 0, start_j = 0;
@@ -209,22 +357,243 @@ static void diff_file_LCS(Smatrix **s, Index *i1, Index *i2, ulint start) {
 
 }
 
-static _bool diff_file_regular(File file_1, File file_2) {
+/* ===============================================
+                  diff_file_regular
+
+    Permet de faire le diff entre deux fichiers
+    indexés.
+    ----------------------------------------------
+    File files[] : fichiers à traiter.
+    ----------------------------------------------
+    Retourne vrai si les fichiers sont identiques,
+    et faux s'ils sont différents.
+   =============================================== */
+static _bool diff_file_regular(File files[]) {
 
     Smatrix *s = NULL;
-    ulint ret = 0, start =  diff_get_start(file_1.i, file_2.i);
+    ulint ret = 0, start =  diff_get_start(files[0].i, files[1].i);
 
-    diff_file_LCS(&s, file_1.i, file_2.i, start);
-    ret = smatrix_to_index(s, file_1.i, file_2.i, start);
-    smatrix_free(s, file_1.i->line_max);
+    diff_file_LCS(&s, files[0].i, files[1].i, start);
+    ret = smatrix_to_index(s, files[0].i, files[1].i, start);
+    smatrix_free(s, files[0].i->line_max);
 
-    if(file_1.i->line_max == file_2.i->line_max && file_1.i->line_max == ret)
+    if(files[0].i->line_max == files[1].i->line_max && files[0].i->line_max == ret)
         return _false;
     else {
-        diff_analyse_index(file_1.i, file_2.i);
+        diff_analyse_index(files[0].i, files[1].i);
         return _true;
     }
 }
+
+
+/* ===============================================
+                 get_type_char
+
+    Permet de récupérer facilement le nom du type
+    d'un fichier à partir de son stat.
+    ----------------------------------------------
+    stat *s : structure à tester
+    ----------------------------------------------
+    Retourne le nom du type sous forme de chaine
+    statique.
+   =============================================== */
+static const char* get_type_char(struct stat *s) {
+
+    if(S_ISREG(s->st_mode)) {
+        if(s->st_size == 0)
+            return "regular empty file";
+        else
+            return "regular file";
+    } else if (S_ISDIR(s->st_mode))
+        return "directory";
+    else if (S_ISCHR(s->st_mode))
+        return "character device";
+    else if (S_ISBLK(s->st_mode))
+        return "block device";
+    else if (S_ISFIFO(s->st_mode))
+        return "FIFO (named pipe)";
+    #ifdef S_ISLNK
+    else if (S_ISLNK(s->st_mode))
+        return "symbolic link";
+    #endif
+    #ifdef S_ISSOCK
+    else if (S_ISSOCK(s->st_mode))
+        return "socket";
+    #endif
+    else
+        return "unknown/other";
+
+}
+
+
+/* ===============================================
+                    dir_search
+
+    Permet de localiser un nom de fichier dans une
+    directory DIR.
+    ----------------------------------------------
+    const char* to_search : nom à chercher
+    DIR* d                : directory où chercher
+    ----------------------------------------------
+    Retourne l'index du fichier ou -1 s'il ne peut
+    le trouver.
+   =============================================== */
+static int dir_search(const char* to_search, DIR* d) {
+
+    int d_save = telldir(d), d_val = 0;
+    struct dirent *dr = NULL;
+
+    while ((dr = readdir(d)) != NULL) {
+        if(strcmp(to_search, dr->d_name) == 0) {
+            d_val = telldir(d);
+            seekdir(d, d_save);
+            return d_val;
+        }
+    }
+
+    seekdir(d, d_save);
+    return -1;
+}
+
+
+/* ===============================================
+                    diff_dir_make
+
+    Permet de réaliser le diff entre deux dossiers
+    en testant les éléments qu'il contient.
+
+    Renvoit 0 si leur contenu est identique, 1
+    sinon.
+    ----------------------------------------------
+
+    ----------------------------------------------
+
+   =============================================== */
+static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR* d2) {
+
+    int ret = EXIT_IDENTICAL_FILES, tmp = 0;
+    char *tmp_name1 = NULL, *tmp_name2 = NULL;
+
+    struct dirent *dr1 = NULL, *dr2 = NULL;
+    struct stat st1, st2;
+
+    #ifdef DEBUG
+        printf("Start of directories comparison...\n");
+
+        START_TIMER;
+    #endif
+
+    /* On passe le . & .. */
+    seekdir(d1, 2);
+    seekdir(d2, 2);
+
+    /* Pour chaque dossier dans d1 */
+    while ((dr1 = readdir(d1)) != NULL) {
+        if((dr2 = readdir(d2)) != NULL) {
+            /* S'il s'agit du même */
+            if(strcmp(dr1->d_name, dr2->d_name) == 0) {
+
+                tmp_name1 = (char*)malloc(sizeof(char)*(strlen(dr1->d_name)+strlen(d1_name)+2));
+                sprintf(tmp_name1, "%s/%s", d1_name, dr1->d_name);
+
+                tmp_name2 = (char*)malloc(sizeof(char)*(strlen(dr2->d_name)+strlen(d2_name)+2));
+                sprintf(tmp_name2, "%s/%s", d2_name, dr2->d_name);
+
+                /* On récupère le type */
+                if(stat(tmp_name1, &st1) == 0) {
+                    if(stat(tmp_name2, &st2) == 0) {
+                        /* S'il sont du même type */
+                        if(st1.st_mode == st2.st_mode) {
+                            /* A voir/ faire
+                                Si dossier ET -r ou si fichiers
+                                1. Afficher la commande
+                                2. Soit rappeller le main, ou relancer directement le programme */
+                        }
+                        /* Sinon ... */
+                        else {
+                            printf("File %s/%s is a %s while file %s/%s is a %s\n",
+                                    d1_name, dr1->d_name, get_type_char(&st1), d2_name, dr2->d_name, get_type_char(&st2));
+                            ret = EXIT_DIFFERENTS_FILES;
+                        }
+                    } else
+                        send_error(tmp_name2, NULL);
+                } else
+                    send_error(tmp_name1, NULL);
+
+                free(tmp_name1);
+                free(tmp_name2);
+            }
+            /* Il ne s'agit pas du même */
+            else {
+                /* On retrouve d1 plus loin dans d2 */
+                if((tmp = dir_search(dr1->d_name, d2)) != -1) {
+                    /* Tout les elements de d2 jusqu'à tmp ne sont que dans d2 */
+                    do {
+                        printf("Only in %s: %s\n", d2_name, dr2->d_name);
+                        ret = EXIT_DIFFERENTS_FILES;
+                    } while((dr2 = readdir(d2)) != NULL && telldir(d2) < tmp);
+
+                }
+                /* On retrouve d2 plus loin dans d1 */
+                else if((tmp = dir_search(dr2->d_name, d1)) != -1) {
+                    /* Tout les elements de d1 jusqu'à tmp ne sont que dans d1 */
+                    do {
+                        printf("Only in %s: %s\n", d1_name, dr1->d_name);
+                        ret = EXIT_DIFFERENTS_FILES;
+                    } while((dr1 = readdir(d1)) != NULL && telldir(d1) < tmp);
+                }
+                else {
+                    printf("Only in %s: %s\n", d1_name, dr1->d_name);
+                    printf("Only in %s: %s\n", d2_name, dr2->d_name);
+                    ret = EXIT_DIFFERENTS_FILES;
+                }
+            }
+        } else {
+            printf("Only in %s: %s\n", d1_name, dr1->d_name);
+            ret = EXIT_DIFFERENTS_FILES;
+        }
+    }
+
+    /* Fichier dans d2 en plus */
+    while((dr2 = readdir(d2)) != NULL) {
+        printf("Only in %s: %s\n", d2_name, dr2->d_name);
+        ret = EXIT_DIFFERENTS_FILES;
+    }
+
+
+    #ifdef DEBUG
+        STOP_TIMER;
+        if(ret == EXIT_DIFFERENTS_FILES)
+            printf("Directories are different\n...comparison of directories completed (%.4fs) \n--------------\n", GET_TIMER_VALUE);
+        else
+            printf("Directories are identical\n...comparison of directories completed (%.4fs) \n--------------\n", GET_TIMER_VALUE);
+    #endif
+
+    return ret;
+}
+
+int diff_dir(File files[]) {
+
+    int ret = EXIT_IDENTICAL_FILES;
+
+    DIR *d1 = sec_opendir(files[0].path), *d2 = sec_opendir(files[1].path);
+
+    if(d1) {
+        if(d2) {
+            ret = diff_dir_make(files[0].path, d1, files[1].path, d2);
+            sec_closedir(d1);
+            sec_closedir(d2);
+        } else {
+            sec_closedir(d1);
+            ret = EXIT_ERROR;
+        }
+
+    } else
+        ret = EXIT_ERROR;
+
+    return ret;
+}
+
 
 int diff_file(File files[]) {
 
@@ -318,7 +687,7 @@ int diff_file(File files[]) {
                         START_TIMER;
                     #endif
 
-                    if(diff_file_regular(files[0], files[1])) {
+                    if(diff_file_regular(files)) {
                         ret = EXIT_DIFFERENTS_FILES;
 
                         #ifdef DEBUG

@@ -32,7 +32,12 @@ static END_LINE get_end_line(FILE *f, char c) {
             return CRLF;
         } else {
             /* Ligne Mac OS 9 */
+
+            #ifdef _WIN32
             fseeko64(f, (long long)-1, SEEK_CUR);
+            #else
+            fseeko(f, (long long)-1, SEEK_CUR);
+            #endif
             return CR;
         }
     }

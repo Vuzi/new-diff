@@ -1,8 +1,11 @@
 /* == Inlcudes == */
+
+#include <dirent.h>
 #include "../constant.h"
 #include "../index/index.h"
 #include "smatrix.h"
 #include "../print/print.h"
+
 
 #ifndef _H_DIFF_S
 #define _H_DIFF_S
@@ -33,7 +36,13 @@ typedef struct _File{
 /* == Prototypes == */
 FILE* sec_fopen(const char* path, const char* mode);
 void sec_fclose(FILE *f);
+
+void sec_closedir(DIR *d);
+DIR *sec_opendir(const char* path);
+
 int diff_file(File files[]);
+int diff_dir(File files[]);
+
 void free_diff(File files[]);
 ulint diff_get_length(Index* index, ulint i);
 

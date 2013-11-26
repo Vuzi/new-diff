@@ -53,5 +53,8 @@ void init_diff(int argc, char** argv, File files[]) {
         files[1].label = files[1].path;
     }
 
+    files[0].i = NULL;
+    files[1].i = NULL;
+
     set_paths(files);
 }

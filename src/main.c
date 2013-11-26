@@ -19,7 +19,7 @@ int main(int argc, char** argv){
     init_diff(argc, argv, files);
 
     if(files[0].type == T_DIR)
-        printf("Dossier %s et %s\n", files[0].path, files[1].path);
+        r = diff_dir(files);
     else if(files[0].type == T_FILE)
         r = diff_file(files);
     else
