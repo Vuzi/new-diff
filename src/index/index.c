@@ -47,7 +47,7 @@ static END_LINE get_end_line(FILE *f, char c) {
 
 void index_file(File *file) {
 
-    ulint cpt = 0, j = 0;
+    ulint cpt = 0, j = 0, tab_cpt = 0, space_cpt = 0, blank_cpt = 0;
     _bool new_line = _true;
     int tmp = 0;
     hash_t h = HASH_START;
@@ -85,6 +85,10 @@ void index_file(File *file) {
                     file->i->lines[j].h = h;
                     h = HASH_START;
 
+                    tab_cpt = 0;
+                    space_cpt = 0;
+                    blank_cpt = 0;
+
                     /* Début nouvelle ligne */
                     new_line = _true;
                     if(file->i->lines[j++].end_line == CRLF) {
@@ -110,7 +114,35 @@ void index_file(File *file) {
 
                     /* Ici : gérer les options de blank space */
                     cpt++;
-                    h = hash(h, (char)tmp); // hashage
+
+                    if(p->ignore_case) {
+                        if(tmp >= 'A' && tmp <= 'Z')
+                            tmp += 32;
+                    }
+
+                    if(p->ignore_tab_change) {
+                        if(tmp == '\t')
+                            tab_cpt++;
+                        else
+                            tab_cpt = 0;
+                    }
+
+                    if(p->ignore_space_change) {
+                        if(tmp == ' ')
+                            space_cpt++;
+                        else
+                            space_cpt = 0;
+                    }
+
+                    if(p->ignore_all_space) {
+                        if(tmp == '\t' || tmp == ' ')
+                            blank_cpt++;
+                        else
+                            blank_cpt = 0;
+                    }
+
+                    if(blank_cpt <=1 && tab_cpt <= 1 && space_cpt <= 1)
+                        h = hash(h, (char)tmp); // hashage
                 }
             }
 

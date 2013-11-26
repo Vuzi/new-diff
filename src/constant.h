@@ -17,5 +17,8 @@
 extern Params *p;
 extern suint diff_stderr_show_help;
 
+/* == Defines == */
+#define VERSION_NUM "0.01a"
+
 
 #endif

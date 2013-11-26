@@ -647,10 +647,11 @@ int diff_file(File files[]) {
                     if(p->d_show_index) {
                         index_display(&files[0]);
                         index_display(&files[1]);
-                        if(p->d_interactive_mode) {
-                            printf("Press enter to continue...\n");
-                            getchar();
-                        }
+                    }
+
+                    if(p->d_interactive_mode) {
+                        printf("Press enter to continue...\n");
+                        getchar();
                     }
                 #endif
 
@@ -693,6 +694,16 @@ int diff_file(File files[]) {
                         #ifdef DEBUG
                             STOP_TIMER;
                             printf("Files are different\n...comparison of files completed (%.4fs) \n--------------\n", GET_TIMER_VALUE);
+
+                            if(p->d_show_diff) {
+                                index_display(&files[0]);
+                                index_display(&files[1]);
+                            }
+
+                            if(p->d_interactive_mode) {
+                                printf("Press enter to continue...\n");
+                                getchar();
+                            }
                         #endif
 
                         print_diff(files);

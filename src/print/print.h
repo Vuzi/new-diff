@@ -8,5 +8,7 @@
 #include "../diff/diff.h"
 
 void print_diff(File files[]);
+void print_version(void);
+void print_help(void);
 
 #endif // _H_PRINT

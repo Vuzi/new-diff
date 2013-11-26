@@ -693,3 +693,51 @@ static void print_diff_columns(File files[]) {
         }
     }
 }
+
+void print_version(void) {
+    printf("diff - version %s\nBy G. Villerez, Q. Ysambert, E. Berezovskiy and K. Maarek\n\nCompiled at %s on %s\n",VERSION_NUM, __TIME__,__DATE__);
+    #ifdef DEBUG
+        puts("(Compiled in debug version)");
+    #endif
+}
+
+void print_help(void) {
+
+    puts("Usage: diff [OPTION]... FILE1 FILE2\n\n"
+         "  -i  --ignore-case          Consider upper- and lower-case to be the same.\n"
+         "  -w  --ignore-all-space     Ignore all white space.\n"
+         "  -b  --ignore-space-change  Ignore change in the amount of white space.\n"
+         "\n"
+         "  -a  --text  Treat all files as text.\n"
+         "  --binary    Treat all files as binary files.\n"
+         "\n"
+         "  -q  --brief                  Output only whether file differ.\n"
+         "  -s  --report-identical-file  Report when two files are the same.\n"
+         "\n"
+         "  --normal                     Output using classical format.\n"
+         "  -c  -C NUM  --context[=NUM]  Output NUM (default 3) lines of copied context.\n"
+         "  -u  -U NUM  --unified[=NUM]  Output NUM (default 3) lines of unified context.\n"
+         "    -L LABLE --label LABEL       Use Label instead of file name.\n"
+         "    -p --show-c-function         Show which C function each change is in.\n"
+         "  -e  --ed                     Output an ed script.\n"
+         "  -n  --rcs                    Output an RCS format diff.\n"
+         "  -y  --side-by-side           Output in two columns\n"
+         "    -w NUM  --width=NUM          Output at most NUM (default 130) characters per line.\n"
+         "    --left-column                Output only the left column of common lines.\n"
+         "    --suppress-common-lines      Do not output common lines.\n"
+         "\n"
+        "  -t  --expand-tabs  Expand tabs to spaces in output.\n"
+        "  --tabsize=NUM      Use NUM space (default 8) space for each tab.\n"
+         "\n"
+         "  --help        Output this help.\n"
+         "  -v --version  Output version info."
+         #ifdef DEBUG
+         "\n\nDebug option :\n"
+         "  --debug-show-options      Show the struct containing program's arguments.\n"
+         "  --debug-show-index        Show the struct containing both file's index.\n"
+         "  --debug-show-diff         Show the raw diff result.\n"
+         "  --debug-interactive-mode  Pause the program after each step."
+         #endif
+         );
+
+}

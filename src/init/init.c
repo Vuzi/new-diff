@@ -25,10 +25,10 @@ void init_diff(int argc, char** argv, File files[]) {
 
         if(p->d_show_options) {
             print_params(p);
-            if(p->d_interactive_mode) {
-                printf("Press enter to continue...\n");
-                getchar();
-            }
+        }
+        if(p->d_interactive_mode) {
+            printf("Press enter to continue...\n");
+            getchar();
         }
     #endif
 

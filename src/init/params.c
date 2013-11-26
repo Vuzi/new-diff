@@ -306,32 +306,31 @@ int make_param(char* option, char* argument) {
             p->show_c_function = _true;
             return 0;
         }
-        else if (!strcmp(option, "label") || !strcmp(option, "label1") ) {
+        else if (!strcmp(option, "label") || !strcmp(option, "L") ) {
 
             if(!argument) {
                 exit_help();
                 exit_error(NULL, "option '%s' requires an argument", option);
             }
 
-            p->label_1 = argument;
+            if(!p->label_1)
+                p->label_1 = argument;
+            else if(!p->label_2)
+                p->label_2 = argument;
+            else
+                exit_error(NULL, "more than two labels given '%s'", option);
             return 1;
         }
-        else if (!strcmp(option, "label2")) {
-
-            if(!argument) {
-                exit_help();
-                exit_error(NULL, "option '%s' requires an argument", option);
-            }
-
-            p->label_2 = argument;
-            return 1;
+        else if (!strcmp(option, "suppress-blank-empty")) {
+            p->suppress_blank_empty = _true;
+            return 0;
         }
         else if (!strcmp(option, "ignore-case") || !strcmp(option, "i")) {
             p->ignore_case = _true;
             return 0;
         }
         else if (!strcmp(option, "ignore-tab-expansion") || !strcmp(option, "E")) {
-            p->ignore_tab = _true;
+            p->ignore_tab_change = _true;
             return 0;
         }
         else if (!strcmp(option, "ignore-trailing-space") || !strcmp(option, "Z")) {
@@ -339,7 +338,7 @@ int make_param(char* option, char* argument) {
             return 0;
         }
         else if (!strcmp(option, "ignore-space-change") || !strcmp(option, "b")) {
-            p->ignore_change_space = _true;
+            p->ignore_space_change = _true;
             return 0;
         }
         else if (!strcmp(option, "ignore-all-space") || !strcmp(option, "w")) {
@@ -406,6 +405,43 @@ int make_param(char* option, char* argument) {
             p->strip_trailing_cr = _true;
             return 0;
         }
+        else if (!strcmp(option, "expand-tabs") || !strcmp(option, "t")) {
+            p->expand_tab = _true;
+            return 0;
+        }
+        else if (!strcmp(option, "expand-tabs") || !strcmp(option, "t")) {
+
+            if(!argument) {
+                exit_help();
+                exit_error(NULL, "option requires an argument -- '%s'", option);
+            }
+
+            if((p->size_tab = atoi(argument)) == 0) {
+                p->size_tab = 8;
+            }
+
+            return 0;
+        }
+        else if (!strcmp(option, "help")) {
+            #ifdef DEBUG
+                puts("Help selected");
+            #endif
+            print_help();
+            #ifdef DEBUG
+                puts("... diff will now stop\n--------------");
+            #endif
+            exit(0);
+        }
+        else if (!strcmp(option, "v") || !strcmp(option, "version")) {
+            #ifdef DEBUG
+                puts("Version selected");
+            #endif
+            print_version();
+            #ifdef DEBUG
+                puts("... diff will now stop\n--------------");
+            #endif
+            exit(0);
+        }
         #ifdef DEBUG
         else if (!strcmp(option, "debug-show-options")) {
             p->d_show_options = _true;
@@ -439,6 +475,7 @@ int make_param(char* option, char* argument) {
 }
 
 #ifdef DEBUG
+// A refaire
 void print_params(Params* parameters) {
 	if (parameters == NULL) {
 		return;
@@ -460,7 +497,7 @@ void print_params(Params* parameters) {
 	printf("Expand tab : %d\n", parameters->expand_tab);
 	printf("Align tab : %d\n", parameters->align_tab);
 	printf("Size tab : %d\n", parameters->size_tab);
-	printf("Delete first space : %d\n", parameters->delete_first_space);
+	printf("Delete first space : %d\n", parameters->suppress_blank_empty);
 
 	printf("Out relay : %d\n", parameters->out_relay);
 	printf("Recursive dir : %d\n", parameters->recursive_dir);
@@ -475,9 +512,9 @@ void print_params(Params* parameters) {
 	printf("Start compare file : %d\n", parameters->start_compare_file);
 
 	printf("Ignore case : %d\n", parameters->ignore_case);
-	printf("Ignore tab : %d\n", parameters->ignore_tab);
+	printf("Ignore tab : %d\n", parameters->ignore_tab_change);
 	printf("Ignore end space : %d\n", parameters->ignore_end_space);
-	printf("Ignore change space : %d\n", parameters->ignore_change_space);
+	printf("Ignore change space : %d\n", parameters->ignore_space_change);
 	printf("Ignore all space : %d\n", parameters->ignore_all_space);
 	printf("Ignore blank lines : %d\n", parameters->ignore_blank_lines);
 

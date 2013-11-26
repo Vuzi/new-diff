@@ -40,7 +40,7 @@ typedef struct _params {
 	_bool expand_tab;
 	_bool align_tab;
 	_bool size_tab;
-	_bool delete_first_space;
+	_bool suppress_blank_empty;
 
 	_bool out_relay;
 	_bool recursive_dir;
@@ -55,9 +55,9 @@ typedef struct _params {
 	_bool start_compare_file;
 
 	_bool ignore_case;
-	_bool ignore_tab;
+	_bool ignore_tab_change;
 	_bool ignore_end_space;
-	_bool ignore_change_space;
+	_bool ignore_space_change;
 	_bool ignore_all_space;
 	_bool ignore_blank_lines;
 	regex_t *ignore_regex_match;

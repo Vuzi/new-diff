@@ -18,6 +18,8 @@ int main(int argc, char** argv){
     // Initialisation
     init_diff(argc, argv, files);
 
+    //if()
+
     if(files[0].type == T_DIR)
         r = diff_dir(files);
     else if(files[0].type == T_FILE)
