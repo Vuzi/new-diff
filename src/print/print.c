@@ -12,6 +12,8 @@ static void print_diff_context_lines(const char* line_start, File* file, ulint s
 static void print_diff_unified(File files[]);
 static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, ulint start_2, ulint end_2);
 static void print_diff_ed(File files[]);
+static void print_diff_rcs(File files[]);
+static void print_diff_columns(File files[]);
 
 /* ===============================================
                   lines_display
@@ -65,14 +67,16 @@ static void print_lines_length(File *file, ulint start, ulint end, const char *l
                 fseeko(file->f, (long long)file->i->lines[i].start, SEEK_SET);
                 #endif
                 for(j = 0; j < l; j++) {
-                    if((c = getc(file->f)) == '\t')
+                    c = getc(file->f);
+                    if(p->expand_tab && c == '\t')
                         print_space(p->size_tab);
                     else
                         putchar(c);
                 }
             }
 
-            putchar('\n');
+            if(length == 0)
+                putchar('\n');
         }
 
         if(show_end_of_file && length == 0 && i == file->i->line_max && file->i->lines[i-1].end_line == END_OF_FILE)
@@ -90,8 +94,10 @@ static void print_current_c_func(File *file, ulint line) {
         i++;
     }
 
-    if(c_func > 0 || (line == 0 && file->i->line_max >= 1 && file->i->lines[0].is_c_func))
+    if(c_func > 0 || (line == 0 && file->i->line_max >= 1 && file->i->lines[0].is_c_func)) {
         print_lines_length(file, c_func, c_func, "", 40, _false);
+        fputc((int)'\n', stdout);
+    }
 
 }
 
@@ -161,8 +167,10 @@ void print_diff(File files[]) {
         print_diff_ed(files);
     /* Format en colonnes */
     else if(p->o_style == COLUMNS)
-        //diff_display_columns(diff, f1, f2, p->show_max_char);
-        puts("A faire");
+        print_diff_columns(files);
+    /* Format RCS */
+    else if(p->o_style == RCS)
+        print_diff_rcs(files);
     /* Format pas défaut */
     else
         print_diff_regular(files);
@@ -242,7 +250,7 @@ static void print_diff_context_lines(const char* line_start, File* file, ulint s
     puts(line_start);
 
     if(show_line) {
-        for(; i <= end; i++){ // Sale à refaire
+        for(; i <= end; i++){
             if(file->i->lines[i-1].modified == LINE_ADD)
                 print_lines(file, i-1, i-1, "+ ", _true);
             else if(file->i->lines[i-1].modified == LINE_DEL)
@@ -403,6 +411,7 @@ static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, u
     }
 }
 
+
 static void print_diff_unified(File files[]) {
 
     ulint i = 1, j = 1;
@@ -473,6 +482,63 @@ static void print_diff_unified(File files[]) {
 }
 
 
+static void print_diff_rcs(File files[]) {
+
+    ulint i = 0, j = 0;
+    ulint end_1 = 0, end_2 = 0;
+
+    for(; i < files[0].i->line_max && j < files[1].i->line_max; i++, j++) {
+        if(files[0].i->lines[i].modified == LINE_DEL) {
+            end_1 = i;
+
+            do {
+                i++;
+            }while(files[0].i->lines[i].modified == LINE_DEL);
+
+            i--;
+
+            printf("d%"SHOW_ulint" %"SHOW_ulint"\n", i+1, end_1-i+1);
+
+        } else if(files[1].i->lines[j].modified == LINE_ADD) {
+            end_2 = j;
+
+            do {
+                j++;
+            }while(files[1].i->lines[j].modified == LINE_ADD);
+
+            j--;
+
+            printf("a%"SHOW_ulint" %"SHOW_ulint"\n", j+1, end_2-j+1);
+            print_lines(&files[1], j, end_2, "", _false);
+
+        } else if(files[0].i->lines[i].modified == LINE_CHANGE || files[1].i->lines[j].modified == LINE_CHANGE) {
+
+            end_1 = i;
+            end_2 = j;
+
+            do {
+                j++;
+            }while(files[1].i->lines[j].modified == LINE_CHANGE);
+
+            j--;
+
+            do {
+                i++;
+            }while(files[0].i->lines[i].modified == LINE_CHANGE);
+
+            i--;
+
+
+            printf("d%"SHOW_ulint" %"SHOW_ulint"\n", i+1, end_1-i+1);
+            printf("a%"SHOW_ulint" %"SHOW_ulint"\n", j+1, end_2-j+1);
+            print_lines(&files[1], j, end_2, "", _false);
+        }
+    }
+
+}
+
+
+
 static void print_diff_ed(File files[]) {
 
     ulint i = files[0].i->line_max, j = files[1].i->line_max;
@@ -539,4 +605,91 @@ static void print_diff_ed(File files[]) {
     if(files[1].i->lines[files[1].i->line_max-1].end_line == END_OF_FILE)
         printf("diff: No newline at end of file %s\n", files[1].label);
 
+}
+
+
+static void print_diff_columns(File files[]) {
+
+    uint char_ligne = (p->width >= 5) ? (p->width - 3) : 0; // Nombre de colonnes
+    uint char_center = 3 + char_ligne%2; // Nombre de colone centrale
+    char_ligne = char_ligne / 2;
+
+    ulint i = 0, j = 0;
+
+    for(; i < files[0].i->line_max && j < files[1].i->line_max;) {
+
+        if(files[1].i->lines[j].modified == LINE_ADD) {
+            print_space(char_center/2 + char_ligne);
+            fputc((int)'>', stdout);
+            print_space(char_center/2);
+
+            if(char_ligne > 0) {
+                print_lines_length(&files[1], j, j, "", char_ligne, _false);
+                if(files[1].i->lines[j].length < char_ligne)
+                    print_space(char_ligne - files[1].i->lines[j].length);
+            }
+
+            fputc((int)'\n', stdout);
+            j++;
+        } else if(files[0].i->lines[i].modified == LINE_DEL) {
+            if(char_ligne > 0) {
+                print_lines_length(&files[0], i, i, "", char_ligne, _false);
+                if(files[1].i->lines[j].length < char_ligne)
+                    print_space(char_ligne - files[1].i->lines[j].length);
+            }
+
+            print_space(char_center/2);
+            fputc((int)'<', stdout);
+            print_space(char_center/2 + char_ligne);
+            fputc((int)'\n', stdout);
+            i++;
+        } else if(files[0].i->lines[i].modified == LINE_CHANGE) {
+            if(char_ligne > 0) {
+                print_lines_length(&files[0], i, i, "", char_ligne, _false);
+                if(files[1].i->lines[j].length < char_ligne)
+                    print_space(char_ligne - files[1].i->lines[j].length);
+            }
+
+            print_space(char_center/2);
+            fputc((int)'|', stdout);
+            print_space(char_center/2);
+
+            if(char_ligne > 0) {
+                print_lines_length(&files[1], j, j, "", char_ligne, _false);
+                if(files[1].i->lines[j].length < char_ligne)
+                    print_space(char_ligne - files[1].i->lines[j].length);
+            }
+
+            fputc((int)'\n', stdout);
+            i++;
+            j++;
+        } else {
+            if(!(p->suppress_common_lines)) {
+                if(char_ligne > 0) {
+                    print_lines_length(&files[0], i, i, "", char_ligne, _false);
+                    if(files[1].i->lines[j].length < char_ligne)
+                        print_space(char_ligne - files[1].i->lines[j].length);
+                }
+
+                print_space(char_center/2);
+                if(p->left_column) {
+                    fputs("(\n", stdout);
+                } else {
+                    fputc((int)' ', stdout);
+                    print_space(char_center/2);
+
+                    if(char_ligne > 0) {
+                        print_lines_length(&files[1], j, j, "", char_ligne, _false);
+                        if(files[1].i->lines[j].length < char_ligne)
+                            print_space(char_ligne - files[1].i->lines[j].length);
+                    }
+
+                    fputc((int)'\n', stdout);
+                }
+            }
+
+            i++;
+            j++;
+        }
+    }
 }

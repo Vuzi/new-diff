@@ -28,7 +28,7 @@ typedef struct _params {
 	_bool generate_script;
 	_bool generate_diff_file;
 
-	uint show_max_char;
+	uint width;
 	_bool left_column; /* Ligne identique colonne de gauche */
 	_bool suppress_common_lines; /* Ne pas afficher les lignes identiques */
 

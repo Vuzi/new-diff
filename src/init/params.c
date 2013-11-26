@@ -14,7 +14,8 @@ void initialize_params(void) {
 	p->o_style = NOT_SELECTED;
 	p->context = 3;
 
-	p->show_max_char = 130;
+	p->width = 130;
+	p->size_tab = 8;
 
 	p->show_function_line = NULL;
 	p->label_1 = NULL;
@@ -188,7 +189,7 @@ static void set_width(char* val) {
 
     if(val[0] != '\0' && *str == '\0') {
         if(n >= 0)
-            p->context = (int)n;
+            p->width = (int)n;
         else if (n == 0) {
             exit_help();
             exit_error(NULL, "invalid width '%s'", val);
@@ -449,7 +450,7 @@ void print_params(Params* parameters) {
 	printf("Brief : %d\n", parameters->brief);
 	printf("Context : %d\n", parameters->context);
 
-	printf("Show max char : %d\n", parameters->show_max_char);
+	printf("Width : %d\n", parameters->width);
 
 	printf("Show C function : %d\n", parameters->show_c_function);
 	printf("Show function line : %s\n", parameters->show_function_line);
