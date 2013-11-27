@@ -1,3 +1,5 @@
-Créer un dossier, ajouter les fichiers de ../src dedans, puis le project codeblocks.
+﻿Créer un dossier, ajouter les fichiers de ../src dedans, puis le project codeblocks.
 Ouvrir le projet !
 Compiler !
+
+test
