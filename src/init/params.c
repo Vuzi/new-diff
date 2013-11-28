@@ -37,6 +37,9 @@ void initialize_params(void) {
 	p->pathLeft = NULL;
 	p->pathRight = NULL;
 
+	p->argc = 0;
+	p->argv = NULL;
+
 }
 
 
@@ -305,6 +308,10 @@ int make_param(char* option, char* argument) {
             p->suppress_common_lines = _true;
             return 0;
         }
+        else if (!strcmp(option, "recursive") || !strcmp(option, "r")) {
+            p->recursive_dir = _true;
+            return 0;
+        }
         else if (!strcmp(option, "show-c-function") || !strcmp(option, "p")) {
 
             if (p->show_regex_function) {
@@ -557,7 +564,10 @@ void print_params(Params* parameters) {
 	printf("Ignore end space : %d\n", parameters->ignore_end_space);
 	printf("Ignore change space : %d\n", parameters->ignore_space_change);
 	printf("Ignore all space : %d\n", parameters->ignore_all_space);
-	printf("Ignore blank lines : %d\n", parameters->ignore_blank_lines);
+	if(parameters->ignore_blank_lines)
+        printf("Ignore blank lines : 1\n");
+    else
+        printf("Ignore blank lines : 0\n");
 
 	if(parameters->ignore_regex_match)
         fputs("Ignore regex match : 1\n", stdout);

@@ -2,7 +2,7 @@
 
 #ifdef DEBUG
     #include "time.h"
-    time_t debug_start_timer, debug_end_timer;
+    time_t debug_start_timer, debug_end_timer, debug_start_timer2, debug_end_timer2;
 #endif
 
 void init_diff(int argc, char** argv, File files[]) {
@@ -18,6 +18,9 @@ void init_diff(int argc, char** argv, File files[]) {
 	atexit(free_params_glob); // Ajout à la liste
 
     make_params(argc, argv);
+
+    p->argc = argc;
+    p->argv = argv;
 
     #ifdef DEBUG
         STOP_TIMER;
@@ -52,6 +55,29 @@ void init_diff(int argc, char** argv, File files[]) {
     } else {
         files[1].label = files[1].path;
     }
+
+    files[0].i = NULL;
+    files[1].i = NULL;
+
+    set_paths(files);
+}
+
+
+void init_diff_r(char* path1, char* path2, char* label1, char* label2, File files[]) {
+
+    files[0].path = path1;
+    files[1].path = path2;
+
+    if(label1)
+        files[0].label = label1;
+    else
+        files[0].label = path1;
+
+
+    if(label2)
+        files[1].label = label2;
+    else
+        files[1].label = path2;
 
     files[0].i = NULL;
     files[1].i = NULL;

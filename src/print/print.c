@@ -693,6 +693,19 @@ static void print_diff_columns(File files[]) {
     }
 }
 
+void print_args(void) {
+    int i = 1;
+
+    fputs("diff ", stdout);
+
+    for(; i < p->argc; i++) {
+        fputs(p->argv[i], stdout);
+        fputc(' ', stdout);
+    }
+
+    fputc('\n', stdout);
+}
+
 void print_version(void) {
     printf("diff - version %s\nBy G. Villerez, Q. Ysambert, E. Berezovskiy and K. Maarek\n\nCompiled at %s on %s\n",VERSION_NUM, __TIME__,__DATE__);
     #ifdef DEBUG
@@ -704,13 +717,14 @@ void print_help(void) {
 
     puts("Usage: diff [OPTION]... FILE1 FILE2\n\n"
          "  -i  --ignore-case                 Consider upper- and lower-case to be the same.\n"
-         "  -w  --ignore-all-space            Ignore all white space.\n"
+         "  -W  --ignore-all-space            Ignore all white space.\n"
          "  -b  --ignore-space-change         Ignore change in the amount of white space.\n"
          "  -B  --ignore-blank-lines          Ignore change whose lines are all blank.\n"
          "  -I RE --ignore-matching-lines=RE  Ignore change whose lines all match RE.\n"
          "\n"
-         "  -a  --text  Treat all files as text.\n"
-         "  --binary    Treat all files as binary files.\n"
+         "  -a  --text      Treat all files as text.\n"
+         "  --binary        Treat all files as binary files.\n"
+         "  -r --recursive  recursively compare any  subdirectories found.\n"
          "\n"
          "  -q  --brief                  Output only whether file differ.\n"
          "  -s  --report-identical-file  Report when two files are the same.\n"

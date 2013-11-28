@@ -121,6 +121,17 @@ void free_diff(File files[]) {
 }
 
 
+void free_diff_r(File files[]) {
+
+    sint i = 0;
+
+    for(; i < 2; i++) {
+        if(files[i].i)
+            index_free(&files[i]);
+    }
+}
+
+
 /* ===============================================
                     diff_file_brief
 
@@ -477,10 +488,13 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
     struct dirent *dr1 = NULL, *dr2 = NULL;
     struct stat st1, st2;
 
+    File files[2];
+    char *label1 = NULL, *label2 = NULL;
+
     #ifdef DEBUG
         printf("Start of directories comparison...\n");
 
-        START_TIMER;
+        START_TIMER2;
     #endif
 
     /* On passe le . & .. */
@@ -504,10 +518,43 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
                     if(stat(tmp_name2, &st2) == 0) {
                         /* S'il sont du même type */
                         if(st1.st_mode == st2.st_mode) {
-                            /* A voir/ faire
-                                Si dossier ET -r ou si fichiers
-                                1. Afficher la commande
-                                2. Soit rappeller le main, ou relancer directement le programme */
+                            if(p->recursive_dir && S_ISDIR(st1.st_mode)) {
+                                #ifdef DEBUG
+                                    printf("Two sub-directoriers detected\n--------------\nStart of sub-directories comparison...\n");
+                                #endif
+
+                                /* Labels à copier */
+                                label1 = ( files[0].path != files[0].label ? files[0].label : NULL );
+                                label2 = ( files[1].path != files[1].label ? files[1].label : NULL );
+
+                                init_diff_r(tmp_name1, tmp_name2, label1, label2, files);
+                                if((tmp = diff_dir(files)) > ret)
+                                    ret = tmp;
+                                free_diff_r(files);
+
+                                #ifdef DEBUG
+                                    printf("End of sub-directories comparison\n--------------\n");
+                                #endif
+
+                            } else if (S_ISREG(st1.st_mode)) {
+                                #ifdef DEBUG
+                                    printf("Two sub-files detected\n--------------\nStart of sub-files comparison...\n");
+                                #endif
+                                /* Labels à copier */
+                                label1 = ( files[0].path != files[0].label ? files[0].label : NULL );
+                                label2 = ( files[1].path != files[1].label ? files[1].label : NULL );
+
+                                print_args();
+
+                                init_diff_r(tmp_name1, tmp_name2, label1, label2, files);
+                                if((tmp = diff_file(files)) > ret)
+                                    ret = tmp;
+                                free_diff_r(files);
+
+                                #ifdef DEBUG
+                                    printf("End of sub-files comparison\n--------------\n");
+                                #endif
+                            }
                         }
                         /* Sinon ... */
                         else {
@@ -532,7 +579,8 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
                         printf("Only in %s: %s\n", d2_name, dr2->d_name);
                         ret = EXIT_DIFFERENTS_FILES;
                     } while((dr2 = readdir(d2)) != NULL && telldir(d2) < tmp);
-
+                    seekdir(d1, telldir(d1)-1);
+                    seekdir(d2, telldir(d2)-1);
                 }
                 /* On retrouve d2 plus loin dans d1 */
                 else if((tmp = dir_search(dr2->d_name, d1)) != -1) {
@@ -541,6 +589,8 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
                         printf("Only in %s: %s\n", d1_name, dr1->d_name);
                         ret = EXIT_DIFFERENTS_FILES;
                     } while((dr1 = readdir(d1)) != NULL && telldir(d1) < tmp);
+                    seekdir(d1, telldir(d1)-1);
+                    seekdir(d2, telldir(d2)-1);
                 }
                 else {
                     printf("Only in %s: %s\n", d1_name, dr1->d_name);
@@ -562,11 +612,11 @@ static int diff_dir_make(const char* d1_name, DIR* d1, const char* d2_name, DIR*
 
 
     #ifdef DEBUG
-        STOP_TIMER;
+        STOP_TIMER2;
         if(ret == EXIT_DIFFERENTS_FILES)
-            printf("Directories are different\n...comparison of directories completed (%.4fs) \n--------------\n", GET_TIMER_VALUE);
+            printf("Directories are different\n...comparison of directories completed (%.4fs) \n--------------\n", GET_TIMER_VALUE2);
         else
-            printf("Directories are identical\n...comparison of directories completed (%.4fs) \n--------------\n", GET_TIMER_VALUE);
+            printf("Directories are identical\n...comparison of directories completed (%.4fs) \n--------------\n", GET_TIMER_VALUE2);
     #endif
 
     return ret;

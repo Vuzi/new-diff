@@ -19,6 +19,9 @@ typedef enum _output_style {
 
 typedef struct _params {
 
+    int argc;
+    char** argv;
+
 	_bool brief;
 	_bool report_identical_files;
 

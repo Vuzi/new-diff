@@ -6,9 +6,9 @@
 #include "smatrix.h"
 #include "../print/print.h"
 
-
 #ifndef _H_DIFF_S
 #define _H_DIFF_S
+
 /* == Structures/Enum == */
 typedef enum _File_type {
     T_DIR, T_FILE, T_STDIN, T_NONE
@@ -32,6 +32,7 @@ typedef struct _File{
 
 #ifndef _H_DIFF
 #define _H_DIFF
+#include "../init/init.h"
 
 /* == Prototypes == */
 FILE* sec_fopen(const char* path, const char* mode);
@@ -44,6 +45,7 @@ int diff_file(File files[]);
 int diff_dir(File files[]);
 
 void free_diff(File files[]);
+void free_diff_r(File files[]);
 ulint diff_get_length(Index* index, ulint i);
 
 #endif
