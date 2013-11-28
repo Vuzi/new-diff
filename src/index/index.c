@@ -1,16 +1,22 @@
 #include "index.h"
 
-static ulint index_size(FILE *f);
+static ulint index_size(FILE *f, ulint* longest_line);
 static END_LINE get_end_line(FILE *f, char c);
 
-static ulint index_size(FILE *f) {
-    ulint cpt = 0;
+static ulint index_size(FILE *f, ulint* longest_line) {
+    ulint cpt = 0, line_max = 0;
     int c = 0;
 
+    *longest_line = 0;
+
     while((c = getc(f)) != EOF) {
+        line_max++;
         if(IS_EL_START(c)) {
             get_end_line(f, c);
             cpt++;
+            if(line_max > *longest_line)
+                *longest_line = line_max;
+            line_max = 0;
         }
     }
     cpt++; // Dernière ligne
@@ -47,16 +53,20 @@ static END_LINE get_end_line(FILE *f, char c) {
 
 void index_file(File *file) {
 
-    ulint cpt = 0, j = 0, tab_cpt = 0, space_cpt = 0, blank_cpt = 0;
-    _bool new_line = _true;
-    int tmp = 0;
+    ulint cpt = 0, j = 0, tab_cpt = 0, space_cpt = 0, blank_cpt = 0, max_lenght = 0;
+    int tmp = 0, reg_stat = 0;
     hash_t h = HASH_START;
+
+    char * buffer = NULL;
 
     /* Création de l'index */
     file->i = (Index*)malloc(sizeof(Index));
 
-    file->i->line_max = index_size(file->f);
+    file->i->line_max = index_size(file->f, &max_lenght);
     file->i->lines = (Line*)calloc(sizeof(Line), file->i->line_max);
+
+    /* Buffer temporaire */
+    buffer = (char*)malloc(sizeof(char)*(max_lenght+1));
 
     if(file->f) {
         if(file->i->line_max > 0) {
@@ -68,6 +78,41 @@ void index_file(File *file) {
             while((tmp = getc(file->f)) != EOF) {
                 /* \n ou \r */
                 if(IS_EL_START(tmp)) {
+                    /* Ajout au buffer */
+                    buffer[cpt - file->i->lines[j].start] = '\0';
+
+                    /* Test regex fonction */
+                    if(p->show_regex_function) {
+                        reg_stat = regexec(p->show_regex_function, buffer, (size_t) 0, NULL, 0);
+                        if(!reg_stat)
+                            file->i->lines[j].is_func = _true; // match
+                        else if (reg_stat != REG_NOMATCH) {
+                            send_error(NULL, "error while using the regex with line %d of file '%s'", j+1, file->path);
+                            send_error(NULL, "function detection may not be working...");
+                        }
+                    }
+
+                    /* On ignore les lignes blanches */
+                    if(p->ignore_blank_lines) {
+                        reg_stat = regexec(p->ignore_blank_lines, buffer, (size_t) 0, NULL, 0);
+                        if(!reg_stat)
+                            file->i->lines[j].ignore = _true; // match
+                        else if (reg_stat != REG_NOMATCH) {
+                            send_error(NULL, "error while using the regex with line %d of file '%s'", j+1, file->path);
+                            send_error(NULL, "ignoring blank line may not be working...");
+                        }
+                    }
+
+                    /* On ignore les lignes qui match le regex */
+                    if(p->ignore_regex_match) {
+                        reg_stat = regexec(p->ignore_regex_match, buffer, (size_t) 0, NULL, 0);
+                        if(!reg_stat)
+                            file->i->lines[j].ignore = _true; // match
+                        else if (reg_stat != REG_NOMATCH) {
+                            send_error(NULL, "error while using the regex with line %d of file '%s'", j+1, file->path);
+                        }
+                    }
+
                     /* Fin de l'ancienne ligne */
                     file->i->lines[j].length = cpt - file->i->lines[j].start;
                     file->i->lines[j].end_line = get_end_line(file->f, tmp);
@@ -90,7 +135,6 @@ void index_file(File *file) {
                     blank_cpt = 0;
 
                     /* Début nouvelle ligne */
-                    new_line = _true;
                     if(file->i->lines[j++].end_line == CRLF) {
                         cpt++;
                         file->i->lines[j].start = ++cpt;
@@ -102,24 +146,16 @@ void index_file(File *file) {
                 /* Caractère normal */
                 else {
 
-                    /* Fonctions C */
-                    if(new_line) {
-                        new_line = _false;
-                        if((tmp >= 'a' && tmp <= 'z') ||
-                           (tmp >= 'A' && tmp <= 'Z') ||
-                           (tmp == '_')){
-                            file->i->lines[j].is_c_func = _true;
-                        }
-                    }
+                    /* Ajout au buffer */
+                    buffer[cpt - file->i->lines[j].start] = tmp;
 
-                    /* Ici : gérer les options de blank space */
-                    cpt++;
-
+                    /* Test de casse */
                     if(p->ignore_case) {
                         if(tmp >= 'A' && tmp <= 'Z')
                             tmp += 32;
                     }
 
+                    /* Test expansion tabulation */
                     if(p->ignore_tab_change) {
                         if(tmp == '\t')
                             tab_cpt++;
@@ -127,6 +163,7 @@ void index_file(File *file) {
                             tab_cpt = 0;
                     }
 
+                    /* Test changement espaces */
                     if(p->ignore_space_change) {
                         if(tmp == ' ')
                             space_cpt++;
@@ -134,6 +171,7 @@ void index_file(File *file) {
                             space_cpt = 0;
                     }
 
+                    /* Test d'ignorance des espaces blancs */
                     if(p->ignore_all_space) {
                         if(tmp == '\t' || tmp == ' ')
                             blank_cpt++;
@@ -143,6 +181,8 @@ void index_file(File *file) {
 
                     if(blank_cpt <=1 && tab_cpt <= 1 && space_cpt <= 1)
                         h = hash(h, (char)tmp); // hashage
+
+                    cpt++;
                 }
             }
 
@@ -155,6 +195,8 @@ void index_file(File *file) {
                 file->i->line_max--;
         }
     }
+
+    free(buffer);
 }
 
 void index_free(File *file) {
@@ -170,13 +212,13 @@ void index_display(File *file) {
 
     ulint j = 0;
 
-    puts("Affichage Index : ");
+    puts("Index : ");
 
     if(file->i) {
         for(; j < file->i->line_max; j++) {
-            printf("[%"SHOW_ulint"] start %05"SHOW_ulint" | length %05"SHOW_ulint" | hash %010"SHOW_ulint" | end_line %01d | is_c_func %01d | modified %01d\n",
+            printf("[%"SHOW_ulint"] start %05"SHOW_ulint" | length %05"SHOW_ulint" | hash %010"SHOW_ulint" | end_line %01d | is_func %01d | modified %01d\n",
                    j, file->i->lines[j].start, file->i->lines[j].length, (ulint)file->i->lines[j].h,
-                   file->i->lines[j].end_line, file->i->lines[j].is_c_func, file->i->lines[j].modified);
+                   file->i->lines[j].end_line, file->i->lines[j].is_func, file->i->lines[j].modified);
         }
     }
 

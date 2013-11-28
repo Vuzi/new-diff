@@ -5,7 +5,7 @@ static void print_diff_regular(File files[]);
 static void print_space(uint n);
 static void print_lines(File *file, ulint start, ulint end, const char *line_start, _bool show_end_of_file);
 static void print_lines_length(File *file, ulint start, ulint end, const char *line_start, ulint length, _bool show_end_of_file);
-static void print_current_c_func(File *file, ulint line);
+static void print_current_func(File *file, ulint line);
 static void print_file_name(struct stat *st, char* name);
 static void print_diff_context(File files[]);
 static void print_diff_context_lines(const char* line_start, File* file, ulint start, ulint end, _bool show_line);
@@ -84,21 +84,20 @@ static void print_lines_length(File *file, ulint start, ulint end, const char *l
     }
 }
 
-static void print_current_c_func(File *file, ulint line) {
+static void print_current_func(File *file, ulint line) {
 
-    ulint i = 1, c_func = 0;
+    ulint i = 1, func = 0;
 
-    while(i < line) {
-        if(file->i->lines[i].is_c_func)
-            c_func = i;
+    while(i <= line) {
+        if(file->i->lines[i].is_func)
+            func = i;
         i++;
     }
 
-    if(c_func > 0 || (line == 0 && file->i->line_max >= 1 && file->i->lines[0].is_c_func)) {
-        print_lines_length(file, c_func, c_func, "", 40, _false);
-        fputc((int)'\n', stdout);
-    }
+    if(func > 0 || (line == 0 && file->i->line_max >= 1 && file->i->lines[0].is_func))
+        print_lines_length(file, func, func, "", 40, _false);
 
+    fputc((int)'\n', stdout);
 }
 
 
@@ -335,9 +334,9 @@ static void print_diff_context(File files[]) {
             fputs("***************", stdout);
 
             /* Si on doit afficher le nom de la fonction courrante */
-            if(p->show_c_function) {
+            if(p->show_regex_function) {
                 fputc(' ', stdout);
-                print_current_c_func(&files[0], start_1-1);
+                print_current_func(&files[0], start_1-1);
             } else
                 fputc('\n', stdout);
 
@@ -363,9 +362,9 @@ static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, u
     else
         printf(" +%"SHOW_ulint",%"SHOW_ulint" @@", start_2, end_2-start_2);
 
-    if(p->show_c_function) {
+    if(p->show_regex_function) {
         fputc(' ', stdout);
-        print_current_c_func(&files[0], start_1-1);
+        print_current_func(&files[0], start_1-1);
     } else
         fputc('\n', stdout);
 
@@ -704,9 +703,11 @@ void print_version(void) {
 void print_help(void) {
 
     puts("Usage: diff [OPTION]... FILE1 FILE2\n\n"
-         "  -i  --ignore-case          Consider upper- and lower-case to be the same.\n"
-         "  -w  --ignore-all-space     Ignore all white space.\n"
-         "  -b  --ignore-space-change  Ignore change in the amount of white space.\n"
+         "  -i  --ignore-case                 Consider upper- and lower-case to be the same.\n"
+         "  -w  --ignore-all-space            Ignore all white space.\n"
+         "  -b  --ignore-space-change         Ignore change in the amount of white space.\n"
+         "  -B  --ignore-blank-lines          Ignore change whose lines are all blank.\n"
+         "  -I RE --ignore-matching-lines=RE  Ignore change whose lines all match RE.\n"
          "\n"
          "  -a  --text  Treat all files as text.\n"
          "  --binary    Treat all files as binary files.\n"
@@ -717,8 +718,9 @@ void print_help(void) {
          "  --normal                     Output using classical format.\n"
          "  -c  -C NUM  --context[=NUM]  Output NUM (default 3) lines of copied context.\n"
          "  -u  -U NUM  --unified[=NUM]  Output NUM (default 3) lines of unified context.\n"
-         "    -L LABLE --label LABEL       Use Label instead of file name.\n"
-         "    -p --show-c-function         Show which C function each change is in.\n"
+         "    -L LABEL --label LABEL         Use Label instead of file name.\n"
+         "    -p --show-c-function           Show which C function each change is in.\n"
+         "    -F RE --show-function-line=RE  Show the most recent line matching RE.\n"
          "  -e  --ed                     Output an ed script.\n"
          "  -n  --rcs                    Output an RCS format diff.\n"
          "  -y  --side-by-side           Output in two columns\n"

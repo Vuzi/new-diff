@@ -32,8 +32,7 @@ typedef struct _params {
 	_bool left_column; /* Ligne identique colonne de gauche */
 	_bool suppress_common_lines; /* Ne pas afficher les lignes identiques */
 
-	_bool show_c_function;
-	char* show_function_line;
+	regex_t* show_regex_function;
 	char* label_1;
 	char* label_2;
 
@@ -59,8 +58,8 @@ typedef struct _params {
 	_bool ignore_end_space;
 	_bool ignore_space_change;
 	_bool ignore_all_space;
-	_bool ignore_blank_lines;
-	regex_t *ignore_regex_match;
+	regex_t* ignore_blank_lines;
+	regex_t* ignore_regex_match;
 
 	_bool text;
 	_bool binary;

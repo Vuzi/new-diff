@@ -345,9 +345,9 @@ static void diff_file_LCS(Smatrix **s, Index *i1, Index *i2, ulint start) {
 
     for(; i < i1->line_max; i++) {
         for(j = start_j; j < i2->line_max; j++, first_y = _true) {
-            if(i1->lines[i].h == i2->lines[j].h) {
+            if(i1->lines[i].h == i2->lines[j].h || (i1->lines[i].ignore && i2->lines[j].ignore)) {
                 smatrix_append(&(*s)[i], j);
-                if(first_y) {
+                if(first_y) { // Optimisation qui permet de privilégier la première branche
                     start_j = j+1;
                     first_y = _false;
                 }

@@ -20,5 +20,8 @@ extern suint diff_stderr_show_help;
 /* == Defines == */
 #define VERSION_NUM "0.01a"
 
+/* == Regex == */
+#define C_FUNCTION_REGEX "^[A-Za-z_]"
+#define BLANK_LINE_REGEX "^[ \r]*$"
 
 #endif

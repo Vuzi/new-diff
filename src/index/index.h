@@ -28,7 +28,8 @@ typedef struct _Line {
 
     hash_t h;
 
-    _bool is_c_func;
+    _bool is_func;
+    _bool ignore;
 
     enum LINE_CHANGE_TYPE modified;
 

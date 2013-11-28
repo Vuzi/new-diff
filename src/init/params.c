@@ -1,4 +1,5 @@
 #include "params.h"
+#include "../print/print.h" // Fonction print
 
 Params *p = NULL;
 suint diff_stderr_show_help = 0;
@@ -17,7 +18,7 @@ void initialize_params(void) {
 	p->width = 130;
 	p->size_tab = 8;
 
-	p->show_function_line = NULL;
+	p->show_regex_function = NULL;
 	p->label_1 = NULL;
 	p->label_2 = NULL;
 
@@ -25,6 +26,8 @@ void initialize_params(void) {
 	p->exclude_from = NULL;
 
 	p->start_compare_file_in_dir = NULL;
+
+	p->ignore_blank_lines = NULL;
 	p->ignore_regex_match = NULL;
 
 	p->group_format_GFMT = NULL;
@@ -119,7 +122,7 @@ void make_params(int argc, char **argv) {
 
     /* Si aucune sortie, celle par défaut */
     if(p->o_style == NOT_SELECTED) {
-        if(p->show_c_function)
+        if(p->show_regex_function)
             p->o_style = CONTEXT;
         else
             p->o_style = REGULAR;
@@ -303,8 +306,39 @@ int make_param(char* option, char* argument) {
             return 0;
         }
         else if (!strcmp(option, "show-c-function") || !strcmp(option, "p")) {
-            p->show_c_function = _true;
+
+            if (p->show_regex_function) {
+                exit_help();
+                exit_error(NULL, "conflicting type of matching function to show", option);
+            }
+
+            p->show_regex_function = (regex_t*)malloc(sizeof(regex_t)); // regex
+
+            if(regcomp(p->show_regex_function, C_FUNCTION_REGEX, REG_NOSUB | REG_EXTENDED) != 0) { // Compilation
+                exit_help();
+                exit_error(NULL, "regex '%s' of c function is invalid (and shouldn't).", C_FUNCTION_REGEX);
+            }
+
             return 0;
+        }
+        else if (!strcmp(option, "show-function-line") || !strcmp(option, "F")) {
+
+            if(!argument) {
+                exit_help();
+                exit_error(NULL, "option '%s' requires an argument", option);
+            } else if (p->show_regex_function) {
+                exit_help();
+                exit_error(NULL, "conflicting type of matching function to show", option);
+            }
+
+            p->show_regex_function = (regex_t*)malloc(sizeof(regex_t)); // regex
+
+            if(regcomp(p->show_regex_function, argument, REG_NOSUB | REG_EXTENDED) != 0) { // Compilation
+                exit_help();
+                exit_error(NULL, "regex '%s' is invalid", argument);
+            }
+
+            return 1;
         }
         else if (!strcmp(option, "label") || !strcmp(option, "L") ) {
 
@@ -346,7 +380,14 @@ int make_param(char* option, char* argument) {
             return 0;
         }
         else if (!strcmp(option, "ignore-blank-lines") || !strcmp(option, "B")) {
-            p->ignore_blank_lines = _true;
+
+            p->ignore_blank_lines = (regex_t*)malloc(sizeof(regex_t)); // regex
+
+            if(regcomp(p->ignore_blank_lines, BLANK_LINE_REGEX, REG_NOSUB | REG_EXTENDED) != 0) { // Compilation
+                exit_help();
+                exit_error(NULL, "regex '%s' of blank line is invalid (and shouldn't).", BLANK_LINE_REGEX);
+            }
+
             return 0;
         }
         else if (!strcmp(option, "ignore-matching-lines")) {
@@ -475,7 +516,6 @@ int make_param(char* option, char* argument) {
 }
 
 #ifdef DEBUG
-// A refaire
 void print_params(Params* parameters) {
 	if (parameters == NULL) {
 		return;
@@ -483,14 +523,15 @@ void print_params(Params* parameters) {
 
 	printf("Options list : \n");
 
-	printf("Output Style : %d\n", parameters->o_style);
+	printf("Output Style Code : %d\n", parameters->o_style);
 	printf("Brief : %d\n", parameters->brief);
 	printf("Context : %d\n", parameters->context);
 
-	printf("Width : %d\n", parameters->width);
-
-	printf("Show C function : %d\n", parameters->show_c_function);
-	printf("Show function line : %s\n", parameters->show_function_line);
+	printf("Width : %u\n", parameters->width);
+    if(p->show_regex_function)
+	printf("Show function line : 1\n");
+	else
+	printf("Show function line : 0\n");
 	printf("Label 1 : %s\n", parameters->label_1);
 	printf("Label 2 : %s\n", parameters->label_2);
 
@@ -550,6 +591,10 @@ void free_params_glob(void) {
 
         if(p->ignore_regex_match)
             regfree(p->ignore_regex_match);
+        if(p->ignore_blank_lines)
+            regfree(p->ignore_blank_lines);
+        if(p->show_regex_function)
+            regfree(p->show_regex_function);
 
         free(p);
         p = NULL;
