@@ -52,7 +52,7 @@ static void print_lines_length(File *file, ulint start, ulint end, const char *l
     int c = 0;
 
 
-    if(start <= end && end <= file->i->line_max) { // Si taille possible
+    if(start <= end && end <= file->i->line_max && !file->empty) { // Si taille possible
         for(i = start; i <= end; i++) { // Pour chacune des lignes à afficher
 
             if(line_start)
@@ -384,7 +384,7 @@ static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, u
                 print_lines(&files[0], start_print-1, i-2, "- ", _true);
             }
             /* Lignes ajoutées */
-            if (files[1].i->lines[i-1].modified) {
+            if (files[1].i->lines[j-1].modified) {
                 start_print = j;
                 do {
                     j++;
@@ -394,7 +394,6 @@ static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, u
 
                 print_lines(&files[1], start_print-1, j-2, "+ ", _true);
             }
-
         } else {
             /* Lignes identiques */
             start_print = i;
@@ -693,14 +692,21 @@ static void print_diff_columns(File files[]) {
     }
 }
 
-void print_args(void) {
-    int i = 1;
+void print_args(char* f[]) {
+    int i = 0;
 
     fputs("diff ", stdout);
 
-    for(; i < p->argc; i++) {
-        fputs(p->argv[i], stdout);
+    for(; i < 2; i++) {
+        fputs(f[0], stdout);
         fputc(' ', stdout);
+    }
+
+    for(i = 1; i < p->argc; i++) {
+        if(!(p->argv[i] == p->original_paths[0] || p->argv[i] == p->original_paths[1])) {
+            fputs(p->argv[i], stdout);
+            fputc(' ', stdout);
+        }
     }
 
     fputc('\n', stdout);
@@ -724,7 +730,8 @@ void print_help(void) {
          "\n"
          "  -a  --text      Treat all files as text.\n"
          "  --binary        Treat all files as binary files.\n"
-         "  -r --recursive  recursively compare any  subdirectories found.\n"
+         "  -r --recursive  Recursively compare any  subdirectories found.\n"
+         "  -N --new-file   Treat absent files as empty.\n"
          "\n"
          "  -q  --brief                  Output only whether file differ.\n"
          "  -s  --report-identical-file  Report when two files are the same.\n"

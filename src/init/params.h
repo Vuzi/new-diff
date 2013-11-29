@@ -32,12 +32,10 @@ typedef struct _params {
 	_bool generate_diff_file;
 
 	uint width;
-	_bool left_column; /* Ligne identique colonne de gauche */
-	_bool suppress_common_lines; /* Ne pas afficher les lignes identiques */
+	_bool left_column;
+	_bool suppress_common_lines;
 
 	regex_t* show_regex_function;
-	char* label_1;
-	char* label_2;
 
 	_bool expand_tab;
 	_bool align_tab;
@@ -79,8 +77,9 @@ typedef struct _params {
 	_bool show_help;
 	_bool show_version;
 
-	char* pathLeft;
-	char* pathRight;
+	char* paths[2];
+	char* original_paths[2];
+	char* labels[2];
 
 	#ifdef DEBUG
 	_bool d_show_index;

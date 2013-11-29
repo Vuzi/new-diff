@@ -10,6 +10,7 @@ static void set_context(char* val);
 static void set_width(char* val);
 
 void initialize_params(void) {
+    uint i = 0;
 	p = (Params*) calloc(1, sizeof(Params));
 
 	p->o_style = NOT_SELECTED;
@@ -19,8 +20,6 @@ void initialize_params(void) {
 	p->size_tab = 8;
 
 	p->show_regex_function = NULL;
-	p->label_1 = NULL;
-	p->label_2 = NULL;
 
 	p->exclude_pattern = NULL;
 	p->exclude_from = NULL;
@@ -34,8 +33,10 @@ void initialize_params(void) {
 	p->line_format_LFMT = NULL;
 	p->line_type_format_LFMT = NULL;
 
-	p->pathLeft = NULL;
-	p->pathRight = NULL;
+    for(; i < 2; i++) {
+        p->paths[i] = NULL;
+        p->labels[i] = NULL;
+    }
 
 	p->argc = 0;
 	p->argv = NULL;
@@ -132,12 +133,12 @@ void make_params(int argc, char **argv) {
     }
 
     /* Si il manque un path, erreur */
-    if(!(p->pathLeft)) {
+    if(!(p->paths[0])) {
         exit_help();
         exit_error(NULL, "missing operand after 'diff'", NULL);
-    } else if (!(p->pathRight)) {
+    } else if (!(p->paths[1])) {
         exit_help();
-        exit_error(NULL, "missing operand after '%s'", p->pathLeft);
+        exit_error(NULL, "missing operand after '%s'", p->paths[0]);
     }
 }
 
@@ -149,10 +150,10 @@ static void set_file_name(char *name) {
     #endif
 
     if(p) {
-        if(!(p->pathLeft)) {
-            p->pathLeft = name;
-        } else if(!(p->pathRight)) {
-            p->pathRight = name;
+        if(!(p->paths[0])) {
+            p->original_paths[0] = p->paths[0] = name;
+        } else if(!(p->paths[1])) {
+            p->original_paths[1] = p->paths[1] = name;
         } else {
             exit_help();
             exit_error(NULL, "extra operand '%s'", name);
@@ -312,6 +313,10 @@ int make_param(char* option, char* argument) {
             p->recursive_dir = _true;
             return 0;
         }
+        else if (!strcmp(option, "new-file") || !strcmp(option, "N")) {
+            p->new_file = _true;
+            return 0;
+        }
         else if (!strcmp(option, "show-c-function") || !strcmp(option, "p")) {
 
             if (p->show_regex_function) {
@@ -354,10 +359,10 @@ int make_param(char* option, char* argument) {
                 exit_error(NULL, "option '%s' requires an argument", option);
             }
 
-            if(!p->label_1)
-                p->label_1 = argument;
-            else if(!p->label_2)
-                p->label_2 = argument;
+            if(!p->labels[0])
+                p->labels[0] = argument;
+            else if(!p->labels[1])
+                p->labels[1] = argument;
             else
                 exit_error(NULL, "more than two labels given '%s'", option);
             return 1;
@@ -539,8 +544,8 @@ void print_params(Params* parameters) {
 	printf("Show function line : 1\n");
 	else
 	printf("Show function line : 0\n");
-	printf("Label 1 : %s\n", parameters->label_1);
-	printf("Label 2 : %s\n", parameters->label_2);
+	printf("Label 1 : %s\n", parameters->labels[0]);
+	printf("Label 2 : %s\n", parameters->labels[1]);
 
 	printf("Expand tab : %d\n", parameters->expand_tab);
 	printf("Align tab : %d\n", parameters->align_tab);
@@ -588,8 +593,8 @@ void print_params(Params* parameters) {
 	printf("Show help : %d\n", parameters->show_help);
 	printf("Show version : %d\n", parameters->show_version);
 
-	printf("Path left : %s\n", parameters->pathLeft);
-	printf("Path right : %s\n", parameters->pathRight);
+	printf("Path 1 : %s\n", parameters->paths[0]);
+	printf("Path 2 : %s\n", parameters->paths[1]);
 
 }
 #endif

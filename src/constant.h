@@ -2,6 +2,7 @@
 #define _H_CONSTANT
 
 /* == Inlcudes == */
+#include <errno.h>
 #include "my_types.h"
 #include "init/params.h"
 #include "err/err.h"

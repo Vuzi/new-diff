@@ -17,6 +17,7 @@ typedef enum _File_type {
 typedef struct _File{
 
 	FILE *f;
+	DIR *d;
 
 	Index *i;
 
@@ -25,6 +26,7 @@ typedef struct _File{
 
 	struct stat st;
 	File_type type;
+	_bool empty;
 
 }File;
 

@@ -1,6 +1,7 @@
 #include "index.h"
 
 static ulint index_size(FILE *f, ulint* longest_line);
+static void index_empty(File *file);
 static END_LINE get_end_line(FILE *f, char c);
 
 static ulint index_size(FILE *f, ulint* longest_line) {
@@ -51,6 +52,21 @@ static END_LINE get_end_line(FILE *f, char c) {
     return -1;
 }
 
+static void index_empty(File *file) {
+
+    /* Création de l'index */
+    file->i = (Index*)malloc(sizeof(Index));
+
+    file->i->line_max = 1;
+    file->i->lines = (Line*)calloc(sizeof(Line), 1);
+    file->i->lines[0].end_line = END_OF_FILE;
+    file->i->lines[0].h = HASH_START;
+    file->i->lines[0].ignore = _false;
+    file->i->lines[0].is_func = _false;
+    file->i->lines[0].length = 0;
+    file->i->lines[0].start = 0;
+}
+
 void index_file(File *file) {
 
     ulint cpt = 0, j = 0, tab_cpt = 0, space_cpt = 0, blank_cpt = 0, max_lenght = 0;
@@ -58,6 +74,11 @@ void index_file(File *file) {
     hash_t h = HASH_START;
 
     char * buffer = NULL;
+
+    if(file->empty) {
+        index_empty(file);
+        return;
+    }
 
     /* Création de l'index */
     file->i = (Index*)malloc(sizeof(Index));
