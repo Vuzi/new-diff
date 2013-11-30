@@ -14,7 +14,7 @@ static _bool diff_file_regular(File files[]);
 static const char* get_type_char(struct stat* s);
 static int dir_search(const char* to_search, DIR* d);
 static int diff_dir_make(File files[]);
-
+static int diff_dir_make_r(File files[], struct  dirent* dr1, struct dirent* dr2);
 
 /* ===============================================
                       sec_fopen
@@ -469,6 +469,131 @@ static int dir_search(const char* to_search, DIR* d) {
 }
 
 
+static int diff_dir_make_r(File files[], struct  dirent* dr1, struct dirent* dr2) {
+
+    File new_files[2];
+    char *tmp_names[2] = {NULL, NULL};
+    char *labels[2] = {NULL, NULL};
+    struct stat st1, st2;
+    int ret = EXIT_IDENTICAL_FILES;
+
+    File_type type = T_NONE;
+
+    if(!dr1) {
+        tmp_names[0] = (char*)malloc(sizeof(char)*(strlen(dr2->d_name)+strlen(files[0].path)+2));
+        sprintf(tmp_names[0], "%s/%s", files[0].path, dr2->d_name);
+    } else {
+        tmp_names[0] = (char*)malloc(sizeof(char)*(strlen(dr1->d_name)+strlen(files[0].path)+2));
+        sprintf(tmp_names[0], "%s/%s", files[0].path, dr1->d_name);
+    }
+
+    if(!dr2) {
+        tmp_names[1] = (char*)malloc(sizeof(char)*(strlen(dr1->d_name)+strlen(files[1].path)+2));
+        sprintf(tmp_names[1], "%s/%s", files[1].path, dr1->d_name);
+    } else {
+        tmp_names[1] = (char*)malloc(sizeof(char)*(strlen(dr2->d_name)+strlen(files[1].path)+2));
+        sprintf(tmp_names[1], "%s/%s", files[1].path, dr2->d_name);
+    }
+
+    if(!dr1) {
+        if(stat(tmp_names[1], &st2) == 0) {
+            if(p->recursive_dir && S_ISDIR(st2.st_mode)) {
+                #ifdef DEBUG
+                    printf("Directory forced as empty\n--------------\nStart of sub-directories comparison...\n");
+                #endif
+                type = T_DIR;
+            } else if (S_ISREG(st2.st_mode)) {
+                #ifdef DEBUG
+                    printf("File forced as empty\n--------------\nStart of sub-files comparison...\n");
+                #endif
+                type = T_FILE;
+            } else
+                ret = EXIT_DIFFERENTS_FILES;
+        } else {
+            send_error(tmp_names[1], NULL);
+            ret = EXIT_DIFFERENTS_FILES;
+        }
+    } else if (!dr2) {
+        if(stat(tmp_names[0], &st1) == 0) {
+            if(p->recursive_dir && S_ISDIR(st1.st_mode)) {
+                #ifdef DEBUG
+                    printf("Directory forced as empty\n--------------\nStart of sub-directories comparison...\n");
+                #endif
+                type = T_DIR;
+            } else if (S_ISREG(st1.st_mode)) {
+                #ifdef DEBUG
+                    printf("File forced as empty\n--------------\nStart of sub-files comparison...\n");
+                #endif
+                type = T_FILE;
+            } else
+                ret = EXIT_DIFFERENTS_FILES;
+        } else {
+            send_error(tmp_names[0], NULL);
+            ret = EXIT_DIFFERENTS_FILES;
+        }
+    } else {
+
+        if(stat(tmp_names[0], &st1) == 0) {
+            if(stat(tmp_names[1], &st2) == 0) {
+                if(st1.st_mode == st2.st_mode) {
+                    if(p->recursive_dir && S_ISDIR(st1.st_mode)) {
+                        type = T_DIR;
+                        #ifdef DEBUG
+                            printf("Two sub-directoriers detected\n--------------\nStart of sub-directories comparison...\n");
+                        #endif
+                    } else if (S_ISREG(st1.st_mode)) {
+                        type = T_FILE;
+                        #ifdef DEBUG
+                            printf("Two sub-files detected\n--------------\nStart of sub-files comparison...\n");
+                        #endif
+                    }
+                    /* Sinon ... */
+                    else {
+                        printf("File %s is a %s while file %s is a %s\n",
+                                tmp_names[0], get_type_char(&st1), tmp_names[1], get_type_char(&st2));
+                        ret = EXIT_IDENTICAL_FILES;
+                    }
+                } else
+                    ret = EXIT_DIFFERENTS_FILES;
+            } else {
+                send_error(tmp_names[1], NULL);
+                ret = EXIT_DIFFERENTS_FILES;
+            }
+        } else {
+            send_error(tmp_names[0], NULL);
+            ret = EXIT_DIFFERENTS_FILES;
+        }
+    }
+
+    if(ret == EXIT_IDENTICAL_FILES) {
+
+        /* Labels à copier */
+        labels[0] = ( files[0].path != files[0].label ? files[0].label : NULL );
+        labels[1] = ( files[1].path != files[1].label ? files[1].label : NULL );
+
+        init_diff_r(tmp_names, labels, new_files);
+
+        if(type == T_DIR)
+            ret = diff_dir(new_files);
+        else {
+            print_args(tmp_names);
+            ret = diff_file(new_files);
+        }
+
+        free_diff_r(new_files);
+
+        #ifdef DEBUG
+            printf("End of comparison\n--------------\n");
+        #endif
+    }
+
+    free(tmp_names[0]);
+    free(tmp_names[1]);
+
+    return ret;
+}
+
+
 /* ===============================================
                     diff_dir_make
 
@@ -485,13 +610,7 @@ static int dir_search(const char* to_search, DIR* d) {
 static int diff_dir_make(File files[]) {
 
     int ret = EXIT_IDENTICAL_FILES, tmp = 0, i = 0;
-    char *tmp_names[2] = {NULL, NULL};
-    char *labels[2] = {NULL, NULL};
-
     struct dirent *dr1 = NULL, *dr2 = NULL;
-    struct stat st1, st2;
-
-    File new_files[2];
 
     #ifdef DEBUG
         printf("Start of directories comparison...\n");
@@ -510,69 +629,9 @@ static int diff_dir_make(File files[]) {
         if(!files[1].empty && (dr2 = readdir(files[1].d)) != NULL) {
             /* S'il s'agit du même */
             if(strcmp(dr1->d_name, dr2->d_name) == 0) {
-
-                tmp_names[0] = (char*)malloc(sizeof(char)*(strlen(dr1->d_name)+strlen(files[0].path)+2));
-                sprintf(tmp_names[0], "%s/%s", files[0].path, dr1->d_name);
-
-                tmp_names[1] = (char*)malloc(sizeof(char)*(strlen(dr2->d_name)+strlen(files[1].path)+2));
-                sprintf(tmp_names[1], "%s/%s", files[1].path, dr2->d_name);
-
-                /* On récupère le type */
-                if(stat(tmp_names[0], &st1) == 0) {
-                    if(stat(tmp_names[1], &st2) == 0) {
-                        /* S'il sont du même type */
-                        if(st1.st_mode == st2.st_mode) {
-                            if(p->recursive_dir && S_ISDIR(st1.st_mode)) {
-                                #ifdef DEBUG
-                                    printf("Two sub-directoriers detected\n--------------\nStart of sub-directories comparison...\n");
-                                #endif
-
-                                /* Labels à copier */
-                                labels[0] = ( files[0].path != files[0].label ? files[0].label : NULL );
-                                labels[1] = ( files[1].path != files[1].label ? files[1].label : NULL );
-
-                                init_diff_r(tmp_names, labels, new_files);
-                                if((tmp = diff_dir(new_files)) > ret)
-                                    ret = tmp;
-                                free_diff_r(new_files);
-
-                                #ifdef DEBUG
-                                    printf("End of sub-directories comparison\n--------------\n");
-                                #endif
-
-                            } else if (S_ISREG(st1.st_mode)) {
-                                #ifdef DEBUG
-                                    printf("Two sub-files detected\n--------------\nStart of sub-files comparison...\n");
-                                #endif
-                                /* Labels à copier */
-                                labels[0] = ( files[0].path != files[0].label ? files[0].label : NULL );
-                                labels[1] = ( files[1].path != files[1].label ? files[1].label : NULL );
-
-                                print_args(tmp_names);
-
-                                init_diff_r(tmp_names, labels, new_files);
-                                if((tmp = diff_file(new_files)) > ret)
-                                    ret = tmp;
-                                free_diff_r(new_files);
-
-                                #ifdef DEBUG
-                                    printf("End of sub-files comparison\n--------------\n");
-                                #endif
-                            }
-                        }
-                        /* Sinon ... */
-                        else {
-                            printf("File %s/%s is a %s while file %s/%s is a %s\n",
-                                    files[0].path, dr1->d_name, get_type_char(&st1), files[1].path, dr2->d_name, get_type_char(&st2));
-                            ret = EXIT_DIFFERENTS_FILES;
-                        }
-                    } else
-                        send_error(tmp_names[1], NULL);
-                } else
-                    send_error(tmp_names[0], NULL);
-
-                free(tmp_names[0]);
-                free(tmp_names[1]);
+                tmp = diff_dir_make_r(files, dr1, dr2);
+                if (tmp > ret)
+                    ret = tmp;
             }
             /* Il ne s'agit pas du même */
             else {
@@ -582,45 +641,9 @@ static int diff_dir_make(File files[]) {
                     do {
                         /* Fichiers uniquement dans d2 */
                         if(p->new_file) {
-                            #ifdef DEBUG
-                                printf("File forced as empty\n--------------\nStart of sub-files comparison...\n");
-                            #endif
-
-                            tmp_names[0] = (char*)malloc(sizeof(char)*(strlen(dr2->d_name)+strlen(files[0].path)+2));
-                            sprintf(tmp_names[0], "%s/%s", files[0].path, dr2->d_name);
-
-                            tmp_names[1] = (char*)malloc(sizeof(char)*(strlen(dr2->d_name)+strlen(files[1].path)+2));
-                            sprintf(tmp_names[1], "%s/%s", files[1].path, dr2->d_name);
-
-                            /* On récupère le type */
-                            if(stat(tmp_names[1], &st2) == 0) {
-                                if(S_ISDIR(st2.st_mode) || S_ISREG(st2.st_mode)) {
-                                    /* Labels à copier */
-                                    labels[0] = ( files[0].path != files[0].label ? files[0].label : NULL );
-                                    labels[1] = ( files[1].path != files[1].label ? files[1].label : NULL );
-
-                                    init_diff_r(tmp_names, labels, new_files);
-
-                                    if(S_ISREG(st2.st_mode)) {
-                                        print_args(tmp_names);
-                                        tmp = diff_file(new_files);
-                                    } else
-                                        tmp = diff_dir(new_files);
-
-                                    if(tmp > ret)
-                                        ret = tmp;
-
-                                    free_diff_r(new_files);
-                                }
-                            } else
-                                send_error(tmp_names[1], NULL);
-
-                            free(tmp_names[0]);
-                            free(tmp_names[1]);
-
-                            #ifdef DEBUG
-                                printf("End of sub-files comparison\n--------------\n");
-                            #endif
+                            tmp = diff_dir_make_r(files, dr1, dr2);
+                            if (tmp > ret)
+                                ret = tmp;
                         } else {
                             printf("Only in %s: %s\n", files[1].path, dr2->d_name);
                             ret = EXIT_DIFFERENTS_FILES;
@@ -635,44 +658,9 @@ static int diff_dir_make(File files[]) {
                     do {
                         /* Fichiers uniquement dans d1 */
                         if(p->new_file) {
-                            #ifdef DEBUG
-                                printf("File forced as empty\n--------------\nStart of sub-files comparison...\n");
-                            #endif
-                            tmp_names[0] = (char*)malloc(sizeof(char)*(strlen(dr1->d_name)+strlen(files[0].path)+2));
-                            sprintf(tmp_names[0], "%s/%s", files[0].path, dr1->d_name);
-
-                            tmp_names[1] = (char*)malloc(sizeof(char)*(strlen(dr1->d_name)+strlen(files[1].path)+2));
-                            sprintf(tmp_names[1], "%s/%s", files[1].path, dr1->d_name);
-
-                            /* On récupère le type */
-                            if(stat(tmp_names[0], &st1) == 0) {
-                                if(S_ISDIR(st1.st_mode) || S_ISREG(st1.st_mode)) {
-                                    /* Labels à copier */
-                                    labels[0] = ( files[0].path != files[0].label ? files[0].label : NULL );
-                                    labels[1] = ( files[1].path != files[1].label ? files[1].label : NULL );
-
-                                    init_diff_r(tmp_names, labels, new_files);
-
-                                    if(S_ISREG(st1.st_mode)) {
-                                        print_args(tmp_names);
-                                        tmp = diff_file(new_files);
-                                    } else
-                                        tmp = diff_dir(new_files);
-
-                                    if(tmp > ret)
-                                        ret = tmp;
-
-                                    free_diff_r(new_files);
-                                }
-                            } else
-                                send_error(tmp_names[0], NULL);
-
-                            free(tmp_names[0]);
-                            free(tmp_names[1]);
-
-                            #ifdef DEBUG
-                                printf("End of sub-files comparison\n--------------\n");
-                            #endif
+                            tmp = diff_dir_make_r(files, dr1, dr2);
+                            if (tmp > ret)
+                                ret = tmp;
                         } else {
                             printf("Only in %s: %s\n", files[0].path, dr1->d_name);
                             ret = EXIT_DIFFERENTS_FILES;
