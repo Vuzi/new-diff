@@ -76,7 +76,7 @@ void make_params(int argc, char **argv) {
                     arg_tmp = strchr(argv[i]+2, (int)'=');
 
                     if(arg_tmp) {
-                        arg_tmp = '\0';
+                        *arg_tmp = '\0';
                         arg_tmp++; // Pour couper en deux une même chaine
                         make_param(argv[i]+2, arg_tmp);
                     } else {
