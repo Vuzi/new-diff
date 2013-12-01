@@ -317,6 +317,14 @@ int make_param(char* option, char* argument) {
             p->new_file = _true;
             return 0;
         }
+        else if (!strcmp(option, "ignore-file-name-case")) {
+            p->ignore_case_filename = _true;
+            return 0;
+        }
+        else if (!strcmp(option, "no-ignore-file-name-case")) {
+            p->ignore_case_filename = _false;
+            return 0;
+        }
         else if (!strcmp(option, "show-c-function") || !strcmp(option, "p")) {
 
             if (p->show_regex_function) {

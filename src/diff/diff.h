@@ -1,6 +1,7 @@
 /* == Inlcudes == */
 
 #include <dirent.h>
+#include <strings.h>
 #include "../constant.h"
 #include "../index/index.h"
 #include "smatrix.h"
