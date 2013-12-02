@@ -5,7 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../string/_string.h"
-#include "../include/regex.h"
+#ifdef _WIN32
+    #include "../include/regex.h" // Pas de regex.h dans mingw
+#else
+    #include <regex.h>
+#endif
 #include "../my_types.h"
 
 typedef enum _mode {
