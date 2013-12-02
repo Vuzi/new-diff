@@ -39,13 +39,13 @@ void init_diff(int argc, char** argv, File files[]) {
         files[i].empty = _false;
 
         /* Analyse des chemins */
-        files[i].path = malloc(sizeof(char)*(strlen(p->paths[i])+1));
-        strcpy(files[i].path, p->paths[i]);
+        files[i].path = malloc(sizeof(char)*(diff_strlen(p->paths[i])+1));
+        diff_strcpy(files[i].path, p->paths[i]);
 
         /* Labels */
         if(p->labels[i]) {
-            files[i].label = malloc(sizeof(char)*(strlen(p->labels[i])+1));
-            strcpy(files[i].label, p->labels[i]);
+            files[i].label = malloc(sizeof(char)*(diff_strlen(p->labels[i])+1));
+            diff_strcpy(files[i].label, p->labels[i]);
         } else {
             files[i].label = files[i].path;
         }

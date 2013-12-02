@@ -2,8 +2,6 @@
 #define SUBSQ_H
 
 /* == Inlcudes == */
-#include <stdio.h>
-#include <stdlib.h>
 #include "../constant.h"
 #include "diff.h"
 

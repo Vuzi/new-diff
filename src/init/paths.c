@@ -53,7 +53,7 @@ void set_paths(File files[]) {
             else {
                 /* Fichier & dossier */
                 if(files[0].type == T_FILE) {
-                    tmp = (char*)malloc(sizeof(char)*(strlen(files[0].path)+strlen(files[1].path)+2));
+                    tmp = (char*)malloc(sizeof(char)*(diff_strlen(files[0].path)+diff_strlen(files[1].path)+2));
                     sprintf(tmp, "%s/%s",files[1].path, files[0].path);
                     free(files[1].path);
                     files[1].path = tmp;
@@ -70,7 +70,7 @@ void set_paths(File files[]) {
                 }
                 /* Dossier & fichier */
                 else {
-                    tmp = (char*)malloc(sizeof(char)*(strlen(files[0].path)+strlen(files[1].path)+2));
+                    tmp = (char*)malloc(sizeof(char)*(diff_strlen(files[0].path)+diff_strlen(files[1].path)+2));
                     sprintf(tmp, "%s/%s",files[0].path, files[1].path);
                     free(files[0].path);
                     files[0].path = tmp;

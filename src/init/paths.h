@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <string.h>
+#include "../string/_string.h"
 
 #include "../constant.h"
 #include "../diff/diff.h"

@@ -119,7 +119,7 @@ static void print_file_name(struct stat *st, char* name) {
     strftime(stat_time, 512, "%Y-%m-%d %H:%M:%S", stat_tm);
 
     printf("%s", name);
-    print_space(12-(strlen(name)%12));
+    print_space(12-(diff_strlen(name)%12));
 
     #ifdef _WIN32
         printf("%s.%I64u ", stat_time, (unsigned long long)st->st_mtime);

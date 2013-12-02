@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <string.h>
+#include "../string/_string.h"
 #include <stdarg.h>
 
 #include "../constant.h"

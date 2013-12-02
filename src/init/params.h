@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include "../string/_string.h"
 #include "../include/regex.h"
 #include "../my_types.h"
 

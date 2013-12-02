@@ -457,7 +457,7 @@ static int dir_search(const char* to_search, DIR* d) {
     struct dirent *dr = NULL;
 
     while ((dr = readdir(d)) != NULL) {
-        if(strcmp(to_search, dr->d_name) == 0) {
+        if(diff_strcmp(to_search, dr->d_name) == 0) {
             d_val = telldir(d);
             seekdir(d, d_save);
             return d_val;
@@ -479,18 +479,18 @@ static int diff_dir_make_r_new_file(File files[], struct  dirent* dr1, struct di
     File_type type = T_NONE;
 
     if(!dr1) {
-        tmp_names[0] = (char*)malloc(sizeof(char)*(strlen(dr2->d_name)+strlen(files[0].path)+2));
+        tmp_names[0] = (char*)malloc(sizeof(char)*(diff_strlen(dr2->d_name)+diff_strlen(files[0].path)+2));
         sprintf(tmp_names[0], "%s/%s", files[0].path, dr2->d_name);
     } else {
-        tmp_names[0] = (char*)malloc(sizeof(char)*(strlen(dr1->d_name)+strlen(files[0].path)+2));
+        tmp_names[0] = (char*)malloc(sizeof(char)*(diff_strlen(dr1->d_name)+diff_strlen(files[0].path)+2));
         sprintf(tmp_names[0], "%s/%s", files[0].path, dr1->d_name);
     }
 
     if(!dr2) {
-        tmp_names[1] = (char*)malloc(sizeof(char)*(strlen(dr1->d_name)+strlen(files[1].path)+2));
+        tmp_names[1] = (char*)malloc(sizeof(char)*(diff_strlen(dr1->d_name)+diff_strlen(files[1].path)+2));
         sprintf(tmp_names[1], "%s/%s", files[1].path, dr1->d_name);
     } else {
-        tmp_names[1] = (char*)malloc(sizeof(char)*(strlen(dr2->d_name)+strlen(files[1].path)+2));
+        tmp_names[1] = (char*)malloc(sizeof(char)*(diff_strlen(dr2->d_name)+diff_strlen(files[1].path)+2));
         sprintf(tmp_names[1], "%s/%s", files[1].path, dr2->d_name);
     }
 
@@ -573,10 +573,10 @@ static int diff_dir_make_r(File files[], struct  dirent* dr1, struct dirent* dr2
 
     File_type type = T_NONE;
 
-    tmp_names[0] = (char*)malloc(sizeof(char)*(strlen(dr1->d_name)+strlen(files[0].path)+2));
+    tmp_names[0] = (char*)malloc(sizeof(char)*(diff_strlen(dr1->d_name)+diff_strlen(files[0].path)+2));
     sprintf(tmp_names[0], "%s/%s", files[0].path, dr1->d_name);
 
-    tmp_names[1] = (char*)malloc(sizeof(char)*(strlen(dr2->d_name)+strlen(files[1].path)+2));
+    tmp_names[1] = (char*)malloc(sizeof(char)*(diff_strlen(dr2->d_name)+diff_strlen(files[1].path)+2));
     sprintf(tmp_names[1], "%s/%s", files[1].path, dr2->d_name);
 
     if(stat(tmp_names[0], &st1) == 0) {
@@ -674,8 +674,8 @@ static int diff_dir_make(File files[]) {
     while (!files[0].empty && (dr1 = readdir(files[0].d)) != NULL) {
         if(!files[1].empty && (dr2 = readdir(files[1].d)) != NULL) {
             /* S'il s'agit du même */
-            if((!p->ignore_case_filename && strcmp(dr1->d_name, dr2->d_name) == 0) ||
-                strcasecmp(dr1->d_name, dr2->d_name) == 0)
+            if((!p->ignore_case_filename && diff_strcmp(dr1->d_name, dr2->d_name) == 0) ||
+                diff_strcasecmp(dr1->d_name, dr2->d_name) == 0)
             {
                 tmp = diff_dir_make_r(files, dr1, dr2);
                 if (tmp > ret)

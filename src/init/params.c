@@ -55,7 +55,7 @@ void make_params(int argc, char **argv) {
     /* Pour chacun des arguments */
     for (i = 1; i < argc; i++) {
 
-        arg_length = strlen(argv[i]);
+        arg_length = diff_strlen(argv[i]);
 
         /* Si on commence par un tiret */
         if(!no_more_op && arg_length > 0 && argv[i][0] == '-') {
@@ -73,7 +73,7 @@ void make_params(int argc, char **argv) {
                         exit_error(NULL, "option '%s' is ambigous", argv[i]);
                     }
 
-                    arg_tmp = strchr(argv[i]+2, (int)'=');
+                    arg_tmp = diff_strchr(argv[i]+2, (int)'=');
 
                     if(arg_tmp) {
                         *arg_tmp = '\0';
@@ -214,23 +214,23 @@ int make_param(char* option, char* argument) {
     #endif
 
     if(p) {
-        if (!strcmp(option, "normal")) {
+        if (!diff_strcmp(option, "normal")) {
             set_output_style(REGULAR);
             return 0;
         }
-        else if (!strcmp(option, "brief") || !strcmp(option, "q")) {
+        else if (!diff_strcmp(option, "brief") || !diff_strcmp(option, "q")) {
             p->brief = _true;
             return 0;
         }
-        else if (!strcmp(option, "report-identical-files") || !strcmp(option, "s")) {
+        else if (!diff_strcmp(option, "report-identical-files") || !diff_strcmp(option, "s")) {
             p->report_identical_files = _true;
             return 0;
         }
-        else if (!strcmp(option, "c")) {
+        else if (!diff_strcmp(option, "c")) {
             set_output_style(CONTEXT);
             return 0;
         }
-        else if (!strcmp(option, "C")) {
+        else if (!diff_strcmp(option, "C")) {
 
             if(!argument) {
                 exit_help();
@@ -242,7 +242,7 @@ int make_param(char* option, char* argument) {
             return 1;
 
         }
-        else if (!strcmp(option, "context")) {
+        else if (!diff_strcmp(option, "context")) {
 
             set_output_style(CONTEXT);
 
@@ -253,10 +253,10 @@ int make_param(char* option, char* argument) {
 
             return 0;
         }
-        else if (!strcmp(option, "u")) {
+        else if (!diff_strcmp(option, "u")) {
             set_output_style(UNIFIED);
         }
-        else if (!strcmp(option, "U")) {
+        else if (!diff_strcmp(option, "U")) {
 
             if(!argument) {
                 exit_help();
@@ -268,7 +268,7 @@ int make_param(char* option, char* argument) {
             return 1;
 
         }
-        else if (!strcmp(option, "unified")) {
+        else if (!diff_strcmp(option, "unified")) {
 
             set_output_style(UNIFIED);
 
@@ -279,19 +279,19 @@ int make_param(char* option, char* argument) {
 
             return 0;
         }
-        else if (!strcmp(option, "ed") || !strcmp(option, "e")) {
+        else if (!diff_strcmp(option, "ed") || !diff_strcmp(option, "e")) {
             set_output_style(EDIT_SCRIPT);
             return 0;
         }
-        else if (!strcmp(option, "rcs") || !strcmp(option, "n")) {
+        else if (!diff_strcmp(option, "rcs") || !diff_strcmp(option, "n")) {
             set_output_style(RCS);
             return 0;
         }
-        else if (!strcmp(option, "side-by-side") || !strcmp(option, "y")) {
+        else if (!diff_strcmp(option, "side-by-side") || !diff_strcmp(option, "y")) {
             set_output_style(COLUMNS);
             return 0;
         }
-        else if (!strcmp(option, "width") || !strcmp(option, "W")) {
+        else if (!diff_strcmp(option, "width") || !diff_strcmp(option, "W")) {
 
             if(!argument) {
                 exit_help();
@@ -301,31 +301,31 @@ int make_param(char* option, char* argument) {
             set_width(argument);
             return 1;
         }
-        else if (!strcmp(option, "left-column")) {
+        else if (!diff_strcmp(option, "left-column")) {
             p->left_column = _true;
             return 0;
         }
-        else if (!strcmp(option, "suppress-common-lines")) {
+        else if (!diff_strcmp(option, "suppress-common-lines")) {
             p->suppress_common_lines = _true;
             return 0;
         }
-        else if (!strcmp(option, "recursive") || !strcmp(option, "r")) {
+        else if (!diff_strcmp(option, "recursive") || !diff_strcmp(option, "r")) {
             p->recursive_dir = _true;
             return 0;
         }
-        else if (!strcmp(option, "new-file") || !strcmp(option, "N")) {
+        else if (!diff_strcmp(option, "new-file") || !diff_strcmp(option, "N")) {
             p->new_file = _true;
             return 0;
         }
-        else if (!strcmp(option, "ignore-file-name-case")) {
+        else if (!diff_strcmp(option, "ignore-file-name-case")) {
             p->ignore_case_filename = _true;
             return 0;
         }
-        else if (!strcmp(option, "no-ignore-file-name-case")) {
+        else if (!diff_strcmp(option, "no-ignore-file-name-case")) {
             p->ignore_case_filename = _false;
             return 0;
         }
-        else if (!strcmp(option, "show-c-function") || !strcmp(option, "p")) {
+        else if (!diff_strcmp(option, "show-c-function") || !diff_strcmp(option, "p")) {
 
             if (p->show_regex_function) {
                 exit_help();
@@ -341,7 +341,7 @@ int make_param(char* option, char* argument) {
 
             return 0;
         }
-        else if (!strcmp(option, "show-function-line") || !strcmp(option, "F")) {
+        else if (!diff_strcmp(option, "show-function-line") || !diff_strcmp(option, "F")) {
 
             if(!argument) {
                 exit_help();
@@ -360,7 +360,7 @@ int make_param(char* option, char* argument) {
 
             return 1;
         }
-        else if (!strcmp(option, "label") || !strcmp(option, "L") ) {
+        else if (!diff_strcmp(option, "label") || !diff_strcmp(option, "L") ) {
 
             if(!argument) {
                 exit_help();
@@ -375,31 +375,31 @@ int make_param(char* option, char* argument) {
                 exit_error(NULL, "more than two labels given '%s'", option);
             return 1;
         }
-        else if (!strcmp(option, "suppress-blank-empty")) {
+        else if (!diff_strcmp(option, "suppress-blank-empty")) {
             p->suppress_blank_empty = _true;
             return 0;
         }
-        else if (!strcmp(option, "ignore-case") || !strcmp(option, "i")) {
+        else if (!diff_strcmp(option, "ignore-case") || !diff_strcmp(option, "i")) {
             p->ignore_case = _true;
             return 0;
         }
-        else if (!strcmp(option, "ignore-tab-expansion") || !strcmp(option, "E")) {
+        else if (!diff_strcmp(option, "ignore-tab-expansion") || !diff_strcmp(option, "E")) {
             p->ignore_tab_change = _true;
             return 0;
         }
-        else if (!strcmp(option, "ignore-trailing-space") || !strcmp(option, "Z")) {
+        else if (!diff_strcmp(option, "ignore-trailing-space") || !diff_strcmp(option, "Z")) {
             p->ignore_end_space = _true;
             return 0;
         }
-        else if (!strcmp(option, "ignore-space-change") || !strcmp(option, "b")) {
+        else if (!diff_strcmp(option, "ignore-space-change") || !diff_strcmp(option, "b")) {
             p->ignore_space_change = _true;
             return 0;
         }
-        else if (!strcmp(option, "ignore-all-space") || !strcmp(option, "w")) {
+        else if (!diff_strcmp(option, "ignore-all-space") || !diff_strcmp(option, "w")) {
             p->ignore_all_space = _true;
             return 0;
         }
-        else if (!strcmp(option, "ignore-blank-lines") || !strcmp(option, "B")) {
+        else if (!diff_strcmp(option, "ignore-blank-lines") || !diff_strcmp(option, "B")) {
 
             p->ignore_blank_lines = (regex_t*)malloc(sizeof(regex_t)); // regex
 
@@ -410,7 +410,7 @@ int make_param(char* option, char* argument) {
 
             return 0;
         }
-        else if (!strcmp(option, "ignore-matching-lines")) {
+        else if (!diff_strcmp(option, "ignore-matching-lines")) {
 
             if(!argument) {
                 exit_help();
@@ -426,7 +426,7 @@ int make_param(char* option, char* argument) {
 
             return 1;
         }
-        else if (!strcmp(option, "I")) {
+        else if (!diff_strcmp(option, "I")) {
 
             if(!argument) {
                 exit_help();
@@ -442,7 +442,7 @@ int make_param(char* option, char* argument) {
 
             return 1;
         }
-        else if (!strcmp(option, "text") || !strcmp(option, "a")) {
+        else if (!diff_strcmp(option, "text") || !diff_strcmp(option, "a")) {
 
             if(p->binary) {
                 exit_help();
@@ -452,7 +452,7 @@ int make_param(char* option, char* argument) {
             p->text = _true;
             return 0;
         }
-        else if (!strcmp(option, "binary")) {
+        else if (!diff_strcmp(option, "binary")) {
 
             if(p->text) {
                 exit_help();
@@ -462,15 +462,15 @@ int make_param(char* option, char* argument) {
             p->binary = _true;
             return 0;
         }
-        else if (!strcmp(option, "strip-trailing-cr")) {
+        else if (!diff_strcmp(option, "strip-trailing-cr")) {
             p->strip_trailing_cr = _true;
             return 0;
         }
-        else if (!strcmp(option, "expand-tabs") || !strcmp(option, "t")) {
+        else if (!diff_strcmp(option, "expand-tabs") || !diff_strcmp(option, "t")) {
             p->expand_tab = _true;
             return 0;
         }
-        else if (!strcmp(option, "expand-tabs") || !strcmp(option, "t")) {
+        else if (!diff_strcmp(option, "expand-tabs") || !diff_strcmp(option, "t")) {
 
             if(!argument) {
                 exit_help();
@@ -483,7 +483,7 @@ int make_param(char* option, char* argument) {
 
             return 0;
         }
-        else if (!strcmp(option, "help")) {
+        else if (!diff_strcmp(option, "help")) {
             #ifdef DEBUG
                 puts("Help selected");
             #endif
@@ -493,7 +493,7 @@ int make_param(char* option, char* argument) {
             #endif
             exit(0);
         }
-        else if (!strcmp(option, "v") || !strcmp(option, "version")) {
+        else if (!diff_strcmp(option, "v") || !diff_strcmp(option, "version")) {
             #ifdef DEBUG
                 puts("Version selected");
             #endif
@@ -504,26 +504,26 @@ int make_param(char* option, char* argument) {
             exit(0);
         }
         #ifdef DEBUG
-        else if (!strcmp(option, "debug-show-options")) {
+        else if (!diff_strcmp(option, "debug-show-options")) {
             p->d_show_options = _true;
             return 0;
         }
-        else if (!strcmp(option, "debug-show-index")) {
+        else if (!diff_strcmp(option, "debug-show-index")) {
             p->d_show_index = _true;
             return 0;
         }
-        else if (!strcmp(option, "debug-show-diff")) {
+        else if (!diff_strcmp(option, "debug-show-diff")) {
             p->d_show_diff = _true;
             return 0;
         }
-        else if (!strcmp(option, "debug-interactive-mode")) {
+        else if (!diff_strcmp(option, "debug-interactive-mode")) {
             p->d_interactive_mode = _true;
             return 0;
         }
         #endif
         else {
             exit_help();
-            if(strlen(option) < 2) {
+            if(diff_strlen(option) < 2) {
                 exit_error(NULL, "invalid option -- '%s'", option); // court
             } else {
                 exit_error(NULL, "unrecognized option '%s'", option); // long

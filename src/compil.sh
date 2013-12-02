@@ -8,13 +8,13 @@ fi
 
 if [[ ! -d "bin" ]]; then
 	mkdir "bin"
-	mkdir "bin/debug"
+	mkdir "bin/Debug"
 	mkdir "bin/release"
 fi
 
 if [[ $1 == "-debug" ]]; then
 	mode_comp=DEBUG
-	path_comp=bin/debug
+	path_comp=bin/Debug
 else
 	mode_comp=RELEASE
 	path_comp=bin/release
@@ -31,7 +31,8 @@ gcc -c diff/diff.c -o _o/diff.o -Wall -Wextra -O3 -D $mode_comp
 gcc -c diff/smatrix.c -o _o/smatrix.o -Wall -Wextra -O3 -D $mode_comp
 gcc -c print/print.c -o _o/print.o -Wall -Wextra -O3 -D $mode_comp
 gcc -c err/err.c -o _o/err.o -Wall -Wextra -O3 -D $mode_comp
-gcc -Wall -Wextra -O3 -o $path_comp/diff _o/main.o _o/init.o _o/params.o _o/paths.o _o/index.o _o/hash.o _o/diff.o _o/smatrix.o _o/print.o _o/err.o
+gcc -c string/_string.c -o _o/_string.o -Wall -Wextra -O3 -D $mode_comp
+gcc -Wall -Wextra -O3 -o $path_comp/diff _o/main.o _o/init.o _o/params.o _o/paths.o _o/index.o _o/hash.o _o/diff.o _o/smatrix.o _o/print.o _o/err.o _o/_string.o
 
 rm -rf "_o"
 
