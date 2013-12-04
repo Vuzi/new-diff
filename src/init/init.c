@@ -9,14 +9,14 @@ void init_diff(int argc, char** argv, File files[]) {
 
     uint i = 0;
 
-    /* Analyse des paramètres */
+    // Parameters analyze
     #ifdef DEBUG
         START_TIMER;
         printf("Start of the options analysing...\n");
     #endif
 
     initialize_params();
-	atexit(free_params_glob); // Ajout à la list
+	atexit(free_params_glob); // Add to the list
     make_params(argc, argv);
 
     p->argc = argc;
@@ -38,11 +38,11 @@ void init_diff(int argc, char** argv, File files[]) {
     for(; i < 2; i++) {
         files[i].empty = _false;
 
-        /* Analyse des chemins */
+        // Paths
         files[i].path = malloc(sizeof(char)*(diff_strlen(p->paths[i])+1));
         diff_strcpy(files[i].path, p->paths[i]);
 
-        /* Labels */
+        // Labels
         if(p->labels[i]) {
             files[i].label = malloc(sizeof(char)*(diff_strlen(p->labels[i])+1));
             diff_strcpy(files[i].label, p->labels[i]);
@@ -50,7 +50,7 @@ void init_diff(int argc, char** argv, File files[]) {
             files[i].label = files[i].path;
         }
 
-        /* Index */
+        // Index
         files[i].i = NULL;
         files[i].f = NULL;
     }

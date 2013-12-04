@@ -2,7 +2,7 @@
 
 // djb2
 hash_t hash(hash_t h_val, char c) {
-    return (((h_val << 5) + h_val) + c); /* hash * 33 + c */
+    return (((h_val << 5) + h_val) + c); // hash * 33 + c
 }
 
 // sdbm

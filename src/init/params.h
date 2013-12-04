@@ -1,6 +1,7 @@
 #ifndef _H_PARAMS
 #define _H_PARAMS
 
+/* == Includes == */
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,13 +13,14 @@
 #endif
 #include "../my_types.h"
 
+/* == Struct/Enum == */
 typedef enum _mode {
 	NORMAL, IDENTICAL, DIFFERENT
 } Mode;
 
 
 typedef enum _output_style {
-	NOT_SELECTED, REGULAR, CONTEXT, UNIFIED, COLUMNS, EDIT_SCRIPT, RCS, FORMAT
+	NOT_SELECTED, REGULAR, CONTEXT, UNIFIED, COLUMNS, EDIT_SCRIPT, RCS, FORMAT, IFDEF
 } output_style;
 
 typedef struct _params {
@@ -49,6 +51,7 @@ typedef struct _params {
 	_bool out_relay;
 	_bool recursive_dir;
 	_bool new_file;
+	_bool new_file_recur;
 	_bool first_new_file;
 
 	_bool ignore_case_filename;
@@ -70,9 +73,7 @@ typedef struct _params {
 	_bool binary;
 	_bool strip_trailing_cr;
 
-	char* group_format_GFMT;
-	char* line_format_LFMT;
-	char* line_type_format_LFMT;
+	char* ifdef;
 
 	_bool minimal_diference;
 	_bool horizontal_lines;

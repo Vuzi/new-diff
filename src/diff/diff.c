@@ -1,6 +1,6 @@
 #include "diff.h"
 
-/* Prototype des statiques */
+/* Statics prototypes */
 static _bool is_binary(FILE *f);
 
 static _bool diff_file_binary(FILE *f1, FILE* f2);
@@ -145,8 +145,9 @@ void free_diff_r(File files[]) {
 static _bool diff_file_brief(Index *i1, Index *i2) {
     ulint j = 0;
 
-    /* Si nombre de lignes identiques */
+    /* If we have the same amount of lines */
     if(i1->line_max == i2->line_max) {
+        /* Compare every lines */
         for(; j < i1->line_max; j++) {
             if(i1->lines[j].h != i2->lines[j].h)
                 return _true;
@@ -186,7 +187,7 @@ static _bool is_binary(FILE *f) {
 
         return (i < 4 ? _false : _true);
     } else
-        return _false; // Si vide, pas binaire
+        return _false; // If empty, not binary
 }
 
 
@@ -208,7 +209,7 @@ static _bool diff_file_binary(FILE *f1, FILE* f2) {
 
     int c1 = 0, c2 = 0;
 
-    // Si un des deux est vide
+    // If one of them (or both) is empty
     if(!f1 || !f2) {
         if(f1 == f2)
             return _false;
@@ -219,12 +220,13 @@ static _bool diff_file_binary(FILE *f1, FILE* f2) {
     fseek(f1, 0, SEEK_END);
     fseek(f2, 0, SEEK_END);
 
-    /* Si même taille */
+    // If they have the same size
     if(ftell(f1) == ftell(f2)) {
 
         rewind(f1);
         rewind(f2);
 
+        // Compare every bytes
         while((c1 = getc(f1)) == (c2 = getc(f2))) {
             if(c1 == EOF)
                 return _false;
@@ -252,7 +254,7 @@ ulint diff_get_length(Index* index, ulint i) {
 
     ulint k = i;
 
-    /* On regarde jusqu'où va la zone de changements */
+    // We search the lenght of the change
     for(; k < index->line_max && index->lines[k].modified; k++);
 
     return k - i;
@@ -276,27 +278,26 @@ static void diff_analyse_index(File files[]) {
 
     ulint length_1 = 0, length_2 = 0;
 
-    /* Pour chaque ligne */
-    /* Fonctionne car si les lignes ajoutées sont après la fin, la dernière ligne de l'autre fichier sera modifiée */
+    // For every line
     for(; i < files[0].i->line_max && j < files[1].i->line_max; i++, j++) {
 
-        /* Une des deux lignes modifiée */
+        // If one of them is changed
         if(files[0].i->lines[i].modified || files[1].i->lines[j].modified) {
 
             length_1 = diff_get_length(files[0].i, i);
             length_2 = diff_get_length(files[1].i, j);
 
-            /* Deletions */
+            // Deletions
             if(length_2 == 0 || files[1].empty) {
                 for(k = i; k < i+length_1; k++)
                     files[0].i->lines[k].modified = LINE_DEL;
             }
-            /* Additions */
+            // Additions
             else if (length_1 == 0 || files[0].empty) {
                 for(k = j; k < j+length_2; k++)
                     files[1].i->lines[k].modified = LINE_ADD;
             }
-            /* Changements */
+            // Changes
             else {
                 for(k = i; k < i+length_1; k++)
                     files[0].i->lines[k].modified = LINE_CHANGE;
@@ -304,7 +305,7 @@ static void diff_analyse_index(File files[]) {
                     files[1].i->lines[k].modified = LINE_CHANGE;
             }
 
-            /* On reprend après */
+            // And we go back at the end of the change
             i += length_1;
             j += length_2;
         }
@@ -329,6 +330,7 @@ static ulint diff_get_start(Index *i1, Index *i2) {
 
     ulint i = 0;
 
+    // We search the first change
     while(i < i1->line_max && i < i2->line_max && i1->lines[i].h == i2->lines[i].h)
         i++;
 
@@ -361,7 +363,7 @@ static void diff_file_LCS(Smatrix **s, Index *i1, Index *i2, ulint start) {
         for(j = start_j; j < i2->line_max; j++, first_y = _true) {
             if(i1->lines[i].h == i2->lines[j].h || (i1->lines[i].ignore && i2->lines[j].ignore)) {
                 smatrix_append(&(*s)[i], j);
-                if(first_y) { // Optimisation qui permet de privilégier la première branche
+                if(first_y) { // Optimization that make the algo focus on the first branch
                     start_j = j+1;
                     first_y = _false;
                 }
@@ -391,7 +393,7 @@ static _bool diff_file_regular(File files[]) {
     ret = smatrix_to_index(s, files[0].i, files[1].i, start);
     smatrix_free(s, files[0].i->line_max);
 
-    if(files[0].i->line_max == files[1].i->line_max && files[0].i->line_max == ret) // Si taille identique et LCS égale à taille
+    if(files[0].i->line_max == files[1].i->line_max && files[0].i->line_max == ret) // If different
         return _false;
     else {
         diff_analyse_index(files);
@@ -536,7 +538,7 @@ static int diff_dir_make_r_new_file(File files[], struct  dirent* dr1, struct di
 
     if(ret == EXIT_IDENTICAL_FILES) {
 
-        /* Labels à copier */
+        /* Labels to copy */
         labels[0] = ( files[0].path != files[0].label ? files[0].label : NULL );
         labels[1] = ( files[1].path != files[1].label ? files[1].label : NULL );
 
@@ -562,7 +564,8 @@ static int diff_dir_make_r_new_file(File files[], struct  dirent* dr1, struct di
     return ret;
 }
 
-// A faire : un pour les classique, un pour les new-file
+
+
 static int diff_dir_make_r(File files[], struct  dirent* dr1, struct dirent* dr2) {
 
     File new_files[2];
@@ -612,10 +615,11 @@ static int diff_dir_make_r(File files[], struct  dirent* dr1, struct dirent* dr2
 
     if(ret == EXIT_IDENTICAL_FILES) {
 
-        /* Labels à copier */
+        // Labels to copy
         labels[0] = ( files[0].path != files[0].label ? files[0].label : NULL );
         labels[1] = ( files[1].path != files[1].label ? files[1].label : NULL );
 
+        p->new_file = _true;
         init_diff_r(tmp_names, labels, new_files);
 
         if(type == T_DIR)
@@ -626,6 +630,7 @@ static int diff_dir_make_r(File files[], struct  dirent* dr1, struct dirent* dr2
         }
 
         free_diff_r(new_files);
+        p->new_file = _false;
 
         #ifdef DEBUG
             printf("End of comparison\n--------------\n");
@@ -664,16 +669,16 @@ static int diff_dir_make(File files[]) {
             START_TIMER;
     #endif
 
-    /* On passe le . & .. */
+    // We skip . & ..
     for(; i < 2; i++) {
         if(!files[i].empty)
             seekdir(files[i].d, 2);
     }
 
-    /* Pour chaque dossier dans d1 */
+    // For every file in d1
     while (!files[0].empty && (dr1 = readdir(files[0].d)) != NULL) {
         if(!files[1].empty && (dr2 = readdir(files[1].d)) != NULL) {
-            /* S'il s'agit du même */
+            // Same name
             if((!p->ignore_case_filename && diff_strcmp(dr1->d_name, dr2->d_name) == 0) ||
                 diff_strcasecmp(dr1->d_name, dr2->d_name) == 0)
             {
@@ -681,30 +686,29 @@ static int diff_dir_make(File files[]) {
                 if (tmp > ret)
                     ret = tmp;
             }
-            /* Il ne s'agit pas du même */
+            // Different name
             else {
-                /* On retrouve d1 plus loin dans d2 */
+                // d1 is further in d2
                 if((tmp = dir_search(dr1->d_name, files[1].d)) != -1) {
-                    /* Tout les elements de d2 jusqu'à tmp ne sont que dans d2 */
+                    // Every file in d2 until tmp aren't in d1
                     do {
-                        /* Fichiers uniquement dans d2 */
-                        ret = ( p->new_file ? ((tmp = diff_dir_make_r_new_file(files, dr1, dr2)) > ret ? tmp : ret ) :
+                        ret = ( p->new_file_recur ? ((tmp = diff_dir_make_r_new_file(files, dr1, dr2)) > ret ? tmp : ret ) :
                                EXIT_DIFFERENTS_FILES, printf("Only in %s: %s\n", files[1].path, dr2->d_name));
                     } while((dr2 = readdir(files[1].d)) != NULL && telldir(files[1].d) < tmp);
                     seekdir(files[0].d, telldir(files[0].d)-1);
                     seekdir(files[1].d, telldir(files[1].d)-1);
                 }
-                /* On retrouve d2 plus loin dans d1 */
+                // d2 is further in d1
                 else if((tmp = dir_search(dr2->d_name, files[0].d)) != -1) {
-                    /* Tout les elements de d1 jusqu'à tmp ne sont que dans d1 */
+                    // Every file in d1 until tmp arent in d2
                     do {
-                        /* Fichiers uniquement dans d1 */
-                        ret = ( p->new_file ? ((tmp = diff_dir_make_r_new_file(files, dr1, dr2)) > ret ? tmp : ret ) :
+                        ret = ( p->new_file_recur ? ((tmp = diff_dir_make_r_new_file(files, dr1, dr2)) > ret ? tmp : ret ) :
                                EXIT_DIFFERENTS_FILES, printf("Only in %s: %s\n", files[0].path, dr1->d_name));
                     } while((dr1 = readdir(files[0].d)) != NULL && telldir(files[0].d) < tmp);
                     seekdir(files[0].d, telldir(files[0].d)-1);
                     seekdir(files[1].d, telldir(files[1].d)-1);
                 }
+                // d2 is not further in d1 and vice versa
                 else {
                     printf("Only in %s: %s\n", files[0].path, dr1->d_name);
                     printf("Only in %s: %s\n", files[1].path, dr2->d_name);
@@ -712,15 +716,15 @@ static int diff_dir_make(File files[]) {
                 }
             }
         } else {
-            ret = ( p->new_file ? ((tmp = diff_dir_make_r_new_file(files, dr1, dr2)) > ret ? tmp : ret ) :
+            ret = ( p->new_file_recur ? ((tmp = diff_dir_make_r_new_file(files, dr1, dr2)) > ret ? tmp : ret ) :
                    EXIT_DIFFERENTS_FILES, printf("Only in %s: %s\n", files[0].path, dr1->d_name));
         }
     }
 
-    /* Fichier dans d2 en plus */
+    // Only in d2
     while((dr2 = readdir(files[1].d)) != NULL) {
-        ret = ( p->new_file ? ((tmp = diff_dir_make_r_new_file(files, dr1, dr2)) > ret ? tmp : ret ) :
-                               EXIT_DIFFERENTS_FILES, printf("Only in %s: %s\n", files[1].path, dr2->d_name));
+        ret = ( p->new_file_recur ? ((tmp = diff_dir_make_r_new_file(files, dr1, dr2)) > ret ? tmp : ret ) :
+                EXIT_DIFFERENTS_FILES, printf("Only in %s: %s\n", files[1].path, dr2->d_name));
     }
 
     #ifdef DEBUG
@@ -770,7 +774,7 @@ int diff_file(File files[]) {
     if(files[0].empty || (files[0].f = sec_fopen(files[0].path, "rb+"))) {
         if(files[1].empty || (files[1].f = sec_fopen(files[1].path, "rb+"))) {
 
-            /* Fichier binaire ou forcé binaire */
+            // Binary file or forced binary
             if(p->binary || (!(p->text) && (is_binary(files[0].f) || is_binary(files[1].f)))) {
                 #ifdef DEBUG
                     printf("Binary files detected\n--------------\nStart of files comparison...\n");
@@ -793,7 +797,7 @@ int diff_file(File files[]) {
                         printf("Binary files %s and %s are identical\n", files[0].label, files[1].label);
                 }
             }
-            /* Fichier texte ou forcé texte */
+            // Text file or forced text
             else {
 
                 #ifdef DEBUG
@@ -820,7 +824,7 @@ int diff_file(File files[]) {
                     }
                 #endif
 
-                /* Mode brief selectionné */
+                // Brief mode selected
                 if(p->brief) {
 
                     #ifdef DEBUG
@@ -845,7 +849,7 @@ int diff_file(File files[]) {
                             printf("Files %s and %s are identical\n", files[0].label, files[1].label);
                     }
                 }
-                /* Mode régulier */
+                // Regular mode
                 else {
                     #ifdef DEBUG
                         printf("Start of files comparison...\n");
@@ -881,7 +885,7 @@ int diff_file(File files[]) {
                             printf("Files are identicals\n...comparison of files completed (%.4fs) \n--------------\n", GET_TIMER_VALUE);
                         #endif
 
-                        if(p->o_style == COLUMNS) // Même si le fichier est identique, il faut l'afficher
+                        if(p->o_style == COLUMNS) // Even if the files are identicals, show them
                             print_diff(files);
 
                         if(p->report_identical_files)

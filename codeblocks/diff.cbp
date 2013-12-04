@@ -7,8 +7,8 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/diff" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/Debug/" />
+				<Option output="bin\Debug\diff" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj\Debug\" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -17,8 +17,8 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/diff" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/Release/" />
+				<Option output="bin\Release\diff" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj\Release\" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -50,46 +50,50 @@
 			<Add library="lib\libregex.dll.a" />
 		</Linker>
 		<Unit filename="constant.h" />
-		<Unit filename="diff/diff.c">
+		<Unit filename="diff\diff.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="diff/diff.h" />
-		<Unit filename="diff/smatrix.c">
+		<Unit filename="diff\diff.h" />
+		<Unit filename="diff\smatrix.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="diff/smatrix.h" />
-		<Unit filename="err/err.c">
+		<Unit filename="diff\smatrix.h" />
+		<Unit filename="err\err.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="err/err.h" />
-		<Unit filename="index/hash.c">
+		<Unit filename="err\err.h" />
+		<Unit filename="index\hash.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="index/hash.h" />
-		<Unit filename="index/index.c">
+		<Unit filename="index\hash.h" />
+		<Unit filename="index\index.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="index/index.h" />
-		<Unit filename="init/init.c">
+		<Unit filename="index\index.h" />
+		<Unit filename="init\init.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="init/init.h" />
-		<Unit filename="init/params.c">
+		<Unit filename="init\init.h" />
+		<Unit filename="init\params.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="init/params.h" />
-		<Unit filename="init/paths.c">
+		<Unit filename="init\params.h" />
+		<Unit filename="init\paths.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="init/paths.h" />
+		<Unit filename="init\paths.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="my_types.h" />
-		<Unit filename="print/print.c">
+		<Unit filename="print\print.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="print/print.h" />
+		<Unit filename="print\print.h" />
+		<Unit filename="string\_string.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="string\_string.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

@@ -10,7 +10,7 @@ void set_paths(File files[]) {
         printf("Start of paths analysing...\n");
     #endif
 
-    /* Récupération des stats */
+    // Get the stats
     for(; i < 2; i++) {
         if(stat(files[i].path, &files[i].st) != 0) {
             files_tests[i] = _false;
@@ -19,11 +19,11 @@ void set_paths(File files[]) {
         }
     }
 
-    /* Si traitement possible */
+    // If possible
     if((files_tests[0] && files_tests[1]) ||
       ((files_tests[0] || files_tests[1]) && p->new_file)) {
 
-        /* On récupère leurs types */
+        // Get their type
         for( i = 0; i < 2; i++) {
             if(files_tests[i]) {
                 if(S_ISREG(files[i].st.st_mode) || S_ISFIFO(files[i].st.st_mode)) {
@@ -40,9 +40,9 @@ void set_paths(File files[]) {
                 files[i].type = T_NONE;
         }
 
-        /* Cas de comparaison */
+        // Not the same
         if(files[0].type != files[1].type) {
-            /* Rien et quelque chose */
+            // Nothing and something
             if(files[0].type == T_NONE) {
                 files[0].type = files[1].type;
                 files[0].empty  =_true;
@@ -51,7 +51,7 @@ void set_paths(File files[]) {
                 files[1].empty  =_true;
             }
             else {
-                /* Fichier & dossier */
+                // File & dir
                 if(files[0].type == T_FILE) {
                     tmp = (char*)malloc(sizeof(char)*(diff_strlen(files[0].path)+diff_strlen(files[1].path)+2));
                     sprintf(tmp, "%s/%s",files[1].path, files[0].path);
@@ -68,7 +68,7 @@ void set_paths(File files[]) {
 
                     files[1].type = T_FILE;
                 }
-                /* Dossier & fichier */
+                // Dir and file
                 else {
                     tmp = (char*)malloc(sizeof(char)*(diff_strlen(files[0].path)+diff_strlen(files[1].path)+2));
                     sprintf(tmp, "%s/%s",files[0].path, files[1].path);
@@ -96,7 +96,7 @@ void set_paths(File files[]) {
         #endif
       }
 
-      // Erreur, impossible de continuer
+      // Error
       else {
         if(!files_tests[0] && !files_tests[1] && p->new_file) // Erreur spéciale à afficher
             send_error(NULL, "both files are non-existent");

@@ -29,9 +29,7 @@ void initialize_params(void) {
 	p->ignore_blank_lines = NULL;
 	p->ignore_regex_match = NULL;
 
-	p->group_format_GFMT = NULL;
-	p->line_format_LFMT = NULL;
-	p->line_type_format_LFMT = NULL;
+	p->ifdef = NULL;
 
     for(; i < 2; i++) {
         p->paths[i] = NULL;
@@ -52,20 +50,20 @@ void make_params(int argc, char **argv) {
     char short_tmp[2] = {0};
     char *arg_tmp = NULL;
 
-    /* Pour chacun des arguments */
+    // For each param
     for (i = 1; i < argc; i++) {
 
         arg_length = diff_strlen(argv[i]);
 
-        /* Si on commence par un tiret */
+        // Start with a dash
         if(!no_more_op && arg_length > 0 && argv[i][0] == '-') {
-            /* Si on a un second tiret, argument long */
+            // Second dash : long argument
             if(arg_length > 1 && argv[i][1] == '-') {
-                /* Si ce double tiret est tout seul, les options sont terminées */
+                // If just double dash, no more args
                 if(arg_length == 2) {
                     no_more_op = 1;
                 }
-                /* Argument long */
+                // Long argument
                 else {
 
                     if(argv[i][2] == '=') {
@@ -77,7 +75,7 @@ void make_params(int argc, char **argv) {
 
                     if(arg_tmp) {
                         *arg_tmp = '\0';
-                        arg_tmp++; // Pour couper en deux une même chaine
+                        arg_tmp++;
                         make_param(argv[i]+2, arg_tmp);
                     } else {
                         if(argc < i+1)
@@ -87,28 +85,27 @@ void make_params(int argc, char **argv) {
                     }
                 }
             }
-            /* Tiret seul : stdin comme nom de fichier */
+            // Only one dash, stdin
             else if(arg_length == 1) {
                 set_file_name(argv[i]);
             }
-            /* Argument(s) court(s) */
+            // Short args
             else {
-                /* Plusieurs : valeurs ignorées */
+                // More than one (or values)
                 if(arg_length > 2) {
-                    /* On peut en mettre plusieurs à la suite */
                     for(j = 1; j < arg_length; j++) {
                         short_tmp[0] = argv[i][j];
 
                         if(j+1 < arg_length) {
-                            if(make_param(short_tmp, argv[i]+j+1)) // argument + suite ligne
+                            if(make_param(short_tmp, argv[i]+j+1)) // argument + line ending
                                 j = arg_length-1;
                         } else if(i+1 < argc)
-                            i += make_param(short_tmp, argv[i+1]); // argument + suivant
+                            i += make_param(short_tmp, argv[i+1]); // argument + next
                         else
                             make_param(short_tmp, NULL);
                     }
                 }
-                /* Un seul : On peut avoir des valeurs à la suite */
+                // One arg
                 else {
                     if(i+1 < argc)
                         i += make_param(argv[i]+1, argv[i+1]);
@@ -117,14 +114,14 @@ void make_params(int argc, char **argv) {
                 }
             }
         }
-        /* Pas de tiret, c'est un nom de fichier */
+        // Node dash, filename
         else {
             set_file_name(argv[i]);
         }
 
     }
 
-    /* Si aucune sortie, celle par défaut */
+    // If no output, set to regular
     if(p->o_style == NOT_SELECTED) {
         if(p->show_regex_function)
             p->o_style = CONTEXT;
@@ -132,7 +129,7 @@ void make_params(int argc, char **argv) {
             p->o_style = REGULAR;
     }
 
-    /* Si il manque un path, erreur */
+    // Check if two paths are given
     if(!(p->paths[0])) {
         exit_help();
         exit_error(NULL, "missing operand after 'diff'", NULL);
@@ -287,6 +284,20 @@ int make_param(char* option, char* argument) {
             set_output_style(RCS);
             return 0;
         }
+        else if (!diff_strcmp(option, "ifdef")) {
+
+            set_output_style(IFDEF);
+
+            if(argument) {
+                p->ifdef = argument;
+                return 1;
+            } else {
+                exit_help();
+                exit_error(NULL, "option '%s' requires an argument", option);
+            }
+
+            return 0;
+        }
         else if (!diff_strcmp(option, "side-by-side") || !diff_strcmp(option, "y")) {
             set_output_style(COLUMNS);
             return 0;
@@ -314,7 +325,7 @@ int make_param(char* option, char* argument) {
             return 0;
         }
         else if (!diff_strcmp(option, "new-file") || !diff_strcmp(option, "N")) {
-            p->new_file = _true;
+            p->new_file_recur = _true;
             return 0;
         }
         else if (!diff_strcmp(option, "ignore-file-name-case")) {
@@ -590,10 +601,6 @@ void print_params(Params* parameters) {
 	printf("Type text : %d\n", parameters->text);
 	printf("Strip trailing cr : %d\n", parameters->strip_trailing_cr);
 
-	printf("Group format GFMT : %s\n", parameters->group_format_GFMT);
-	printf("Line format LFMT : %s\n", parameters->line_format_LFMT);
-	printf("Line type format LFMT : %s\n", parameters->line_type_format_LFMT);
-
 	printf("Minimal diference : %d\n", parameters->minimal_diference);
 	printf("Horizontal lines : %d\n", parameters->horizontal_lines);
 	printf("Speed large files : %d\n", parameters->speed_large_files);
@@ -610,8 +617,6 @@ void print_params(Params* parameters) {
 void free_params_glob(void) {
 
     if(p) {
-        /* Ici libérer tout les char* et cie */
-
         if(p->ignore_regex_match)
             regfree(p->ignore_regex_match);
         if(p->ignore_blank_lines)

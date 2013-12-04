@@ -14,6 +14,7 @@ static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, u
 static void print_diff_ed(File files[]);
 static void print_diff_rcs(File files[]);
 static void print_diff_columns(File files[]);
+static void print_diff_ifdef(File files[]);
 
 /* ===============================================
                   lines_display
@@ -52,8 +53,8 @@ static void print_lines_length(File *file, ulint start, ulint end, const char *l
     int c = 0;
 
 
-    if(start <= end && end <= file->i->line_max && !file->empty) { // Si taille possible
-        for(i = start; i <= end; i++) { // Pour chacune des lignes à afficher
+    if(start <= end && end <= file->i->line_max && !file->empty) { // Check size
+        for(i = start; i <= end; i++) { // For each line to print
 
             if(line_start)
                 fputs(line_start, stdout);
@@ -155,22 +156,18 @@ void print_diff(File files[]) {
         printf("Start of the result display...\n");
     #endif
 
-    /* Format de sortie contextuel */
     if(p->o_style == CONTEXT)
         print_diff_context(files);
-    /* Format de sortie unifé */
     else if(p->o_style == UNIFIED)
         print_diff_unified(files);
-    /* Format edit script */
     else if(p->o_style == EDIT_SCRIPT)
         print_diff_ed(files);
-    /* Format en colonnes */
     else if(p->o_style == COLUMNS)
         print_diff_columns(files);
-    /* Format RCS */
     else if(p->o_style == RCS)
         print_diff_rcs(files);
-    /* Format pas défaut */
+    else if(p->o_style == IFDEF)
+        print_diff_ifdef(files);
     else
         print_diff_regular(files);
 
@@ -186,14 +183,13 @@ static void print_diff_regular(File files[]) {
     ulint i = 0, j = 0;
     ulint length_1 = 0, length_2 = 0;
 
-    /* Pour chaque ligne */
-    /* Fonctionne car si les lignes ajoutées sont après la fin, la dernière ligne de l'autre fichier sera modifiée */
+    // For each line
     for(; i < files[0].i->line_max && j < files[1].i->line_max; i++, j++) {
 
-        /* Une des deux lignes modifiée */
+        // One of them is changed
         if(files[0].i->lines[i].modified || files[1].i->lines[j].modified) {
 
-            /* Lignes supprimées */
+            // Deleted
             if(files[0].i->lines[i].modified == LINE_DEL) {
                 if((length_1 = diff_get_length(files[0].i, i)) == 1)
                     printf("%"SHOW_ulint"d%"SHOW_ulint"\n", i+1, j);
@@ -202,7 +198,7 @@ static void print_diff_regular(File files[]) {
 
                 print_lines(&files[0], i, length_1 + i - 1, "< ", _true);
             }
-            /* Lignes ajoutées */
+            // Added
             else if(files[1].i->lines[j].modified == LINE_ADD) {
                 if((length_2 = diff_get_length(files[1].i, j)) == 1)
                     printf("%"SHOW_ulint"a%"SHOW_ulint"\n",i , j+1);
@@ -211,7 +207,7 @@ static void print_diff_regular(File files[]) {
 
                 print_lines(&files[1], j, length_2 + j - 1, "> ", _true);
             }
-            /* Lignes modifiées */
+            // Chnaged
             else {
                 if((length_1 = diff_get_length(files[0].i, i)) == 1)
                     printf("%"SHOW_ulint"c", i+1);
@@ -228,7 +224,6 @@ static void print_diff_regular(File files[]) {
                 print_lines(&files[1], j, length_2 + j - 1, "> ", _true);
             }
 
-            /* On reprend après */
             i += length_1;
             j += length_2;
         }
@@ -265,7 +260,6 @@ static void print_diff_context_lines(const char* line_start, File* file, ulint s
 
 static void print_diff_context(File files[]) {
 
-    /* Attention, range < aux autres affichages */
     ulint i = 1, j = 1;
     ulint start_1 = 0, start_2 = 0, end_1 = 0, end_2 = 0;
 
@@ -276,10 +270,10 @@ static void print_diff_context(File files[]) {
     fputs("*** ",stdout), print_file_name(&files[0].st, files[0].label);
     fputs("--- ",stdout), print_file_name(&files[1].st, files[1].label);
 
-    /* Pour chaque ligne */
+    // For each line
     for(; i <= files[0].i->line_max && j <= files[1].i->line_max; i++, j++) {
 
-        /* Une des deux lignes est modifiée */
+        // One of them is changed
         if(files[0].i->lines[i-1].modified || files[1].i->lines[j-1].modified) {
             is_modified_1 = is_modified_2 = _false;
 
@@ -288,14 +282,14 @@ static void print_diff_context(File files[]) {
             end_1 = start_1 = ( p->context < i ? i - p->context : 1 );
             end_2 = start_2 = ( p->context < j ? j - p->context : 1 );
 
-            /* Tant qu'on peut afficher du contexte, on avance */
+            // Don't stop if we can show context lines
             while(c >= 0) {
-                /* Si on arrive pas encore à la fin */
+                // If we aren't at the end
                 if(i <= files[0].i->line_max && j <= files[1].i->line_max) {
 
                     if(files[0].i->lines[i-1].modified || files[1].i->lines[j-1].modified) {
 
-                        c = 2 * p->context - 1;
+                        c = 2 * p->context - 1; // context back to start
 
                         if(files[0].i->lines[i-1].modified) {
                             is_modified_1 = _true;
@@ -310,21 +304,21 @@ static void print_diff_context(File files[]) {
                         end_1 = i + p->context - 1;
                         end_2 = j + p->context - 1;
 
-                    }else /* On avance en diminuant le context */
+                    }else // Lower context
                         c--;
                     j++, i++;
                 } else
                     break;
             }
 
-            /* Si on dépasse la fin, on revient */
+            // If we're too far, go back
             if(end_1 >= files[0].i->line_max + 1)
                 end_1 = files[0].i->line_max;
 
             if(end_2 >= files[1].i->line_max + 1)
                 end_2 = files[1].i->line_max;
 
-            /* Cas spécial */
+            // Special case
             if(p->context == 0 && !is_modified_1)
                 start_1--;
 
@@ -333,7 +327,7 @@ static void print_diff_context(File files[]) {
 
             fputs("***************", stdout);
 
-            /* Si on doit afficher le nom de la fonction courrante */
+            // If we should print the current function name
             if(p->show_regex_function) {
                 fputc(' ', stdout);
                 print_current_func(&files[0], start_1-1);
@@ -350,7 +344,7 @@ static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, u
 
     ulint i = start_1, j = start_2, start_print = 0;
 
-    /* Affichage numéro de ligne */
+    // Line number
     fputs("@@ -", stdout);
     if(end_1 - start_1 == 1)
         printf("%"SHOW_ulint"", start_1);
@@ -368,11 +362,11 @@ static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, u
     } else
         fputc('\n', stdout);
 
-    /* Affichage des lignes */
+    // Lines
     while(i < end_1) {
-        /* Si lignes différentes */
+        // Modified
         if(files[0].i->lines[i-1].modified || files[1].i->lines[j-1].modified) {
-            /* Lignes supprimées */
+            // Deleted
             if(files[0].i->lines[i-1].modified) {
                 start_print = i;
                 do {
@@ -383,7 +377,7 @@ static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, u
 
                 print_lines(&files[0], start_print-1, i-2, "- ", _true);
             }
-            /* Lignes ajoutées */
+            // Added
             if (files[1].i->lines[j-1].modified) {
                 start_print = j;
                 do {
@@ -395,7 +389,7 @@ static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, u
                 print_lines(&files[1], start_print-1, j-2, "+ ", _true);
             }
         } else {
-            /* Lignes identiques */
+            // Identical
             start_print = i;
             do {
                 i++;
@@ -421,9 +415,9 @@ static void print_diff_unified(File files[]) {
     fputs("--- ",stdout), print_file_name(&files[0].st, files[0].label);
     fputs("+++ ",stdout), print_file_name(&files[1].st, files[1].label);
 
-    /* Pour chaque ligne */
+    // For each line
     for(; i <= files[0].i->line_max && j <= files[1].i->line_max; i++, j++) {
-        /* Si différence */
+        // Different
         if(files[0].i->lines[i-1].modified || files[1].i->lines[j-1].modified) {
             c = 2 * p->context;
 
@@ -457,14 +451,14 @@ static void print_diff_unified(File files[]) {
                     break;
             }
 
-            /* Si on dépasse la fin, on revient */
+            // If we're too far, go back
             if(end_1 > files[0].i->line_max+1)
                 end_1 = files[0].i->line_max+1;
 
             if(end_2 > files[1].i->line_max+1)
                 end_2 = files[1].i->line_max+1;
 
-            /* Cas spécial */
+            // Special case
             if(p->context == 0 && !is_modified_1) {
                 start_1--;
                 end_1 = start_1;
@@ -525,7 +519,6 @@ static void print_diff_rcs(File files[]) {
             }while(files[0].i->lines[i].modified == LINE_CHANGE);
 
             i--;
-
 
             printf("d%"SHOW_ulint" %"SHOW_ulint"\n", i+1, end_1-i+1);
             printf("a%"SHOW_ulint" %"SHOW_ulint"\n", j+1, end_2-j+1);
@@ -608,8 +601,8 @@ static void print_diff_ed(File files[]) {
 
 static void print_diff_columns(File files[]) {
 
-    uint char_ligne = (p->width >= 5) ? (p->width - 3) : 0; // Nombre de colonnes
-    uint char_center = 3 + char_ligne%2; // Nombre de colone centrale
+    uint char_ligne = (p->width >= 5) ? (p->width - 3) : 0; // Number of columns
+    uint char_center = 3 + char_ligne%2; // Size of center column
     char_ligne = char_ligne / 2;
 
     ulint i = 0, j = 0;
@@ -692,6 +685,53 @@ static void print_diff_columns(File files[]) {
     }
 }
 
+static void print_diff_ifdef(File files[]) {
+
+    ulint i = 0, j = 0;
+    ulint length_1 = 0, length_2 = 0;
+
+    // For each line
+    for(; i < files[0].i->line_max && j < files[1].i->line_max; i++, j++) {
+
+        // One of them is changed
+        if(files[0].i->lines[i].modified || files[1].i->lines[j].modified) {
+
+            // Deleted
+            if(files[0].i->lines[i].modified == LINE_DEL) {
+                length_1 = diff_get_length(files[0].i, i);
+                printf("#ifndef %s\n", p->ifdef);
+                print_lines(&files[0], i, length_1 + i - 1, "", _true);
+                printf("#endif /* %s */\n", p->ifdef);
+            }
+            // Added
+            else if(files[1].i->lines[j].modified == LINE_ADD) {
+                length_2 = diff_get_length(files[1].i, j);
+                printf("#ifdef %s\n", p->ifdef);
+                print_lines(&files[1], j, length_2 + j - 1, "", _true);
+                printf("#endif /* %s */\n", p->ifdef);
+            }
+            // Changed
+            else if(files[1].i->lines[j].modified == LINE_CHANGE) {
+                length_1 = diff_get_length(files[0].i, i);
+                length_2 = diff_get_length(files[1].i, j);
+
+                printf("#ifndef %s\n", p->ifdef);
+                print_lines(&files[0], i, length_1 + i - 1, "", _true);
+                printf("#else /* %s */\n", p->ifdef);
+                print_lines(&files[1], j, length_2 + j - 1, "", _true);
+                printf("#endif /* %s */\n", p->ifdef);
+            }
+            // No change
+            else {
+                print_lines(&files[0], i, i, "", _true);
+            }
+
+            i += length_1;
+            j += length_2;
+        }
+    }
+}
+
 void print_args(char* f[]) {
     int i = 0;
 
@@ -722,44 +762,45 @@ void print_version(void) {
 void print_help(void) {
 
     puts("Usage: diff [OPTION]... FILE1 FILE2\n\n"
-         "  -i  --ignore-case                 Consider upper- and lower-case to be the same.\n"
-         "  -W  --ignore-all-space            Ignore all white space.\n"
-         "  -b  --ignore-space-change         Ignore change in the amount of white space.\n"
-         "  -B  --ignore-blank-lines          Ignore change whose lines are all blank.\n"
-         "  -I RE --ignore-matching-lines=RE  Ignore change whose lines all match RE.\n"
+         "  --normal                     output a normal diff (the default).\n"
+         "  -c  -C NUM  --context[=NUM]  output NUM (default 3) lines of copied context.\n"
+         "  -u  -U NUM  --unified[=NUM]  output NUM (default 3) lines of unified context.\n"
+         "    -L LABEL --label LABEL         use Label instead of file name.\n"
+         "    -p --show-c-function           show which C function each change is in.\n"
+         "    -F RE --show-function-line=RE  show the most recent line matching RE.\n"
+         "  -e  --ed                     output an ed script.\n"
+         "  -n  --rcs                    output an RCS format diff.\n"
+         "  -y  --side-by-side           output in two columns\n"
+         "    -w NUM  --width=NUM          output at most NUM (default 130) characters per line.\n"
+         "    --left-column                output only the left column of common lines.\n"
+         "    --suppress-common-lines      do not output common lines.\n"
+         "  --ifdef=NAME                 output merged file with '#ifdef NAME' diffs"
          "\n"
-         "  -a  --text      Treat all files as text.\n"
-         "  --binary        Treat all files as binary files.\n"
-         "  -r --recursive  Recursively compare any  subdirectories found.\n"
-         "  -N --new-file   Treat absent files as empty.\n"
-         "\n"
-         "  -q  --brief                  Output only whether file differ.\n"
+         "  -q  --brief                  Report only when files differ.\n"
          "  -s  --report-identical-file  Report when two files are the same.\n"
          "\n"
-         "  --normal                     Output using classical format.\n"
-         "  -c  -C NUM  --context[=NUM]  Output NUM (default 3) lines of copied context.\n"
-         "  -u  -U NUM  --unified[=NUM]  Output NUM (default 3) lines of unified context.\n"
-         "    -L LABEL --label LABEL         Use Label instead of file name.\n"
-         "    -p --show-c-function           Show which C function each change is in.\n"
-         "    -F RE --show-function-line=RE  Show the most recent line matching RE.\n"
-         "  -e  --ed                     Output an ed script.\n"
-         "  -n  --rcs                    Output an RCS format diff.\n"
-         "  -y  --side-by-side           Output in two columns\n"
-         "    -w NUM  --width=NUM          Output at most NUM (default 130) characters per line.\n"
-         "    --left-column                Output only the left column of common lines.\n"
-         "    --suppress-common-lines      Do not output common lines.\n"
+         "  -a  --text      treat all files as text.\n"
+         "  --binary        treat all files as binary files.\n"
+         "  -r --recursive  recursively compare any  subdirectories found.\n"
+         "  -N --new-file   treat absent files as empty.\n"
          "\n"
-        "  -t  --expand-tabs  Expand tabs to spaces in output.\n"
-        "  --tabsize=NUM      Use NUM space (default 8) space for each tab.\n"
+         "  -i  --ignore-case                 consider upper- and lower-case to be the same.\n"
+         "  -W  --ignore-all-space            ignore all white space.\n"
+         "  -b  --ignore-space-change         ignore change in the amount of white space.\n"
+         "  -B  --ignore-blank-lines          ignore change whose lines are all blank.\n"
+         "  -I RE --ignore-matching-lines=RE  ignore change whose lines all match RE.\n"
          "\n"
-         "  --help        Output this help.\n"
-         "  -v --version  Output version info."
+        "  -t  --expand-tabs  expand tabs to spaces in output.\n"
+        "  --tabsize=NUM      use NUM space (default 8) space for each tab.\n"
+         "\n"
+         "  --help        output this help.\n"
+         "  -v --version  output version info."
          #ifdef DEBUG
          "\n\nDebug option :\n"
-         "  --debug-show-options      Show the struct containing program's arguments.\n"
-         "  --debug-show-index        Show the struct containing both file's index.\n"
-         "  --debug-show-diff         Show the raw diff result.\n"
-         "  --debug-interactive-mode  Pause the program after each step."
+         "  --debug-show-options      show the struct containing program's arguments.\n"
+         "  --debug-show-index        show the struct containing both file's index.\n"
+         "  --debug-show-diff         show the raw diff result.\n"
+         "  --debug-interactive-mode  pause the program after each step."
          #endif
          );
 

@@ -20,7 +20,7 @@ static ulint index_size(FILE *f, ulint* longest_line) {
             line_max = 0;
         }
     }
-    cpt++; // Dernière ligne
+    cpt++; // Last line
 
     rewind(f);
 
@@ -30,20 +30,20 @@ static ulint index_size(FILE *f, ulint* longest_line) {
 static END_LINE get_end_line(FILE *f, char c) {
 
     if(c == '\n') {
-        /* Ligne UNIX */
+        // UNIX line
         return LF;
     } else {
         c = getc(f);
         if(c == '\n') {
-            /* Ligne Windows */
+            // Windows line
             return CRLF;
         } else {
-            /* Ligne Mac OS 9 */
+            // Mac OS 9 line
 
             #ifdef _WIN32
-            fseeko64(f, (long long)-1, SEEK_CUR);
+                fseeko64(f, (long long)-1, SEEK_CUR);
             #else
-            fseeko(f, (long long)-1, SEEK_CUR);
+                fseeko(f, (long long)-1, SEEK_CUR);
             #endif
             return CR;
         }
@@ -54,7 +54,7 @@ static END_LINE get_end_line(FILE *f, char c) {
 
 static void index_empty(File *file) {
 
-    /* Création de l'index */
+    // Empty index creation
     file->i = (Index*)malloc(sizeof(Index));
 
     file->i->line_max = 1;
@@ -80,29 +80,28 @@ void index_file(File *file) {
         return;
     }
 
-    /* Création de l'index */
+    // Index creation
     file->i = (Index*)malloc(sizeof(Index));
 
     file->i->line_max = index_size(file->f, &max_lenght);
     file->i->lines = (Line*)calloc(sizeof(Line), file->i->line_max);
 
-    /* Buffer temporaire */
+    // Buffer
     buffer = (char*)malloc(sizeof(char)*(max_lenght+1));
 
     if(file->f) {
         if(file->i->line_max > 0) {
 
-            /* Début première ligne */
+            // First line start
             file->i->lines[j].start = 0;
 
-            /* Indexation */
+            // Indexing
             while((tmp = getc(file->f)) != EOF) {
-                /* \n ou \r */
+                // \n or \r
                 if(IS_EL_START(tmp)) {
-                    /* Ajout au buffer */
                     buffer[cpt - file->i->lines[j].start] = '\0';
 
-                    /* Test regex fonction */
+                    // Test the function regex
                     if(p->show_regex_function) {
                         reg_stat = regexec(p->show_regex_function, buffer, (size_t) 0, NULL, 0);
                         if(!reg_stat)
@@ -113,7 +112,7 @@ void index_file(File *file) {
                         }
                     }
 
-                    /* On ignore les lignes blanches */
+                    // Ignoring blank lines
                     if(p->ignore_blank_lines) {
                         reg_stat = regexec(p->ignore_blank_lines, buffer, (size_t) 0, NULL, 0);
                         if(!reg_stat)
@@ -124,7 +123,7 @@ void index_file(File *file) {
                         }
                     }
 
-                    /* On ignore les lignes qui match le regex */
+                    // Ignoring lines matching regex
                     if(p->ignore_regex_match) {
                         reg_stat = regexec(p->ignore_regex_match, buffer, (size_t) 0, NULL, 0);
                         if(!reg_stat)
@@ -134,11 +133,10 @@ void index_file(File *file) {
                         }
                     }
 
-                    /* Fin de l'ancienne ligne */
+                    // End of the line
                     file->i->lines[j].length = cpt - file->i->lines[j].start;
                     file->i->lines[j].end_line = get_end_line(file->f, tmp);
 
-                    /* Hashage du/des caracs de fin de ligne */
                     if(p->strip_trailing_cr || file->i->lines[j].end_line == LF) {
                         h = hash(h, (char)'\n');
                     } else if (file->i->lines[j].end_line == CR) {
@@ -155,7 +153,7 @@ void index_file(File *file) {
                     space_cpt = 0;
                     blank_cpt = 0;
 
-                    /* Début nouvelle ligne */
+                    // New line start
                     if(file->i->lines[j++].end_line == CRLF) {
                         cpt++;
                         file->i->lines[j].start = ++cpt;
@@ -164,19 +162,18 @@ void index_file(File *file) {
                     }
 
                 }
-                /* Caractère normal */
+                // Regular char
                 else {
 
-                    /* Ajout au buffer */
                     buffer[cpt - file->i->lines[j].start] = tmp;
 
-                    /* Test de casse */
+                    // Case test
                     if(p->ignore_case) {
                         if(tmp >= 'A' && tmp <= 'Z')
                             tmp += 32;
                     }
 
-                    /* Test expansion tabulation */
+                    // tab expansion
                     if(p->ignore_tab_change) {
                         if(tmp == '\t')
                             tab_cpt++;
@@ -184,7 +181,7 @@ void index_file(File *file) {
                             tab_cpt = 0;
                     }
 
-                    /* Test changement espaces */
+                    // Space change test
                     if(p->ignore_space_change) {
                         if(tmp == ' ')
                             space_cpt++;
@@ -192,7 +189,7 @@ void index_file(File *file) {
                             space_cpt = 0;
                     }
 
-                    /* Test d'ignorance des espaces blancs */
+                    // Blank space test
                     if(p->ignore_all_space) {
                         if(tmp == '\t' || tmp == ' ')
                             blank_cpt++;
@@ -201,18 +198,18 @@ void index_file(File *file) {
                     }
 
                     if(blank_cpt <=1 && tab_cpt <= 1 && space_cpt <= 1)
-                        h = hash(h, (char)tmp); // hashage
+                        h = hash(h, (char)tmp); // hashing
 
                     cpt++;
                 }
             }
 
-            /* Fin dernière ligne */
+            // Last line ending
             file->i->lines[j].end_line = END_OF_FILE;
             file->i->lines[j].length = cpt - file->i->lines[j].start;
             file->i->lines[j].h = h;
 
-            if(file->i->lines[j].length == 0) // Si fin de fichier avec saut de ligne
+            if(file->i->lines[j].length == 0) // If the file end with a new line char
                 file->i->line_max--;
         }
     }

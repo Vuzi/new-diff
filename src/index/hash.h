@@ -1,7 +1,7 @@
 #ifndef _H_HASH
 #define _H_HASH
 
-// Pour le djb2
+// For djb2
 #define HASH_START 5381
 
 /* == Inlcudes == */

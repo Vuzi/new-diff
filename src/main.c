@@ -15,7 +15,6 @@ int main(int argc, char** argv){
         printf("Debug version - Compiled at %s on %s\n--------------\n",__TIME__,__DATE__);
     #endif
 
-    // Initialisation
     init_diff(argc, argv, files);
 
     if(files[0].type == T_DIR)
@@ -25,7 +24,6 @@ int main(int argc, char** argv){
     else
         r = EXIT_ERROR;
 
-    // Libération mémoire
     free_diff(files);
 
     return r;

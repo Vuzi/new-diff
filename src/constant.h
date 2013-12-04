@@ -3,6 +3,7 @@
 
 /* == Inlcudes == */
 #include <errno.h>
+#include "string/_string.h"
 #include "my_types.h"
 #include "init/params.h"
 #include "err/err.h"
