@@ -47,7 +47,7 @@ void init_diff(int argc, char** argv, File files[]) {
             files[i].label = malloc(sizeof(char)*(diff_strlen(p->labels[i])+1));
             diff_strcpy(files[i].label, p->labels[i]);
         } else {
-            files[i].label = files[i].path;
+            files[i].label = files[i].path; // So we can always use the label
         }
 
         // Index

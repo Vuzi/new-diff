@@ -30,9 +30,9 @@ void set_paths(File files[]) {
                     files[i].type = T_FILE;
                     if(files[i].st.st_size == 0)
                         files[i].empty = _true;
-                } else if(S_ISDIR(files[i].st.st_mode))
+                } else if(S_ISDIR(files[i].st.st_mode)) {
                     files[i].type = T_DIR;
-                else {
+                } else {
                     exit_help();
                     exit_error(files[i].path, "not a file or a directory");
                 }
@@ -63,7 +63,7 @@ void set_paths(File files[]) {
 
                     if(!(S_ISREG(files[1].st.st_mode) || S_ISFIFO(files[1].st.st_mode))) {
                         exit_help();
-                        exit_error(files[1].path, "not a file");
+                        exit_error(files[1].path, "not a regular file");
                     }
 
                     files[1].type = T_FILE;
@@ -80,7 +80,7 @@ void set_paths(File files[]) {
 
                     if(!(S_ISREG(files[0].st.st_mode) || S_ISFIFO(files[0].st.st_mode))) {
                         exit_help();
-                        exit_error(files[0].path, "not a file");
+                        exit_error(files[0].path, "not a regular file");
                     }
 
                     files[0].type = T_FILE;
@@ -95,7 +95,6 @@ void set_paths(File files[]) {
                 printf("..two directories detected\n--------------\n");
         #endif
       }
-
       // Error
       else {
         if(!files_tests[0] && !files_tests[1] && p->new_file) // Erreur spéciale à afficher

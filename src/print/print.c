@@ -738,7 +738,7 @@ void print_args(char* f[]) {
     fputs("diff ", stdout);
 
     for(; i < 2; i++) {
-        fputs(f[0], stdout);
+        fputs(f[i], stdout);
         fputc(' ', stdout);
     }
 
