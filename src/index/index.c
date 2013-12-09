@@ -119,7 +119,7 @@ void index_file(File *file) {
                             file->i->lines[j].ignore = _true; // match
                         else if (reg_stat != REG_NOMATCH) {
                             send_error(NULL, "error while using the regex with line %d of file '%s'", j+1, file->path);
-                            send_error(NULL, "ignoring blank line may not be working...");
+                            send_error(NULL, "ignoring, blank line may not be working...");
                         }
                     }
 
@@ -234,9 +234,9 @@ void index_display(File *file) {
 
     if(file->i) {
         for(; j < file->i->line_max; j++) {
-            printf("[%"SHOW_ulint"] start %05"SHOW_ulint" | length %05"SHOW_ulint" | hash %010"SHOW_ulint" | end_line %01d | is_func %01d | modified %01d\n",
+            printf("[%"SHOW_ulint"] start %05"SHOW_ulint" | length %05"SHOW_ulint" | hash %010"SHOW_ulint" | end_line %01d | is_func %01d | modified %01d | ignored %01d\n",
                    j, file->i->lines[j].start, file->i->lines[j].length, (ulint)file->i->lines[j].h,
-                   file->i->lines[j].end_line, file->i->lines[j].is_func, file->i->lines[j].modified);
+                   file->i->lines[j].end_line, file->i->lines[j].is_func, file->i->lines[j].modified, file->i->lines[j].ignore);
         }
     }
 

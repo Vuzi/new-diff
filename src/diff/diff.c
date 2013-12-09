@@ -7,8 +7,7 @@ static _bool diff_file_binary(FILE *f1, FILE* f2);
 static _bool diff_file_brief(Index *i1, Index *i2);
 
 static void diff_analyse_index(File files[]);
-static ulint diff_get_start(Index *i1, Index *i2);
-static void diff_file_LCS(Smatrix **s, Index *i1, Index *i2, ulint start);
+static void diff_file_LCS(Smatrix **s, Line **LCS_lines[], ulint len[]);
 static _bool diff_file_regular(File files[]);
 
 static const char* get_type_char(struct stat* s);
@@ -146,9 +145,9 @@ void free_diff_r(File files[]) {
 static _bool diff_file_brief(Index *i1, Index *i2) {
     ulint j = 0;
 
-    /* If we have the same amount of lines */
+    // If we have the same amount of lines
     if(i1->line_max == i2->line_max) {
-        /* Compare every lines */
+        // Compare every lines
         for(; j < i1->line_max; j++) {
             if(i1->lines[j].h != i2->lines[j].h)
                 return _true;
@@ -315,31 +314,6 @@ static void diff_analyse_index(File files[]) {
 
 
 /* ===============================================
-                 diff_get_start
-
-    Permet de savoir où commence réellement la zone
-    modifiée entres les deux fichiers indexés.
-    Cette opération permet de limiter le nombre
-    de tests du LCS.
-    ----------------------------------------------
-    Index *i1 : index à traiter n°1
-    Index *i2 : index à traiter n°2
-    ----------------------------------------------
-    Retourne le premier indexe de la zone modifiée.
-   =============================================== */
-static ulint diff_get_start(Index *i1, Index *i2) {
-
-    ulint i = 0;
-
-    // We search the first change
-    while(i < i1->line_max && i < i2->line_max && i1->lines[i].h == i2->lines[i].h)
-        i++;
-
-    return (i > 0 ? --i : 0);
-}
-
-
-/* ===============================================
                   diff_file_LCS
 
     Permet de faire le diff entre deux fichiers
@@ -351,18 +325,16 @@ static ulint diff_get_start(Index *i1, Index *i2) {
     Index *i2   : index à traiter n°2
     ulint start : début du traitement
    =============================================== */
-static void diff_file_LCS(Smatrix **s, Index *i1, Index *i2, ulint start) {
+static void diff_file_LCS(Smatrix **s, Line **LCS_lines[], ulint len[]) {
 
     ulint i = 0, j = 0, start_j = 0;
     _bool first_y = _true;
 
-    i = start_j = start;
+    *s = (Smatrix*)calloc(sizeof(Smatrix), len[0]);
 
-    *s = (Smatrix*)calloc(sizeof(Smatrix), i1->line_max);
-
-    for(; i < i1->line_max; i++) {
-        for(j = start_j; j < i2->line_max; j++, first_y = _true) {
-            if(i1->lines[i].h == i2->lines[j].h || (i1->lines[i].ignore && i2->lines[j].ignore)) {
+    for(; i < len[0]; i++) {
+        for(j = start_j; j < len[1]; j++, first_y = _true) {
+            if(LCS_lines[0][i]->h == LCS_lines[1][j]->h ) {
                 smatrix_append(&(*s)[i], j);
                 if(first_y) { // Optimization that make the algo focus on the first branch
                     start_j = j+1;
@@ -382,21 +354,60 @@ static void diff_file_LCS(Smatrix **s, Index *i1, Index *i2, ulint start) {
     ----------------------------------------------
     File files[] : fichiers à traiter.
     ----------------------------------------------
-    Retourne vrai si les fichiers sont identiques,
-    et faux s'ils sont différents.
+    Retourne vrai si les fichiers sont différents,
+    et faux s'ils sont identiques.
    =============================================== */
 static _bool diff_file_regular(File files[]) {
 
     Smatrix *s = NULL;
-    ulint ret = 0, start = diff_get_start(files[0].i, files[1].i);
+    ulint ret = 0, i = 0, j = 0, k = 0;
 
-    diff_file_LCS(&s, files[0].i, files[1].i, start);
-    ret = smatrix_to_index(s, files[0].i, files[1].i, start);
-    smatrix_free(s, files[0].i->line_max);
+    ulint len[2] = {0, 0};
+    Line **LCS_lines[2] = { NULL, NULL };
+
+    // Ignore first identicals lines
+    for( i = 0; i < files[0].i->line_max && i < files[1].i->line_max; i++) {
+        if(files[0].i->lines[i].h == files[1].i->lines[i].h) {
+            files[0].i->lines[i].ignore = files[1].i->lines[i].ignore = _true;
+        } else
+            break;
+    }
+
+    // Count the new number of lines
+    for(i = 0; i < 2; i++) {
+        for( j = 0; j < files[i].i->line_max; j++) {
+            if(!files[i].i->lines[j].ignore) // Count if we don't ignore it
+                len[i]++;
+        }
+    }
+
+    // Alloc the new tab
+    for(i = 0; i < 2; i++) {
+        LCS_lines[i] = malloc(sizeof(Line*)*len[i]);
+        // Add to the new tab the lines not ignored
+        for(j = 0, k = 0; j < files[i].i->line_max; j++) {
+            if(!files[i].i->lines[j].ignore) {
+                LCS_lines[i][k] = &files[i].i->lines[j];
+                k++;
+            }
+        }
+    }
+
+    // Do the LCS stuff
+    diff_file_LCS(&s, LCS_lines, len);
+
+    // Translate from matrix to lines
+    ret = smatrix_to_index(s, LCS_lines, len);
+
+    // Free what need to be freed
+    smatrix_free(s, len[0]);
+    free(LCS_lines[0]);
+    free(LCS_lines[1]);
 
     if(files[0].i->line_max == files[1].i->line_max && files[0].i->line_max == ret) // If different
         return _false;
     else {
+        // Analyse the index to detect changes
         diff_analyse_index(files);
         return _true;
     }
@@ -683,7 +694,7 @@ static int diff_dir_make(File files[]) {
                     seekdir(files[0].d, telldir(files[0].d)-1);
                     seekdir(files[1].d, telldir(files[1].d)-1);
                 }
-                // d2 is not further in d1 and vice versa
+                // d2 is not further in d1 and vice-versa
                 else {
                     printf("Only in %s: %s\n", files[0].path, dr[0]->d_name);
                     printf("Only in %s: %s\n", files[1].path, dr[1]->d_name);
@@ -704,7 +715,6 @@ static int diff_dir_make(File files[]) {
     }
 
     #ifdef DEBUG
-
         if(!p->recursive_dir) {
             STOP_TIMER;
             if(ret == EXIT_DIFFERENTS_FILES)

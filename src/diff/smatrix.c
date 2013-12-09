@@ -63,29 +63,20 @@ static Smatrix* smatrix_at(Smatrix *s, ulint y) {
     return s;
 }
 
-ulint smatrix_to_index(Smatrix s[], Index *i1, Index *i2, ulint start) {
+ulint smatrix_to_index(Smatrix s[], Line **LCS_lines[], ulint len[]) {
 
-    ulint i = 0, j = 0, max_length = 0, max_start = 0;
+    ulint i = 0, j = 0, max_length = 0, max_start = 0, changes = 0;
     Smatrix *tmp = NULL;
     ulint tmp_length = 0, tmp_start = 0;
 
-    ulint changes = start;
-
     // Everything to 1
-    for(; i < i1->line_max; i++)
-        i1->lines[i].modified = 1;
-
-    for(; j < i2->line_max; j++)
-        i2->lines[j].modified = 1;
-
-    // Lines before start are modified
-    for(i = 0; i < start; i++) {
-        i1->lines[i].modified = 0;
-        i2->lines[i].modified = 0;
+    for(; i < 2; i++) {
+        for(j = 0; j < len[i]; j++)
+            LCS_lines[i][j]->modified = 1;
     }
 
     // For every column of the matrix
-    for(; i < i1->line_max; i++) {
+    for(; i < len[0]; i++) {
         tmp = &s[i];
 
         // At least one value
@@ -96,7 +87,7 @@ ulint smatrix_to_index(Smatrix s[], Index *i1, Index *i2, ulint start) {
                 tmp_length = 1;
                 tmp_start = tmp->y;
 
-                for(j = i+1; j < i1->line_max; j++) {
+                for(j = i+1; j < len[0]; j++) {
                     // We look for the next in diagonal
                     if(smatrix_at(&s[i], tmp_start + tmp_length) != NULL)
                         tmp_length++;
@@ -115,10 +106,10 @@ ulint smatrix_to_index(Smatrix s[], Index *i1, Index *i2, ulint start) {
 
             // Mark those lignes
             for(j = i; j < i + max_length; j++)
-                i1->lines[j].modified = 0;
+                LCS_lines[0][j]->modified = 0;
 
             for(j = max_start; j < max_start + max_length; j++)
-                i2->lines[j].modified = 0;
+                LCS_lines[1][j]->modified = 0;
 
             // Go to the next lines
             changes += max_length;

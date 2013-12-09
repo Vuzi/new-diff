@@ -10,13 +10,11 @@ int diff_strcmp(const char *s1, const char *s2) {
 }
 
 
-
 char diff_tolower(char c) {
     if(c >= 'A' && c <= 'Z')
         c += 32;
     return c;
 }
-
 
 
 int diff_strcasecmp(const char *s1, const char *s2) {
@@ -32,14 +30,12 @@ int diff_strcasecmp(const char *s1, const char *s2) {
 }
 
 
-
 size_t diff_strlen(const char *s) {
     size_t size = 0;
     while(*s != '\0')
         size++, s++;
     return size;
 }
-
 
 
 char* diff_strcpy(char *dest, const char *src) {

@@ -189,6 +189,9 @@ static void print_diff_regular(File files[]) {
         // One of them is changed
         if(files[0].i->lines[i].modified || files[1].i->lines[j].modified) {
 
+            length_1 = 0;
+            length_2 = 0;
+
             // Deleted
             if(files[0].i->lines[i].modified == LINE_DEL) {
                 if((length_1 = diff_get_length(files[0].i, i)) == 1)
@@ -207,7 +210,7 @@ static void print_diff_regular(File files[]) {
 
                 print_lines(&files[1], j, length_2 + j - 1, "> ", _true);
             }
-            // Chnaged
+            // Changed
             else {
                 if((length_1 = diff_get_length(files[0].i, i)) == 1)
                     printf("%"SHOW_ulint"c", i+1);
@@ -224,8 +227,8 @@ static void print_diff_regular(File files[]) {
                 print_lines(&files[1], j, length_2 + j - 1, "> ", _true);
             }
 
-            i += length_1;
-            j += length_2;
+            i += length_1-1;
+            j += length_2-1;
         }
     }
 }
@@ -527,7 +530,6 @@ static void print_diff_rcs(File files[]) {
     }
 
 }
-
 
 
 static void print_diff_ed(File files[]) {

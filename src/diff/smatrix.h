@@ -8,7 +8,6 @@
 /* == Structures/Enum == */
 struct _Smatrix {
     ulint y;
-
     ulint value;
 
     struct _Smatrix *next;
@@ -19,6 +18,6 @@ typedef struct _Smatrix Smatrix;
 /* == Prototypes == */
 void smatrix_append(Smatrix *s, ulint y);
 void smatrix_free(Smatrix s[], ulint length);
-ulint smatrix_to_index(Smatrix *s, Index *i1, Index *i2, ulint start);
+ulint smatrix_to_index(Smatrix s[], Line **LCS_lines[], ulint len[]);
 
 #endif // SUBSQ_H
