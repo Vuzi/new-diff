@@ -734,13 +734,13 @@ static void print_diff_ifdef(File files[]) {
     }
 }
 
-void print_args(char* f[]) {
+void print_args(File files[]) {
     int i = 0;
 
     fputs("diff ", stdout);
 
     for(; i < 2; i++) {
-        fputs(f[i], stdout);
+        fputs(files[i].path, stdout);
         fputc(' ', stdout);
     }
 

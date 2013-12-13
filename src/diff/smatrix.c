@@ -76,7 +76,7 @@ ulint smatrix_to_index(Smatrix s[], Line **LCS_lines[], ulint len[]) {
     }
 
     // For every column of the matrix
-    for(; i < len[0]; i++) {
+    for(i = 0; i < len[0]; i++) {
         tmp = &s[i];
 
         // At least one value
@@ -100,8 +100,6 @@ ulint smatrix_to_index(Smatrix s[], Line **LCS_lines[], ulint len[]) {
                     max_length = tmp_length;
                     max_start = tmp_start;
                 }
-
-
             } while((tmp = tmp->next));
 
             // Mark those lignes

@@ -325,7 +325,7 @@ int make_param(char* option, char* argument) {
             return 0;
         }
         else if (!diff_strcmp(option, "new-file") || !diff_strcmp(option, "N")) {
-            p->new_file_recur = _true;
+            p->new_file = _true;
             return 0;
         }
         else if (!diff_strcmp(option, "ignore-file-name-case")) {

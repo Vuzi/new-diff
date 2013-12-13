@@ -14,14 +14,14 @@ void set_paths(File files[]) {
     for(; i < 2; i++) {
         if(stat(files[i].path, &files[i].st) != 0) {
             files_tests[i] = _false;
-            if(!(p->new_file && errno == ENOENT))
+            if(!(p->new_file && p->in_recur && errno == ENOENT))
                 send_error(files[i].path, NULL, NULL);
         }
     }
 
     // If possible
     if((files_tests[0] && files_tests[1]) ||
-      ((files_tests[0] || files_tests[1]) && p->new_file)) {
+      ((files_tests[0] || files_tests[1]) && p->new_file && p->in_recur)) {
 
         // Get their type
         for( i = 0; i < 2; i++) {
@@ -97,7 +97,7 @@ void set_paths(File files[]) {
       }
       // Error
       else {
-        if(!files_tests[0] && !files_tests[1] && p->new_file) // Erreur spéciale à afficher
+        if(!files_tests[0] && !files_tests[1] && p->new_file && p->in_recur) // Erreur spéciale à afficher
             send_error(NULL, "both files are non-existent");
         exit(EXIT_ERROR);
       }

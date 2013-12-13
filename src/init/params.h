@@ -51,7 +51,6 @@ typedef struct _params {
 	_bool out_relay;
 	_bool recursive_dir;
 	_bool new_file;
-	_bool new_file_recur;
 	_bool first_new_file;
 
 	_bool ignore_case_filename;
@@ -78,6 +77,8 @@ typedef struct _params {
 	_bool minimal_diference;
 	_bool horizontal_lines;
 	_bool speed_large_files;
+
+	int in_recur;
 
 	_bool show_help;
 	_bool show_version;
