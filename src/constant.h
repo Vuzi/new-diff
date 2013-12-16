@@ -20,7 +20,7 @@ extern Params *p;
 extern suint diff_stderr_show_help;
 
 /* == Defines == */
-#define VERSION_NUM "0.01a"
+#define VERSION_NUM "0.9b"
 
 /* == Regex == */
 #define C_FUNCTION_REGEX "^[A-Za-z_]"

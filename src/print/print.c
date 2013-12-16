@@ -16,42 +16,45 @@ static void print_diff_rcs(File files[]);
 static void print_diff_columns(File files[]);
 static void print_diff_ifdef(File files[]);
 
+
 /* ===============================================
                   lines_display
 
-    Affiche les lignes de f de start à end (compris)
-    en ajoutant line_start avant chaque ligne.
-    Saute une ligne après chaque ligne écrite.
+    Display lines of file from start to
+    end (included). line_start is added to every
+    line before printing the line itself. Add
+    a cariage return after each line.
     ----------------------------------------------
-    t_index *f       : fichier où sont les lignes.
-    u int start      : première ligne.
-    u int end        : dernière ligne.
-    char* line_start : à afficher avant chaque ligne
+    File *file       : file where are the lines
+    u int start      : first line
+    u int end        : last line
+    char* line_start : to display before each line
    =============================================== */
 static void print_lines(File *file, ulint start, ulint end, const char *line_start, _bool show_end_of_file) {
     print_lines_length(file, start, end, line_start, 0, show_end_of_file);
 }
 
+
 /* ===============================================
                 lines_display_length
 
-    Affiche les lignes de f de start à end (compris)
-    en ajoutant line_start avant chaque ligne avec
-    un maximum de length caractères. 0 permet de ne
-    pas utiliser de limitation.
-    Saute une ligne après chaque ligne écrite.
+    Display lines of file from start to
+    end (included) with a maximum of length char.
+    line_start is added to every line before
+    printing the line itself. Add a cariage return
+    after each line. 0 to the length disable the
+    lenght test.
     ----------------------------------------------
-    t_index *f       : fichier où sont les lignes.
-    u int start      : première ligne.
-    u int end        : dernière ligne.
-    char* line_start : à afficher avant chaque ligne
-    u int length     : nombre de char max
+    File *file       : file where are the lines
+    u int start      : first line
+    u int end        : last line
+    char* line_start : to display before each line
+    u int length     : number of char to display
    =============================================== */
 static void print_lines_length(File *file, ulint start, ulint end, const char *line_start, ulint length, _bool show_end_of_file) {
 
     ulint i = 0, j = 0, l = 0;
     int c = 0;
-
 
     if(start <= end && end <= file->i->line_max && !file->empty) { // Check size
         for(i = start; i <= end; i++) { // For each line to print
@@ -79,15 +82,24 @@ static void print_lines_length(File *file, ulint start, ulint end, const char *l
             if(length == 0)
                 putchar('\n');
         }
-
         if(show_end_of_file && length == 0 && i == file->i->line_max && file->i->lines[i-1].end_line == END_OF_FILE)
             puts("\\ No newline at end of file");
     }
 }
 
+
+/* ===============================================
+                  print_current_func
+
+    Display the current function, based on file
+    and using line as the current line.
+    ----------------------------------------------
+    File *file       : file where are the functions
+    u int line       : actual line
+   =============================================== */
 static void print_current_func(File *file, ulint line) {
 
-    ulint i = 1, func = 0;
+    ulint i = 0, func = 0;
 
     while(i <= line) {
         if(file->i->lines[i].is_func)
@@ -95,7 +107,7 @@ static void print_current_func(File *file, ulint line) {
         i++;
     }
 
-    if(func > 0 || (line == 0 && file->i->line_max >= 1 && file->i->lines[0].is_func))
+    if(func > 0 || file->i->lines[0].is_func)
         print_lines_length(file, func, func, "", 40, _false);
 
     fputc((int)'\n', stdout);
@@ -105,11 +117,11 @@ static void print_current_func(File *file, ulint line) {
 /* ===============================================
              diff_display_file_name
 
-    Permet d'afficher le nom du fichier indexé par
-    f, ainsi qu'un timestamp.
+    Print the name of the file and a timestamp of
+    this file.
     ----------------------------------------------
-    t_index *f     : index
-    ----------------------------------------------
+    stat *st   : stat of the file
+    char *name : name of the file
    =============================================== */
 static void print_file_name(struct stat *st, char* name) {
 
@@ -122,10 +134,10 @@ static void print_file_name(struct stat *st, char* name) {
     printf("%s", name);
     print_space(12-(diff_strlen(name)%12));
 
-    #ifdef _WIN32
-        printf("%s.%I64u ", stat_time, (unsigned long long)st->st_mtime);
+    #ifdef __linux
+        printf("%s.%lu ", stat_time, st->st_mtim.tv_nsec); // milliseconds
     #else
-        printf("%s.%llu ", stat_time, (unsigned long long)st->st_mtime);
+        printf("%s ", stat_time);
     #endif
 
     strftime(stat_time, 512, "%z", stat_tm);
@@ -136,10 +148,9 @@ static void print_file_name(struct stat *st, char* name) {
 /* ===============================================
                     print_space
 
-    Permet d'afficher simplement un nombre donné
-    d'espace sur la sortie standard
+    Print n space on stdout.
     ----------------------------------------------
-    u int n : nombre d'espaces
+    u int n : Number of space
    =============================================== */
 static void print_space(uint n) {
     uint i = 0;
@@ -149,11 +160,19 @@ static void print_space(uint n) {
 }
 
 
+/* ===============================================
+                    print_diff
+
+    Print the diff display using the two files
+    given and the display option choosen.
+    ----------------------------------------------
+    File files[] : Array contening the two files
+   =============================================== */
 void print_diff(File files[]) {
 
     #ifdef DEBUG
-        START_TIMER;
         printf("Start of the result display...\n");
+        START_TIMER;
     #endif
 
     if(p->o_style == CONTEXT)
@@ -178,6 +197,14 @@ void print_diff(File files[]) {
 
 }
 
+
+/* ===============================================
+                print_diff_regular
+
+    Print the diff display using the regular theme
+    ----------------------------------------------
+    File files[] : Array containing the two files
+   =============================================== */
 static void print_diff_regular(File files[]) {
 
     ulint i = 0, j = 0;
@@ -234,6 +261,20 @@ static void print_diff_regular(File files[]) {
 }
 
 
+/* ===============================================
+            print_diff_context_lines
+
+    Print lines for the context style output. If
+    show_line is _false, only the line number is
+    printed. Otherwise lines start to end are
+    printed with line_start before them.
+    ----------------------------------------------
+    const char* line_start : Line start
+    File *file             : File containing lines
+    u int start            : First line (included)
+    u int end              : Last line (included)
+    _bool show_line        : Show the lines ?
+   =============================================== */
 static void print_diff_context_lines(const char* line_start, File* file, ulint start, ulint end, _bool show_line) {
 
     ulint i = start;
@@ -261,6 +302,14 @@ static void print_diff_context_lines(const char* line_start, File* file, ulint s
 }
 
 
+/* ===============================================
+               print_diff_context
+
+    Print the diff's result using the context
+    output style
+    ----------------------------------------------
+    Files files : Array containing the two files
+   =============================================== */
 static void print_diff_context(File files[]) {
 
     ulint i = 1, j = 1;
@@ -343,6 +392,21 @@ static void print_diff_context(File files[]) {
     }
 }
 
+
+/* ===============================================
+            print_diff_unified_lines
+
+    Print lines for the unified style output.
+    Lines start_1 to end_2 are printed from the
+    first file, and start_2 to end_2 for the
+    second file.
+    ----------------------------------------------
+    File files[]  : Array containing the two files
+    u int start_1 : First line (included) for file 1
+    u int end_1   : Last line (included) for file 1
+    u int start_2 : First line (included) for file 2
+    u int end_2   : Last line (included) for file 2
+   =============================================== */
 static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, ulint start_2, ulint end_2) {
 
     ulint i = start_1, j = start_2, start_print = 0;
@@ -407,6 +471,14 @@ static void print_diff_unified_lines(File files[], ulint start_1, ulint end_1, u
 }
 
 
+/* ===============================================
+               print_diff_unified
+
+    Print the diff's result using the unified
+    output style
+    ----------------------------------------------
+    Files files : Array containing the two files
+   =============================================== */
 static void print_diff_unified(File files[]) {
 
     ulint i = 1, j = 1;
@@ -477,6 +549,14 @@ static void print_diff_unified(File files[]) {
 }
 
 
+/* ===============================================
+               print_diff_rcs
+
+    Print the diff's result using the RCS output
+    style
+    ----------------------------------------------
+    Files files : Array containing the two files
+   =============================================== */
 static void print_diff_rcs(File files[]) {
 
     ulint i = 0, j = 0;
@@ -532,6 +612,14 @@ static void print_diff_rcs(File files[]) {
 }
 
 
+/* ===============================================
+               print_diff_ed
+
+    Print the diff's result using the edit script
+    output style
+    ----------------------------------------------
+    Files files : Array containing the two files
+   =============================================== */
 static void print_diff_ed(File files[]) {
 
     ulint i = files[0].i->line_max, j = files[1].i->line_max;
@@ -601,6 +689,14 @@ static void print_diff_ed(File files[]) {
 }
 
 
+/* ===============================================
+                print_diff_columns
+
+    Print the diff's result using the column
+    output style
+    ----------------------------------------------
+    Files files : Array containing the two files
+   =============================================== */
 static void print_diff_columns(File files[]) {
 
     uint char_ligne = (p->width >= 5) ? (p->width - 3) : 0; // Number of columns
@@ -687,6 +783,15 @@ static void print_diff_columns(File files[]) {
     }
 }
 
+
+/* ===============================================
+                 print_diff_ifdef
+
+    Print the diff's result using the ifdef output
+    style
+    ----------------------------------------------
+    Files files : Array containing the two files
+   =============================================== */
 static void print_diff_ifdef(File files[]) {
 
     ulint i = 0, j = 0;
@@ -734,6 +839,15 @@ static void print_diff_ifdef(File files[]) {
     }
 }
 
+
+/* ===============================================
+                    print_args
+
+    Print the args used in the program. Used when
+    diff_file is called recursivly.
+    ----------------------------------------------
+    Files files : Array containing the two files
+   =============================================== */
 void print_args(File files[]) {
     int i = 0;
 
@@ -754,6 +868,12 @@ void print_args(File files[]) {
     fputc('\n', stdout);
 }
 
+
+/* ===============================================
+                    print_version
+
+    Print the program version.
+   =============================================== */
 void print_version(void) {
     printf("diff - version %s\nBy G. Villerez, Q. Ysambert, E. Berezovskiy and K. Maarek\n\nCompiled at %s on %s\n",VERSION_NUM, __TIME__,__DATE__);
     #ifdef DEBUG
@@ -761,6 +881,12 @@ void print_version(void) {
     #endif
 }
 
+
+/* ===============================================
+                    print_help
+
+    Print the program's help.
+   =============================================== */
 void print_help(void) {
 
     puts("Usage: diff [OPTION]... FILE1 FILE2\n\n"
@@ -781,10 +907,12 @@ void print_help(void) {
          "  -q  --brief                  Report only when files differ.\n"
          "  -s  --report-identical-file  Report when two files are the same.\n"
          "\n"
-         "  -a  --text      treat all files as text.\n"
-         "  --binary        treat all files as binary files.\n"
-         "  -r --recursive  recursively compare any  subdirectories found.\n"
-         "  -N --new-file   treat absent files as empty.\n"
+         "  -a  --text                  treat all files as text.\n"
+         "  --binary                    treat all files as binary files.\n"
+         "  -r --recursive              recursively compare any  subdirectories found.\n"
+         "  -N --new-file               treat absent files as empty.\n"
+         "  --ignore-file-name-case     ignore file name case when comparing files"
+         "  --no-ignore-file-name-case  don't ignore file name case when comparing files"
          "\n"
          "  -i  --ignore-case                 consider upper- and lower-case to be the same.\n"
          "  -W  --ignore-all-space            ignore all white space.\n"
@@ -795,8 +923,9 @@ void print_help(void) {
         "  -t  --expand-tabs  expand tabs to spaces in output.\n"
         "  --tabsize=NUM      use NUM space (default 8) space for each tab.\n"
          "\n"
-         "  --help        output this help.\n"
-         "  -v --version  output version info."
+         "  --help            output this help.\n"
+         "  -v --version      output version info."
+         "  --use-matrix-lcs  compute the result using the matricial LCS rather than the Myers' LCS"
          #ifdef DEBUG
          "\n\nDebug option :\n"
          "  --debug-show-options      show the struct containing program's arguments.\n"
@@ -804,6 +933,8 @@ void print_help(void) {
          "  --debug-show-diff         show the raw diff result.\n"
          "  --debug-interactive-mode  pause the program after each step."
          #endif
+         " Report bug to:vuzi@vuzi.fr "
+         " Project's github:https://github.com/Vuzi/new_diff/"
+         " Project's manual:https://github.com/Vuzi/new_diff/wiki/Liste-des-options (french)"
          );
-
 }

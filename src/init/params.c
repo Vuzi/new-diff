@@ -1,17 +1,26 @@
 #include "params.h"
 #include "../print/print.h" // Fonction print
 
+/* == Variables globales == */
 Params *p = NULL;
 suint diff_stderr_show_help = 0;
+
 
 static void set_file_name(char *name);
 static void set_output_style(output_style style);
 static void set_context(char* val);
 static void set_width(char* val);
 
+
+/* ===============================================
+                     initialize_params
+
+    Initialize the global struct containing all
+    the parameters.
+   =============================================== */
 void initialize_params(void) {
     uint i = 0;
-	p = (Params*) calloc(1, sizeof(Params));
+	p = (Params*) diff_xcalloc(1, sizeof(Params));
 
 	p->o_style = NOT_SELECTED;
 	p->context = 3;
@@ -42,6 +51,15 @@ void initialize_params(void) {
 }
 
 
+/* ===============================================
+                     make_params
+
+    Analyse the array argv to find all the
+    parameters.
+    ----------------------------------------------
+    int argc    : size of argv
+    char **argv : array containing the options
+   =============================================== */
 void make_params(int argc, char **argv) {
 
     int i = 1, j = 0, arg_length;
@@ -140,6 +158,14 @@ void make_params(int argc, char **argv) {
 }
 
 
+/* ===============================================
+                     set_file_name
+
+    Set the filename to name. If more than two
+    filenames are given, an error is generated.
+    ----------------------------------------------
+    char *name : name of the file
+   =============================================== */
 static void set_file_name(char *name) {
 
     #ifdef DEBUG
@@ -159,6 +185,15 @@ static void set_file_name(char *name) {
 }
 
 
+/* ===============================================
+                     set_output_style
+
+    Set the output style to style. If an output
+    style is already selected, an error is
+    generated.
+    ----------------------------------------------
+    output_style style : new output style
+   =============================================== */
 static void set_output_style(output_style style) {
     if(p->o_style != NOT_SELECTED && style != p->o_style) {
         exit_help();
@@ -168,6 +203,14 @@ static void set_output_style(output_style style) {
 }
 
 
+/* ===============================================
+                     set_context
+
+    Set the context to val. If val refers to a
+    value below zero, and error is generated.
+    ----------------------------------------------
+    char* val : string of the value
+   =============================================== */
 static void set_context(char* val) {
 
     long int n = 0;
@@ -184,6 +227,16 @@ static void set_context(char* val) {
     }
 }
 
+
+/* ===============================================
+                     set_width
+
+    Set the context to val. If val refers to a
+    value below or equal to zero, and error is
+    generated.
+    ----------------------------------------------
+    char* val : string of the value
+   =============================================== */
 static void set_width(char* val) {
 
     long int n = 0;
@@ -204,6 +257,17 @@ static void set_width(char* val) {
     }
 }
 
+
+/* ===============================================
+                     make_param
+
+    Analyse a parameter and its argument
+    ----------------------------------------------
+    char* option   : option to analyse
+    char* argument : argument to that option
+    ----------------------------------------------
+    Return 1 whe argument is used, 0 otherwise.
+   =============================================== */
 int make_param(char* option, char* argument) {
 
     #ifdef DEBUG
@@ -343,7 +407,7 @@ int make_param(char* option, char* argument) {
                 exit_error(NULL, "conflicting type of matching function to show", option);
             }
 
-            p->show_regex_function = (regex_t*)malloc(sizeof(regex_t)); // regex
+            p->show_regex_function = (regex_t*)diff_xmalloc(sizeof(regex_t)); // regex
 
             if(regcomp(p->show_regex_function, C_FUNCTION_REGEX, REG_NOSUB | REG_EXTENDED) != 0) { // Compilation
                 exit_help();
@@ -362,7 +426,7 @@ int make_param(char* option, char* argument) {
                 exit_error(NULL, "conflicting type of matching function to show", option);
             }
 
-            p->show_regex_function = (regex_t*)malloc(sizeof(regex_t)); // regex
+            p->show_regex_function = (regex_t*)diff_xmalloc(sizeof(regex_t)); // regex
 
             if(regcomp(p->show_regex_function, argument, REG_NOSUB | REG_EXTENDED) != 0) { // Compilation
                 exit_help();
@@ -412,7 +476,7 @@ int make_param(char* option, char* argument) {
         }
         else if (!diff_strcmp(option, "ignore-blank-lines") || !diff_strcmp(option, "B")) {
 
-            p->ignore_blank_lines = (regex_t*)malloc(sizeof(regex_t)); // regex
+            p->ignore_blank_lines = (regex_t*)diff_xmalloc(sizeof(regex_t)); // regex
 
             if(regcomp(p->ignore_blank_lines, BLANK_LINE_REGEX, REG_NOSUB | REG_EXTENDED) != 0) { // Compilation
                 exit_help();
@@ -428,7 +492,7 @@ int make_param(char* option, char* argument) {
                 exit_error(NULL, "option '%s' requires an argument", option);
             }
 
-            p->ignore_regex_match = (regex_t*)malloc(sizeof(regex_t)); // regex
+            p->ignore_regex_match = (regex_t*)diff_xmalloc(sizeof(regex_t)); // regex
 
             if(regcomp(p->ignore_regex_match, argument, REG_NOSUB | REG_EXTENDED) != 0) { // Compilation
                 exit_help();
@@ -444,7 +508,7 @@ int make_param(char* option, char* argument) {
                 exit_error(NULL, "option requires an argument -- '%s'", option);
             }
 
-            p->ignore_regex_match = (regex_t*)malloc(sizeof(regex_t)); // regex
+            p->ignore_regex_match = (regex_t*)diff_xmalloc(sizeof(regex_t)); // regex
 
             if(regcomp(p->ignore_regex_match, argument, REG_NOSUB | REG_EXTENDED) != 0) { // Compilation
                 exit_help();
@@ -514,6 +578,10 @@ int make_param(char* option, char* argument) {
             #endif
             exit(0);
         }
+        else if (!diff_strcmp(option, "use-matrix-lcs")) {
+            p->use_matrix_lcs = _true;
+            return 0;
+        }
         #ifdef DEBUG
         else if (!diff_strcmp(option, "debug-show-options")) {
             p->d_show_options = _true;
@@ -546,7 +614,15 @@ int make_param(char* option, char* argument) {
 
 }
 
+
 #ifdef DEBUG
+/* ===============================================
+                     print_params
+
+    Display the content of the struct params
+    ----------------------------------------------
+    Params *parameters : to display
+   =============================================== */
 void print_params(Params* parameters) {
 	if (parameters == NULL) {
 		return;
@@ -614,6 +690,14 @@ void print_params(Params* parameters) {
 }
 #endif
 
+
+/* ===============================================
+                 free_params_glob
+
+    Display the content of the struct params
+    ----------------------------------------------
+    Params *parameters : to display
+   =============================================== */
 void free_params_glob(void) {
 
     if(p) {

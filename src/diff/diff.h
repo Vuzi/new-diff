@@ -4,7 +4,7 @@
 #include "../string/_string.h"
 #include "../constant.h"
 #include "../index/index.h"
-#include "smatrix.h"
+#include "snake.h"
 #include "../print/print.h"
 
 #ifndef _H_DIFF_S

@@ -4,13 +4,16 @@
 /* ===============================================
                     exit_error
 
-    Permet d'afficher une erreur et de quitter le
-    programme.
-    msg doit être formaté comme un "printf"
-    classique suivit de ses valeurs.
+    Print a formated error to stderr, and quit the
+    program.
+    msg should be formated as a "printf" follows
+    by its values.
+    If title is null, then no title will be
+    displayed. If msg is null, perror will be used
+    to print the error.
     ----------------------------------------------
-    const char* title : Titre de l'erreur
-    const char* msg   : Contenu de l'erreur
+    const char* title : Error title
+    const char* msg   : Error content
    =============================================== */
 void exit_error(const char* title, const char* msg, ...) {
 
@@ -43,12 +46,15 @@ void exit_error(const char* title, const char* msg, ...) {
 /* ===============================================
                     send_error
 
-    Permet d'afficher une erreur.
-    msg doit être formaté comme un "printf"
-    classique suivit de ses valeurs.
+    Print a formated error to stderr.
+    msg should be formated as a "printf" follows
+    by its values.
+    If title is null, then no title will be
+    displayed. If msg is null, perror will be used
+    to print the error.
     ----------------------------------------------
-    const char* title : Titre de l'erreur
-    const char* msg   : Contenu de l'erreur
+    const char* title : Error title
+    const char* msg   : Error content
    =============================================== */
 void send_error(const char* title, const char* msg, ...) {
 
@@ -78,9 +84,9 @@ void send_error(const char* title, const char* msg, ...) {
 /* ===============================================
                     exit_help
 
-    Permet d'activer l'affichage de la ligne
+    Activate the line
     "diff: Try 'diff --help' for more information."
-    après l'affichage de l'erreur.
+    after displaying an error.
     ----------------------------------------------
    =============================================== */
 void exit_help(void) {

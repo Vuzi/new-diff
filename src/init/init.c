@@ -5,6 +5,16 @@
     time_t debug_start_timer, debug_end_timer, debug_start_timer2, debug_end_timer2;
 #endif
 
+
+/* ===============================================
+                     init_diff
+
+    Initialize files with the arguments in argv.
+    ----------------------------------------------
+    int argc     : size of argv
+    char** argv  : array of options
+    File files[] : array containing the two files
+   =============================================== */
 void init_diff(int argc, char** argv, File files[]) {
 
     uint i = 0;
@@ -39,12 +49,12 @@ void init_diff(int argc, char** argv, File files[]) {
         files[i].empty = _false;
 
         // Paths
-        files[i].path = malloc(sizeof(char)*(diff_strlen(p->paths[i])+1));
+        files[i].path = diff_xmalloc(sizeof(char)*(diff_strlen(p->paths[i])+1));
         diff_strcpy(files[i].path, p->paths[i]);
 
         // Labels
         if(p->labels[i]) {
-            files[i].label = malloc(sizeof(char)*(diff_strlen(p->labels[i])+1));
+            files[i].label = diff_xmalloc(sizeof(char)*(diff_strlen(p->labels[i])+1));
             diff_strcpy(files[i].label, p->labels[i]);
         } else {
             files[i].label = files[i].path; // So we can always use the label
@@ -59,6 +69,16 @@ void init_diff(int argc, char** argv, File files[]) {
 }
 
 
+/* ===============================================
+                     init_diff_r
+
+    Initialize files with the arguments in argv.
+    Used when called recursivly.
+    ----------------------------------------------
+    char* paths  : labels of the two files
+    char* labels : paths of the two files
+    File files[] : array containing the two files
+   =============================================== */
 void init_diff_r(char* paths[], char* labels[], File files[]) {
 
     uint i = 0;

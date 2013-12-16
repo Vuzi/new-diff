@@ -1,5 +1,5 @@
-#ifndef _H_INDEX
-#define _H_INDEX
+#ifndef _H_DIFF_INDEX
+#define _H_DIFF_INDEX
 
 /* == Inlcudes == */
 #include "../constant.h"
@@ -52,4 +52,4 @@ void index_free(File *file);
 void index_display(File *file);
 #endif
 
-#endif
+#endif //_H_DIFF_INDEX

@@ -1,5 +1,14 @@
 #include "paths.h"
 
+
+/* ===============================================
+                     set_paths
+
+    Analyse the two files paths, and detect their
+    type.
+    ----------------------------------------------
+    Files files : Array containing the two files
+   =============================================== */
 void set_paths(File files[]) {
 
     int i = 0;
@@ -53,7 +62,7 @@ void set_paths(File files[]) {
             else {
                 // File & dir
                 if(files[0].type == T_FILE) {
-                    tmp = (char*)malloc(sizeof(char)*(diff_strlen(files[0].path)+diff_strlen(files[1].path)+2));
+                    tmp = (char*)diff_xmalloc(sizeof(char)*(diff_strlen(files[0].path)+diff_strlen(files[1].path)+2));
                     sprintf(tmp, "%s/%s",files[1].path, files[0].path);
                     free(files[1].path);
                     files[1].path = tmp;
@@ -70,7 +79,7 @@ void set_paths(File files[]) {
                 }
                 // Dir and file
                 else {
-                    tmp = (char*)malloc(sizeof(char)*(diff_strlen(files[0].path)+diff_strlen(files[1].path)+2));
+                    tmp = (char*)diff_xmalloc(sizeof(char)*(diff_strlen(files[0].path)+diff_strlen(files[1].path)+2));
                     sprintf(tmp, "%s/%s",files[0].path, files[1].path);
                     free(files[0].path);
                     files[0].path = tmp;

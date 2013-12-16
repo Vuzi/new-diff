@@ -1,5 +1,5 @@
-#ifndef _H_PARAMS
-#define _H_PARAMS
+#ifndef _H_DIFF_PARAMS
+#define _H_DIFF_PARAMS
 
 /* == Includes == */
 #include <sys/types.h>
@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include "../string/_string.h"
 #ifdef _WIN32
-    #include "../include/regex.h" // Pas de regex.h dans mingw
+    #include "../include/regex.h" // No regex.h in mingw
 #else
     #include <regex.h>
 #endif
@@ -80,6 +80,7 @@ typedef struct _params {
 
 	int in_recur;
 
+    _bool use_matrix_lcs;
 	_bool show_help;
 	_bool show_version;
 
@@ -108,4 +109,4 @@ void free_params_glob(void);
 void print_params(Params* parameters);
 #endif
 
-#endif
+#endif // _H_DIFF_PARAMS

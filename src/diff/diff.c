@@ -1,17 +1,18 @@
 #include "diff.h"
 
-/* Statics prototypes */
+/* == Statics prototypes == */
 static _bool is_binary(FILE *f);
 
 static _bool diff_file_binary(FILE *f1, FILE* f2);
 static _bool diff_file_brief(Index *i1, Index *i2);
 
 static void diff_analyse_index(File files[]);
-static void diff_file_LCS(Smatrix **s, Line **LCS_lines[], ulint len[]);
+static void diff_file_LCS_matrix(Line **LCS_lines[], ulint len[]);
+static void diff_file_LCS_Myers(Line **LCS_lines[], ulint len[]);
 static _bool diff_file_regular(File files[]);
 
 static const char* get_type_char(struct stat* s);
-static int dir_search(const char* to_search, DIR* d);
+static lint dir_search(const char* to_search, DIR* d);
 static int diff_dir_make(File files[]);
 static int diff_dir_make_r(File files[], struct dirent *dr[]);
 static int diff_dir_make_r_new_file(File files[], struct dirent *dr[]);
@@ -19,17 +20,16 @@ static int diff_dir_make_r_new_file(File files[], struct dirent *dr[]);
 /* ===============================================
                       sec_fopen
 
-    Ouverture sécurisée, retour le résultat de
-    fopen et affiche l'erreur s'il y en a une.
+    Secure open of path using mod mod. If the
+    fopen isn't successful, the error is displayed.
     ----------------------------------------------
-    c char *path : chemin
-    c char *mode : mode d'ouverture
+    c char *path : path
+    c char *mode : open mod
     ----------------------------------------------
-    Retourne le résultat de fopen avec path et
-    mode.
+    Return the result of fopen.
    =============================================== */
-FILE* sec_fopen(const char* path, const char* mode) {
-    FILE* f = fopen(path, mode);
+FILE* sec_fopen(const char* path, const char* mod) {
+    FILE* f = fopen(path, mod);
 
     if(!f)
         send_error(path, NULL, NULL);
@@ -41,10 +41,9 @@ FILE* sec_fopen(const char* path, const char* mode) {
 /* ===============================================
                       sec_fclose
 
-    Fermeture sécurisée, affiche l'erreur s'il y
-    en a une.
+    Secure close of f.
     ----------------------------------------------
-    FILE *f : Flux à fermer
+    FILE *f : Flux to close
    =============================================== */
 void sec_fclose(FILE *f) {
 
@@ -58,10 +57,9 @@ void sec_fclose(FILE *f) {
 /* ===============================================
                       sec_closedir
 
-    Fermeture sécurisée, affiche l'erreur s'il y
-    en a une.
+    Secure close of d.
     ----------------------------------------------
-    DIR *f : Directory à fermer
+    DIR *f : Directory to close
    =============================================== */
 void sec_closedir(DIR *d) {
 
@@ -75,12 +73,12 @@ void sec_closedir(DIR *d) {
 /* ===============================================
                       sec_opendir
 
-    Ouverture sécurisée, retour le résultat de
-    opendir et affiche l'erreur s'il y en a une.
+    Secure open of directory. If the diropen isn't
+    successful, the error is displayed.
     ----------------------------------------------
-    c char *path : chemin
+    c char *path : path
     ----------------------------------------------
-    Retourne le résultat de opendir avec path.
+    Return the result of opendir.
    =============================================== */
 DIR *sec_opendir(const char* path) {
 
@@ -96,10 +94,10 @@ DIR *sec_opendir(const char* path) {
 /* ===============================================
                       free_diff
 
-    Permet de libérer de la mémoire les éléments
-    du diffs avant la fin du programme
+    Free the elements in the diff at the end of
+    the program.
     ----------------------------------------------
-    files : tableau de structures File
+    files : array of the two files to be freed
    =============================================== */
 void free_diff(File files[]) {
 
@@ -119,6 +117,14 @@ void free_diff(File files[]) {
 }
 
 
+/* ===============================================
+                      free_diff_r
+
+    Free the elements in the diff at the end of
+    the program. Only used recursivly.
+    ----------------------------------------------
+    files : array of the two files to be freed
+   =============================================== */
 void free_diff_r(File files[]) {
 
     sint i = 0;
@@ -133,14 +139,14 @@ void free_diff_r(File files[]) {
 /* ===============================================
                     diff_file_brief
 
-    Compare de manière rapide les deux indexs
-    donnés en paramètre.
+    Compare quicly two index to find if they are
+    identicals. Stop avec the first difference.
     ----------------------------------------------
     Index i1 : index n°1
     Index i2 : index n°2
     ----------------------------------------------
-    Retourne true si les fichiers sont identiques,
-    et false s'il sont différents
+    Return _true if the files are different,
+    otherwise _false.
    =============================================== */
 static _bool diff_file_brief(Index *i1, Index *i2) {
     ulint j = 0;
@@ -161,15 +167,14 @@ static _bool diff_file_brief(Index *i1, Index *i2) {
 /* ===============================================
                     is_binary
 
-    Permet d'essayer de deviner qu'un fichier est
-    binaire en lisant les 4 premiers octets de
-    celui-ci (Par convention, un fichier binaire
-    commence par 4 fois la valeur '0').
+    Try to guess if the file is binary by reading
+    the first 4 bytes. Thoses bytes should be at
+    0 for a binary file.
     ----------------------------------------------
-    FILE *f : fichier à tester
+    FILE *f : file to test
     ----------------------------------------------
-    Retourne true si le fichiers est detecté
-    comme binaire, false sinon.
+    Return _true if the file is detected as binary,
+    _false otherwise.
    =============================================== */
 static _bool is_binary(FILE *f) {
 
@@ -194,16 +199,14 @@ static _bool is_binary(FILE *f) {
 /* ===============================================
                  diff_file_binary
 
-    diff de deux fichiers binaire, permet de
-    comparer directement le contenu des deux
-    fichiers octets à octets sans se soucier de
-    l'indexation.
+    diff of two binary file, which compare every
+    bytes of the two files.
     ----------------------------------------------
-    FILE *f1 : fichier à tester n°1
-    FILE *f2 : fichier à tester n°2
+    FILE *f1 : file n°1
+    FILE *f2 : file n°2
     ----------------------------------------------
-    Retourne true si les fichiers sont identiques,
-    false sinon.
+    Return _true if the files are different,
+    otherwise _false.
    =============================================== */
 static _bool diff_file_binary(FILE *f1, FILE* f2) {
 
@@ -240,15 +243,13 @@ static _bool diff_file_binary(FILE *f1, FILE* f2) {
 /* ===============================================
                  diff_get_length
 
-    Permet de compter le nombre de lignes
-    différentes dans un index à partir d'une ligne
-    donnée.
+    Count the number of different lines from the
+    line i.
     ----------------------------------------------
-    Index *index : index à traiter
-    ulint i      : début zone différente
+    Index *index : index to analyse
+    ulint i      : start of the diff zone
     ----------------------------------------------
-    Retourne le dernier index de la suite de
-    modifications.
+    Return the last modified index.
    =============================================== */
 ulint diff_get_length(Index* index, ulint i) {
 
@@ -264,13 +265,12 @@ ulint diff_get_length(Index* index, ulint i) {
 /* ===============================================
                  diff_analyse_index
 
-    Permet d'analyser un fichier d'index pour en
-    déduire si une ligne est ajoutée, supprimée
-    ou encore modifiée. Cette opération est faite
-    pour simplifier les traitements d'affichages.
+    Analyse a file, and detect added, deleted and
+    modified lines. This operation is done in order
+    to make easier the display of the file.
     ----------------------------------------------
-    Index *i1 : index à traiter n°1
-    Index *i2 : index à traiter n°2
+    Index *i1 : index n°1
+    Index *i2 : index n°2
    =============================================== */
 static void diff_analyse_index(File files[]) {
 
@@ -314,53 +314,177 @@ static void diff_analyse_index(File files[]) {
 
 
 /* ===============================================
-                  diff_file_LCS
+                 diff_file_LCS_Myers
 
-    Permet de faire le diff entre deux fichiers
-    indexés, en stockant le résultat dans une
-    matrice.
+    Diff using the Myers' LCS algorithm. Rather
+    than using matrix to store data, this one
+    only store 'snakes'. The algorithm stop after
+    the first snake that reach the end (which
+    is (one of) the solution(s)).
+    This algorithm is faster than the matrix in
+    usual diff case, and take usually a lot less
+    space in memory.
+    The function have no return value, and set
+    the lines modified value to 1 when they are
+    modified, otherwise its stays to 0.
     ----------------------------------------------
-    Smatrix **s : matrice
-    Index *i1   : index à traiter n°1
-    Index *i2   : index à traiter n°2
-    ulint start : début du traitement
+    Line **LCS_lines[] : array of array of lines*
+    u l int len[]      : size of the array of lines*
    =============================================== */
-static void diff_file_LCS(Smatrix **s, Line **LCS_lines[], ulint len[]) {
+static void diff_file_LCS_Myers(Line **LCS_lines[], ulint len[]) {
 
-    ulint i = 0, j = 0, start_j = 0;
-    _bool first_y = _true;
+    // Snake list
+    Snake *snakes = NULL, *first_snake = NULL;
 
-    *s = (Smatrix*)calloc(sizeof(Smatrix), len[0]);
+    // Last values
+    Snake **_V = diff_xmalloc(sizeof(Snake *)*(1 + 2*(len[0] + len[1])));
+    Snake **V = _V + len[0] + len[1]; // So we can access using -d to d to access data
 
-    for(; i < len[0]; i++) {
-        for(j = start_j; j < len[1]; j++, first_y = _true) {
-            if(LCS_lines[0][i]->h == LCS_lines[1][j]->h ) {
-                smatrix_append(&(*s)[i], j);
-                if(first_y) { // Optimization that make the algo focus on the first branch
-                    start_j = j+1;
-                    first_y = _false;
-                }
-            }
+    // Temps values
+    lint k = 0, d = 0, i = 0, j = 0;
+
+    snake_add(&snakes, 0, -1, 0, 0, 0, 0); // Stub for d = 0
+    first_snake = V[1] = snakes;
+
+    for(d = 0; d <= (signed)len[0] + (signed)len[1]; d++) {
+        for(k = -d; k <= d; k += 2) {
+            // Down or right ?
+            char down = (k == -d || (k != d && V[k-1]->end.x < V[k+1]->end.x));
+
+            int kPrev = down ? k + 1: k - 1;
+
+            // Start point
+            int xStart = V[kPrev]->end.x;
+            int yStart = xStart - kPrev;
+
+            // Mid point
+            int xMid = down ? xStart : xStart + 1;
+            int yMid = xMid - k;
+
+            // End point
+            int xEnd = xMid;
+            int yEnd = yMid;
+
+            // Follow diagonal
+            while( xEnd < (signed)len[0] && yEnd < (signed)len[1] &&
+                  LCS_lines[0][xEnd]->h == LCS_lines[1][yEnd]->h &&
+                  LCS_lines[0][xEnd]->length == LCS_lines[1][yEnd]->length )
+                xEnd++, yEnd++;
+
+            // Save the snake
+            snake_add(&snakes, xStart, yStart, xMid, yMid, xEnd, yEnd);
+            snakes->path = V[kPrev];
+            V[k] = snakes;
+
+            // Check for solutiontu c
+            if(xEnd >= (signed)len[0] && yEnd >= (signed)len[1]) // Solution has been found
+                goto solution_found;
         }
     }
 
+    // Here need to check data
+    solution_found:
+
+    // Set every line to changed, because we'll find the unchanged lines
+    for( i = 0; i < 2; i++) {
+        for( j = 0; j < (signed)len[i]; j++)
+            LCS_lines[i][j]->modified = LINE_IS_CHANGED;
+    }
+
+    // Now we have our solution at V[k], we can analyse it
+    snakes = V[k];
+
+    // We'll analyse each snake until we get back to the first snake. Also check for NULL snake
+    while(snakes && (snakes->end.x > 0 || snakes->end.y > 0)) {
+        //Firstly we analyse the diagonal of the snake (Which is part of the LCS)
+        for(i = snakes->end.x, j = snakes->end.y; i > snakes->mid.x; i--, j--) {
+            LCS_lines[0][i-1]->modified = LINE_NO_CHANGE;
+            LCS_lines[1][j-1]->modified = LINE_NO_CHANGE;
+        }
+
+        // Then we find the previous linked snake
+        snakes = snakes->path;
+    }
+
+    // Fre values
+    free(_V);
+    snake_clear(first_snake);
+}
+
+
+/* ===============================================
+                 diff_file_LCS_matrix
+
+    Diff using usual matricial LCS. This algorithm
+    is slow in every case, and can take a lot ( too
+    much) of memory to allocate its matrix.
+    But this algorithm is strong and well tested.
+    It can be used with the option --use-matrix-lcs.
+    ----------------------------------------------
+    Line **LCS_lines[] : array of array of lines*
+    u l int len[]      : size of the array of lines*
+   =============================================== */
+static void diff_file_LCS_matrix(Line **LCS_lines[], ulint len[]) {
+
+    // We initialize the matrix
+    ulint i = 0, j = 0;
+
+    ulint *matrix_tmp = (ulint*)diff_xcalloc(sizeof(ulint), (len[0]+1) * (len[1]+1));
+    ulint **matrix = (ulint**)diff_xcalloc(sizeof(ulint*), len[0]+1);
+
+    for(; i <= len[0]; i++)
+        matrix[i] = ( i * (len[1]+1)) + matrix_tmp;
+
+    // Fill the matrix
+    for(i = 0; i < len[0]; i++) {
+        for(j = 0; j < len[1]; j++) {
+            if(LCS_lines[0][i-1]->h == LCS_lines[1][j-1]->h && LCS_lines[0][i-1]->length == LCS_lines[1][j-1]->length)
+                matrix[i][j] = matrix[i-1][j-1] + 1;
+            else
+                matrix[i][j] = matrix[i-1][j] > matrix[i][j-1] ? matrix[i-1][j] : matrix[i][j-1];
+        }
+    }
+
+    // Set every line to changed, because we'll find the unchanged lines
+    for( i = 0; i < 2; i++) {
+        for( j = 0; j < len[i]; j++)
+            LCS_lines[i][j]->modified = LINE_IS_CHANGED;
+    }
+
+    // Compute the LCS
+    for(i = len[0], j = len[1]; matrix[i][j] != 0 && i > 0 && j > 0;) {
+        // If we can go to left
+        if(matrix[i-1][j] == matrix[i][j])
+            i--;
+        // If we can go up
+        else if(matrix[i][j-1] == matrix[i][j])
+            j--;
+        // We need to take the bridge
+        else {
+            // Valeur dans le LCS
+            LCS_lines[0][i-1]->modified = LCS_lines[1][j-1]->modified = LINE_NO_CHANGE;
+            i--, j--;
+        }
+    }
+
+    // Free of the matrix
+    free(matrix[0]);
+    free(matrix);
 }
 
 /* ===============================================
                   diff_file_regular
 
-    Permet de faire le diff entre deux fichiers
-    indexés.
+    Diff between two regular indexed files.
     ----------------------------------------------
-    File files[] : fichiers à traiter.
+    File files[] : files to be computed.
     ----------------------------------------------
-    Retourne vrai si les fichiers sont différents,
-    et faux s'ils sont identiques.
+    Return _true when files are identical, _false
+    otherwise.
    =============================================== */
 static _bool diff_file_regular(File files[]) {
 
-    Smatrix *s = NULL;
-    ulint ret = 0, i = 0, j = 0, k = 0;
+    ulint i = 0, j = 0, k = 0;
 
     ulint len[2] = {0, 0};
     Line **LCS_lines[2] = { NULL, NULL };
@@ -373,6 +497,14 @@ static _bool diff_file_regular(File files[]) {
             break;
     }
 
+    // Ignore last identicals lines
+    for( i = files[0].i->line_max-1, j = files[1].i->line_max-1; i > 0 && j > 0; i--, j--) {
+        if(files[0].i->lines[i].h == files[1].i->lines[j].h && !files[0].i->lines[i].ignore) { // If line ignored, stop
+            files[0].i->lines[i].ignore = files[1].i->lines[j].ignore = _true;
+        } else
+            break;
+    }
+
     // Count the new number of lines
     for(i = 0; i < 2; i++) {
         for( j = 0; j < files[i].i->line_max; j++) {
@@ -381,10 +513,11 @@ static _bool diff_file_regular(File files[]) {
         }
     }
 
+    // If we have something to test
     if(len[0] > 0 || len[1] > 0) {
         // Alloc the new tab
         for(i = 0; i < 2; i++) {
-            LCS_lines[i] = malloc(sizeof(Line*)*len[i]);
+            LCS_lines[i] = diff_xmalloc(sizeof(Line*)*len[i]);
             // Add to the new tab the lines not ignored
             for(j = 0, k = 0; j < files[i].i->line_max; j++) {
                 if(!files[i].i->lines[j].ignore) {
@@ -395,13 +528,12 @@ static _bool diff_file_regular(File files[]) {
         }
 
         // Do the LCS stuff
-        diff_file_LCS(&s, LCS_lines, len);
-
-        // Translate from matrix to lines
-        ret = smatrix_to_index(s, LCS_lines, len);
+        if(p->use_matrix_lcs)
+            diff_file_LCS_matrix(LCS_lines, len);
+        else
+            diff_file_LCS_Myers(LCS_lines, len);
 
         // Free what need to be freed
-        smatrix_free(s, len[0]);
         free(LCS_lines[0]);
         free(LCS_lines[1]);
     }
@@ -409,7 +541,7 @@ static _bool diff_file_regular(File files[]) {
     if(files[0].i->line_max == files[1].i->line_max && len[0] == 0 && len[1] == 0) // Same file
         return _false;
     else {
-        // Analyse the index to detect changes
+        // Analyse the index to detect additions, deletions and changes
         diff_analyse_index(files);
         return _true;
     }
@@ -419,13 +551,12 @@ static _bool diff_file_regular(File files[]) {
 /* ===============================================
                  get_type_char
 
-    Permet de récupérer facilement le nom du type
-    d'un fichier à partir de son stat.
+    Allow us to easily get the type of a file
+    using stat.
     ----------------------------------------------
-    stat *s : structure à tester
+    stat *s : stat to test
     ----------------------------------------------
-    Retourne le nom du type sous forme de chaine
-    statique.
+    Return the name of the type in a static string.
    =============================================== */
 static const char* get_type_char(struct stat *s) {
 
@@ -458,18 +589,17 @@ static const char* get_type_char(struct stat *s) {
 /* ===============================================
                     dir_search
 
-    Permet de localiser un nom de fichier dans une
-    directory DIR.
+    Locate a file in a directory DIR.
     ----------------------------------------------
-    const char* to_search : nom à chercher
-    DIR* d                : directory où chercher
+    const char* to_search : name to search
+    DIR* d                : where to search
     ----------------------------------------------
-    Retourne l'index du fichier ou -1 s'il ne peut
-    le trouver.
+    Return the index of to_search in d, otherwise
+    -1.
    =============================================== */
-static int dir_search(const char* to_search, DIR* d) {
+static lint dir_search(const char* to_search, DIR* d) {
 
-    int d_save = telldir(d), d_val = 0;
+    lint d_save = telldir(d), d_val = 0;
     struct dirent *dr = NULL;
 
     while ((dr = readdir(d)) != NULL) {
@@ -484,6 +614,18 @@ static int dir_search(const char* to_search, DIR* d) {
     return -1;
 }
 
+
+/* ===============================================
+             diff_dir_make_r_new_file
+
+    Analyse recursivly two files, whith one of them
+    being null.
+    ----------------------------------------------
+    Files files[]       : files
+    struct dirent *dr[] : files to test
+    ----------------------------------------------
+    Return the result of the recursiv call.
+   =============================================== */
 static int diff_dir_make_r_new_file(File files[], struct dirent *dr[]) {
 
     File new_files[2];
@@ -496,7 +638,7 @@ static int diff_dir_make_r_new_file(File files[], struct dirent *dr[]) {
     for(i = 0; i < 2; i++) {
         if (dr[i]) {
             // Name
-            tmp_names[i] = malloc(sizeof(char)*(dr[i]->d_namlen+diff_strlen(files[i].path)+2));
+            tmp_names[i] = diff_xmalloc(sizeof(char)*(diff_strlen(dr[i]->d_name)+diff_strlen(files[i].path)+2));
             sprintf(tmp_names[i], "%s/%s", files[i].path, dr[i]->d_name);
             // We stat the file
             if(stat(tmp_names[i], &(st[i])) != 0) {
@@ -519,10 +661,10 @@ static int diff_dir_make_r_new_file(File files[], struct dirent *dr[]) {
 
             // We create the new names and labels to test
             if(!dr[0]) {
-                tmp_names[0] = (char*)malloc(sizeof(char)*(dr[1]->d_namlen+diff_strlen(files[0].path)+2));
+                tmp_names[0] = (char*)diff_xmalloc(sizeof(char)*(diff_strlen(dr[1]->d_name)+diff_strlen(files[0].path)+2));
                 sprintf(tmp_names[0], "%s/%s", files[0].path, dr[1]->d_name);
             } else {
-                tmp_names[1] = (char*)malloc(sizeof(char)*(dr[0]->d_namlen+diff_strlen(files[1].path)+2));
+                tmp_names[1] = (char*)diff_xmalloc(sizeof(char)*(diff_strlen(dr[0]->d_name)+diff_strlen(files[1].path)+2));
                 sprintf(tmp_names[1], "%s/%s", files[1].path, dr[0]->d_name);
             }
 
@@ -547,6 +689,17 @@ static int diff_dir_make_r_new_file(File files[], struct dirent *dr[]) {
     return ret;
 }
 
+
+/* ===============================================
+                   diff_dir_make_r
+
+    Analyse recursivly two files.
+    ----------------------------------------------
+    Files files[]       : files
+    struct dirent *dr[] : files to test
+    ----------------------------------------------
+    Return the result of the recursiv call.
+   =============================================== */
 static int diff_dir_make_r(File files[], struct  dirent *dr[]) {
 
     File new_files[2];
@@ -558,7 +711,7 @@ static int diff_dir_make_r(File files[], struct  dirent *dr[]) {
     // We stat both files
     for(i = 0; i < 2; i++) {
         // Names
-        tmp_names[i] = malloc(sizeof(char)*(dr[i]->d_namlen+diff_strlen(files[i].path)+3));
+        tmp_names[i] = diff_xmalloc(sizeof(char)*(diff_strlen(dr[i]->d_name)+diff_strlen(files[i].path)+3));
         sprintf(tmp_names[i], "%s/%s", files[i].path, dr[i]->d_name);
 
         // We stat the file
@@ -611,17 +764,13 @@ static int diff_dir_make_r(File files[], struct  dirent *dr[]) {
 
 
 /* ===============================================
-                    diff_dir_make
+                   diff_dir_make
 
-    Permet de réaliser le diff entre deux dossiers
-    en testant les éléments qu'il contient.
-
-    Renvoit 0 si leur contenu est identique, 1
-    sinon.
+    Analyse recursivly two directory.
     ----------------------------------------------
-
+    Files files[]       : files to test
     ----------------------------------------------
-
+    Return if the directory are identical or not
    =============================================== */
 static int diff_dir_make(File files[]) {
 
@@ -720,20 +869,30 @@ static int diff_dir_make(File files[]) {
     return ret;
 }
 
+
+/* ===============================================
+                    diff_dir
+
+    Core function of the diff between two dirs.
+    ----------------------------------------------
+    Files files[]       : files to test
+    ----------------------------------------------
+    Return if the directory are identical or not
+   =============================================== */
 int diff_dir(File files[]) {
 
     int ret = EXIT_IDENTICAL_FILES;
 
+    // Works because we already check the two paths
     if(files[0].empty || (files[0].d = sec_opendir(files[0].path))) {
         if(files[1].empty || (files[1].d = sec_opendir(files[1].path))) {
             ret = diff_dir_make(files);
-            sec_closedir(files[0].d);
-            sec_closedir(files[1].d);
+            if(files[0].d) sec_closedir(files[0].d);
+            if(files[1].d) sec_closedir(files[1].d);
         } else {
-            sec_closedir(files[0].d);
+            if(files[0].d) sec_closedir(files[0].d);
             ret = EXIT_ERROR;
         }
-
     } else
         ret = EXIT_ERROR;
 
@@ -741,6 +900,16 @@ int diff_dir(File files[]) {
 }
 
 
+
+/* ===============================================
+                     diff_file
+
+    Core function of the diff between two files.
+    ----------------------------------------------
+    Files files[]       : files to test
+    ----------------------------------------------
+    Return if the files are identical or not
+   =============================================== */
 int diff_file(File files[]) {
 
     int ret = EXIT_IDENTICAL_FILES;

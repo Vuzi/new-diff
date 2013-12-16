@@ -1,5 +1,5 @@
-#ifndef _H_PRINT
-#define _H_PRINT
+#ifndef _H_DIFF_PRINT
+#define _H_DIFF_PRINT
 
 /* == Inlcudes == */
 #include <stdio.h>
@@ -14,4 +14,4 @@ void print_args(File files[]);
 void print_version(void);
 void print_help(void);
 
-#endif // _H_PRINT
+#endif // _H_DIFF_PRINT

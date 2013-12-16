@@ -1,9 +1,23 @@
 #include "index.h"
 
+/* == Prototypes == */
 static ulint index_size(FILE *f, ulint* longest_line);
 static void index_empty(File *file);
 static END_LINE get_end_line(FILE *f, char c);
 
+
+/* ===============================================
+                     index_size
+
+    Return the number of lines of the file f. Set
+    longest_line to the the length of the longest
+    line of the file.
+    ----------------------------------------------
+    FILE *f               : file
+    u l int* longest_line : longest line
+    ----------------------------------------------
+    Return the number of lines in f.
+   =============================================== */
 static ulint index_size(FILE *f, ulint* longest_line) {
     ulint cpt = 0, line_max = 0;
     int c = 0;
@@ -27,6 +41,18 @@ static ulint index_size(FILE *f, ulint* longest_line) {
     return cpt;
 }
 
+
+/* ===============================================
+                     get_end_line
+
+    Return the type of end of line, and move the
+    cursor to the end of the file.
+    ----------------------------------------------
+    FILE *f    : file
+    char c     : char at the end of line
+    ----------------------------------------------
+    Return the end of line type.
+   =============================================== */
 static END_LINE get_end_line(FILE *f, char c) {
 
     if(c == '\n') {
@@ -52,13 +78,21 @@ static END_LINE get_end_line(FILE *f, char c) {
     return -1;
 }
 
+
+/* ===============================================
+                     index_empty
+
+    Create an index adapted to empty files.
+    ----------------------------------------------
+    FILE *f    : empy file
+   =============================================== */
 static void index_empty(File *file) {
 
     // Empty index creation
-    file->i = (Index*)malloc(sizeof(Index));
+    file->i = (Index*)diff_xmalloc(sizeof(Index));
 
     file->i->line_max = 1;
-    file->i->lines = (Line*)calloc(sizeof(Line), 1);
+    file->i->lines = (Line*)diff_xcalloc(sizeof(Line), 1);
     file->i->lines[0].end_line = END_OF_FILE;
     file->i->lines[0].h = HASH_START;
     file->i->lines[0].ignore = _false;
@@ -67,6 +101,14 @@ static void index_empty(File *file) {
     file->i->lines[0].start = 0;
 }
 
+
+/* ===============================================
+                     index_file
+
+    Create an index to the file file.
+    ----------------------------------------------
+    FILE *f    : file to be indexed
+   =============================================== */
 void index_file(File *file) {
 
     ulint cpt = 0, j = 0, tab_cpt = 0, space_cpt = 0, blank_cpt = 0, max_lenght = 0;
@@ -81,13 +123,13 @@ void index_file(File *file) {
     }
 
     // Index creation
-    file->i = (Index*)malloc(sizeof(Index));
+    file->i = (Index*)diff_xmalloc(sizeof(Index));
 
     file->i->line_max = index_size(file->f, &max_lenght);
-    file->i->lines = (Line*)calloc(sizeof(Line), file->i->line_max);
+    file->i->lines = (Line*)diff_xcalloc(sizeof(Line), file->i->line_max);
 
     // Buffer
-    buffer = (char*)malloc(sizeof(char)*(max_lenght+1));
+    buffer = (char*)diff_xmalloc(sizeof(char)*(max_lenght+1));
 
     if(file->f) {
         if(file->i->line_max > 0) {
@@ -197,6 +239,9 @@ void index_file(File *file) {
                             blank_cpt = 0;
                     }
 
+                    if(tmp < 0)
+                        tmp = -tmp + 2;
+
                     if(blank_cpt <=1 && tab_cpt <= 1 && space_cpt <= 1)
                         h = hash(h, (char)tmp); // hashing
 
@@ -217,6 +262,14 @@ void index_file(File *file) {
     free(buffer);
 }
 
+
+/* ===============================================
+                     index_free
+
+    Free the index of file.
+    ----------------------------------------------
+    FILE *f : file containing the index to be freed
+   =============================================== */
 void index_free(File *file) {
     if(file->i) {
         free(file->i->lines);
@@ -226,6 +279,13 @@ void index_free(File *file) {
 }
 
 #ifdef DEBUG
+/* ===============================================
+                     index_display
+
+    Display the index of file.
+    ----------------------------------------------
+    FILE *f : file containing the index to be shown
+   =============================================== */
 void index_display(File *file) {
 
     ulint j = 0;
