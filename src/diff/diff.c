@@ -436,8 +436,8 @@ static void diff_file_LCS_matrix(Line **LCS_lines[], ulint len[]) {
         matrix[i] = ( i * (len[1]+1)) + matrix_tmp;
 
     // Fill the matrix
-    for(i = 0; i < len[0]; i++) {
-        for(j = 0; j < len[1]; j++) {
+    for(i = 1; i < len[0]; i++) {
+        for(j = 1; j < len[1]; j++) {
             if(LCS_lines[0][i-1]->h == LCS_lines[1][j-1]->h && LCS_lines[0][i-1]->length == LCS_lines[1][j-1]->length)
                 matrix[i][j] = matrix[i-1][j-1] + 1;
             else
