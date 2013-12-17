@@ -578,10 +578,6 @@ int make_param(char* option, char* argument) {
             #endif
             exit(0);
         }
-        else if (!diff_strcmp(option, "use-matrix-lcs")) {
-            p->use_matrix_lcs = _true;
-            return 0;
-        }
         #ifdef DEBUG
         else if (!diff_strcmp(option, "debug-show-options")) {
             p->d_show_options = _true;
