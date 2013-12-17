@@ -80,7 +80,6 @@ typedef struct _params {
 
 	int in_recur;
 
-    _bool use_matrix_lcs;
 	_bool show_help;
 	_bool show_version;
 
