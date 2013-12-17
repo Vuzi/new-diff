@@ -528,10 +528,7 @@ static _bool diff_file_regular(File files[]) {
         }
 
         // Do the LCS stuff
-        if(p->use_matrix_lcs)
-            diff_file_LCS_matrix(LCS_lines, len);
-        else
-            diff_file_LCS_Myers(LCS_lines, len);
+        diff_file_LCS_Myers(LCS_lines, len);
 
         // Free what need to be freed
         free(LCS_lines[0]);
