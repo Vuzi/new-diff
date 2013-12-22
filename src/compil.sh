@@ -28,11 +28,11 @@ gcc -c init/paths.c -o _o/paths.o -Wall -Wextra -O3 -D $mode_comp
 gcc -c index/index.c -o _o/index.o -Wall -Wextra -O3 -D $mode_comp
 gcc -c index/hash.c -o _o/hash.o -Wall -Wextra -O3 -D $mode_comp
 gcc -c diff/diff.c -o _o/diff.o -Wall -Wextra -O3 -D $mode_comp
-gcc -c diff/smatrix.c -o _o/smatrix.o -Wall -Wextra -O3 -D $mode_comp
+gcc -c diff/snake.c -o _o/snake.o -Wall -Wextra -O3 -D $mode_comp
 gcc -c print/print.c -o _o/print.o -Wall -Wextra -O3 -D $mode_comp
 gcc -c err/err.c -o _o/err.o -Wall -Wextra -O3 -D $mode_comp
 gcc -c string/_string.c -o _o/_string.o -Wall -Wextra -O3 -D $mode_comp
-gcc -Wall -Wextra -O3 -o $path_comp/diff _o/main.o _o/init.o _o/params.o _o/paths.o _o/index.o _o/hash.o _o/diff.o _o/smatrix.o _o/print.o _o/err.o _o/_string.o
+gcc -Wall -Wextra -O3 -o $path_comp/diff _o/main.o _o/init.o _o/params.o _o/paths.o _o/index.o _o/hash.o _o/diff.o _o/snake.o _o/print.o _o/err.o _o/_string.o
 
 rm -rf "_o"
 
